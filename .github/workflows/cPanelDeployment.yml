@@ -9,6 +9,7 @@ jobs:
   FTP-Deploy-Action:
     name: FTP-Deploy-Action
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2.1.0
@@ -22,22 +23,18 @@ jobs:
     
       - name: Install Composer dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
+    
+      - name: Set up environment file
+        run: cp .env.example .env
+  
       - name: Generate application key
         run: php artisan key:generate
   
-      - name: Delay before running migrations
-        run: sleep 30
-
-      - name: Check Database Connection
-        run: php artisan migrate:status
-
-      - name: Run database migrations
-        run: php artisan migrate --force
-
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@master
         with:
-          server: ${{ secrets.SERVER }}
+          host: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          script: |
+            php artisan migrate --force

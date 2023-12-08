@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+*{
+  margin: 0;
+  padding: 0;
+}
+
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* background-color: #ccc; */
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    /* background-color: white; */
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: orange;
+  }
+  
+  input:focus + .slider {
+    box-shadow: 0 0 1px orange;
+  }
+  
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+  
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  .example::-webkit-scrollbar {
+    display: none;
+}
+
+.example {
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
+}
+
+.slider-wrapper {
+  border-radius: 20px;
+}
+
+.react-datepicker{
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.react-datepicker__header {
+  background-color: none !important;
+  background: none;
+  border: none;
+}
+
+
+
+.react-datepicker__current-month{
+  color: black;
+  font-weight: 300;
+  margin-bottom: 0;
+}
+
+.react-datepicker__day-name{
+  color: grey;
+
+}
+
+.react-datepicker__day--keyboard-selected {
+  background: orange;
+}
+
+.fc-header-toolbar{
+  flex-wrap: wrap;
+}
+
+.fc-today-button{
+  text-transform: uppercase !important;
+  background-color: rgb(239, 115, 0) !important;
+  border: none !important;
+}
+
+ .ant-btn {
+  background-color: orange !important; /* Set the button's background color to orange */
+  color: white; /* Set the text color to white */
+}
+
+.ant-btn:hover{
+  background-color: none;
+  border: none;
+  color: none !important;
+}
+
+
+.fc-view-harness .fc-view-harness-active{
+  height: 500px !important;
+}
+
+:where(.css-3mqfnx).ant-picker-dropdown .ant-picker-panel-container .ant-picker-panels {
+  display: inline-flex;
+  flex-wrap: wrap !important;
+  direction: ltr;
+  width: auto;
+}
+
+:where(.css-3mqfnx).ant-picker-dropdown .ant-picker-panel-container {
+  overflow: hidden;
+  vertical-align: top;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  transition: margin 0.3s;
+  width: min-content;
+}
+
+.react-pdf__Page__canvas {
+  margin: 0 auto !important;
+  width: 80% !important;
+  height: 100% !important;
+}
+
+
+.fc-h-event {
+  background: orange !important;
+  border: black;
+}
+.fc-daygrid-event{
+  padding: 10px;
+  width: 100%;
+}
+
+/* Custom CSS */
+.custom-radio {
+  color: orange; /* Set the radio button color to orange */
+  border-color: orange; /* Set the border color to orange (if desired) */
+}
+
+
+@media (max-width: 600px) {
+
+  .fc .fc-toolbar-title {
+    font-size: 1.2rem;
+  }
+}
+
+
+.sticky{
+  z-index: 10;
+}
+
+
+.ant-spin-spinning{
+  color: orange;
+}

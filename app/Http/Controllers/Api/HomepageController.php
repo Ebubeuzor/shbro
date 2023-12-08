@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\HomepageResource;
+use App\Models\Homepage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
+
+class HomepageController extends Controller
+{
+    
+    public function index()
+    {
+        return HomepageResource::collection(
+            Homepage::whereId(1)->get()
+        );
+    }
+
+    
+    private function saveImage($image)
+    {
+        // Check if image is base64 string
+        if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
+            $imageData = substr($image, strpos($image, ',') + 1);
+            $imageType = strtolower($matches[1]);
+
+            // Check if file is an image
+            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png'])) {
+                throw new \Exception('Invalid image type');
+            }
+
+            // Decode base64 image data
+            $decodedImage = base64_decode($imageData);
+
+            if ($decodedImage === false) {
+                throw new \Exception('Failed to decode image');
+            }
+        } else {
+            throw new \Exception('Invalid image format');
+        }
+
+        $dir = 'images/';
+        $file = Str::random() . '.' . $imageType;
+        $absolutePath = public_path($dir);
+        $relativePath = $dir . $file;
+
+        if (!File::exists($absolutePath)) {
+            File::makeDirectory($absolutePath, 0755, true);
+        }
+
+        // Save the decoded image to the file
+        if (!file_put_contents($relativePath, $decodedImage)) {
+            throw new \Exception('Failed to save image');
+        }
+
+        return $relativePath;
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'image' => 'required|string',
+            'title' => 'required|string',
+            'subtitle' => 'required|string',
+        ]);
+        
+        $attributes = [];
+        $attributes['image'] = $this->saveImage($data['image']);
+        $attributes['title'] = $data['title'];
+        $attributes['subtitle'] = $data['subtitle'];
+        Homepage::updateOrCreate([], $attributes);
+    }
+
+
+}

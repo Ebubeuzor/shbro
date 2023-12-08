@@ -15,6 +15,23 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+    
+      - name: Install Composer dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    
+      - name: Set up environment file
+        run: cp .env.example .env
+  
+      - name: Generate application key
+        run: php artisan key:generate
+  
+      - name: Run database migrations
+        run: php artisan migrate --force
+
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:

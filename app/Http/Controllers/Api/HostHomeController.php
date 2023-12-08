@@ -308,13 +308,6 @@ class HostHomeController extends Controller
     }
 
     
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\HostHome  $hostHome
-     * @return \Illuminate\Http\Response
-     */
     public function show(HostHome $hostHome)
     {
         return new HostHomeResource($hostHome);

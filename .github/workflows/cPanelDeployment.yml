@@ -15,23 +15,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-    
-      - name: Install Composer dependencies
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
-      - name: Generate application key
-        run: php artisan key:generate
-  
-      - name: Delay before running migrations
-        run: sleep 30
-
-      - name: Check Database Connection
-        run: php artisan migrate:status
-
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:

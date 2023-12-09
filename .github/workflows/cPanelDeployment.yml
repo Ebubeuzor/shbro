@@ -1,4 +1,4 @@
-name: Publish Website to CPanel
+name: Laravel SSH Deploy
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+  SSH-Deploy-Action:
+    name: SSH-Deploy-Action
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -15,9 +15,16 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.5
         with:
-          server: ${{ secrets.SERVER }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          script: |
+            php artisan migrate --force

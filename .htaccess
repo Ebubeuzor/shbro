@@ -1,13 +1,9 @@
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-	RewriteCond %{REQUEST_FILENAME} -d [OR]
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^ ^ [N] 
-    RewriteCond %{REQUEST_URI} (\.\w+$) [NC]
-    RewriteRule ^(.*)$ public/ 
- 
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ server.php
+    RewriteEngine on
+
+    RewriteCond %{DOCUMENT_ROOT}public%{REQUEST_URI} -f
+    RewriteRule (.+) /public/$1 [L]
+
+    RewriteRule ^ /public/index.php [L]
 
 </IfModule>

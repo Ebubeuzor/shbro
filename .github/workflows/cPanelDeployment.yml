@@ -28,3 +28,5 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           script: |
             php artisan migrate --force
+
+            

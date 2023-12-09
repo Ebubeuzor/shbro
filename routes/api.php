@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::middleware('auth:sanctum')->group(function(){
+Route::middleware('auth:sanctum')->group(function(){
 
     // This requests an authenticated user details
     Route::get('/user', function (Request $request) {
@@ -129,7 +129,7 @@ use Illuminate\Support\Facades\Route;
     Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
     Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
     
-// });
+});
 
 Route::get('homepage', [HomepageController::class, 'index']);
 

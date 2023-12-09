@@ -16,9 +16,9 @@ jobs:
           fetch-depth: 2
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@<commit-hash>
+        uses: appleboy/setup-ssh-action@v2
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: SSH Deploy
         uses: appleboy/ssh-action@master

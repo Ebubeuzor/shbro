@@ -9,7 +9,6 @@ jobs:
   FTP-Deploy-Action:
     name: FTP-Deploy-Action
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2.1.0
@@ -20,21 +19,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-    
-      - name: Install Composer dependencies
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-    
-      - name: Set up environment file
-        run: cp .env.example .env
-  
-      - name: Generate application key
-        run: php artisan key:generate
-  
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@master
+
+      - name: FTP-Deploy-Action
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
         with:
-          host: ${{ secrets.SERVER }}
+          server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          script: |
-            php artisan migrate --force

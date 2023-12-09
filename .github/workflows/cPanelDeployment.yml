@@ -23,20 +23,22 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Generate application key
-        run: php artisan key:generate
-
-      - name: Delay before running migrations
-        run: sleep 30
-
-      - name: Check Database Connection
-        run: php artisan migrate:status
-
-      - name: Display .env contents
-        run: cat .env
-
-      - name: Run database migrations
-        run: php artisan migrate --force
+      - name: Boot Laravel application
+        run: |
+          php -r "file_exists('.env') || copy('.env.example', '.env');"
+          php artisan key:generate
+          php artisan --version
+  
+      - name: Execute PHPUnit tests
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: shorcjrk_shbro
+          DB_USERNAME: shorcjrk
+          DB_PASSWORD: kHaity15KKFY
+        run: |
+          php artisan migrate --force
 
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.3

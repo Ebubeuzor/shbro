@@ -19,7 +19,7 @@ jobs:
         uses: appleboy/setup-ssh-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+          
       - name: SSH Deploy
         uses: appleboy/ssh-action@master
         with:

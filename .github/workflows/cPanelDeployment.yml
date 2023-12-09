@@ -6,9 +6,10 @@ on:
       - main
 
 jobs:
-  FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+  SSH-Deploy-Action:
+    name: SSH-Deploy-Action
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2.1.0
@@ -40,9 +41,11 @@ jobs:
         run: |
           php artisan migrate --force
 
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@master
         with:
-          server: ${{ secrets.SERVER }}
+          host: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          script: |
+            php artisan migrate --force

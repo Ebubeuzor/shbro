@@ -28,8 +28,7 @@ class AdminController extends Controller
     public function banGuest(Request $request, $id) {
 
         $data = $request->validate([
-            "message" => "required",
-            "id" => "required"
+            "message" => "required"
         ]);
 
         $user = User::where('id', $id)->get();
@@ -48,8 +47,7 @@ class AdminController extends Controller
     public function suspendGuest(Request $request, $id) {
 
         $data = $request->validate([
-            "message" => "required",
-            "id" => "required"
+            "message" => "required"
         ]);
 
         $user = User::where('id', $id)->get();
@@ -68,8 +66,7 @@ class AdminController extends Controller
     public function deleteGuest(Request $request, $id) {
 
         $data = $request->validate([
-            "message" => "required",
-            "id" => "required"
+            "message" => "required"
         ]);
 
         $user = User::where('id', $id)->get();

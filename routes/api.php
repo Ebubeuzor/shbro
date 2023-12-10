@@ -25,111 +25,49 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Route::middleware('auth:sanctum')->group(function(){
+Route::middleware('auth:sanctum')->group(function(){
 
     // This requests an authenticated user details
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    
-
-    /**
-     * Anytime you see apiResource 
-     * just know that it contains 4 type od request
-     * get , put/patch ,post and delete
-     * 
-     * get(/userDetail) get the details of every user that is not  verified
-     * put(/userDetail/{value}) as you can see it accept a value in the url this value is an authenticated user id
-     * and the values which you will send as object must be in the following object
-     * firstName
-        lastName
-        phone
-        email
-        government_id
-        country
-        street
-        emergency_no
-        zipCode
-        state
-        city
-        status
-     * 
-     */
 
     Route::apiResource('/userDetail', UserController::class);
     
-    // this gets all an authenticated user notification
     Route::get('notification', [NotifyController::class, 'index']);
-    // this deletes all an authenticated user notification and it accepts the notification id in the url 
+    
     Route::delete('notification/{notification}', [NotifyController::class, 'destroy']);
-    // this logs out an authenticated user 
+    
     Route::get('logout', [AuthController::class, 'logout']);
-    /**
-     *  this is used to update the homepage
-     *  
-     * 
-     *  */
 
-    Route::post('homepage', [HomepageController::class, 'store']);
-    Route::post('changePassword', [AuthController::class, 'changePassword']);
-    /**
-     * 
-     * 
-     * get(/hosthomes) get the details of every verified homes
-     * post(/hosthomes) use this url to create a user home 
-     * and the values which you will send as object must be in the following object
-            'property_type' => "required",
-            'guest_choice' => "required",
-            'address' => "required",
-            'guest' => "required",
-            'bedrooms' => "required",
-            'beds' => "required",
-            'bathrooms' => "required",
-            'amenities' => "required | array",
-            'hosthomephotos' => "required | array | min:5",
-            'hosthomevideo' => [
-                'required'],
-            'title' => "required",
-            'hosthomedescriptions' => "required|array| min:2",
-            'description' => "required",
-            'reservation' => "required",
-            'reservations' => "required | array",
-            'price' => "required",
-            'discounts' => "required | array",
-            'rules' => "required | array",
-            'additionalRules' => "string",
-            'host_type' => "required",
-            'notice' => "required | array",
-            'checkin' => "required ",
-            'cancelPolicy' => "required",
-            'securityDeposit' => "required",
+    
+    Route::middleware('googleSignup')->group(function(){
 
-            amenities, hosthomephotos, hosthomedescriptions, reservations,discounts 
-            rules,notice
-            must be an array of values 
-
-     *  get(hosthomes/{hosthome}) this is used to get the host home details the
-     *  {hosthome} is the hosthome id 
-     * 
-     * 
-     */
+        Route::post('changePassword', [AuthController::class, 'changePassword']);
+    
+    });
+    
     Route::apiResource('hosthomes',HostHomeController::class);
     
-    // this gets all unverified homes
-    Route::get('notVerified', [HostHomeController::class, 'notVerified']);
-    // this gets all homes
-    Route::get('allHomes', [HostHomeController::class, 'allHomes']);
-    // this accept the value of unverified home id so that they can be verified
-    Route::put('approveHome/{id}', [HostHomeController::class, 'approveHome']);
-    Route::get('guests', [AdminController::class, 'guests']);
-    Route::get('hosts', [AdminController::class, 'hosts']);
+    Route::middleware('role:admin')->group(function(){
+        Route::post('homepage', [HomepageController::class, 'store']);
+        
+        
+        Route::get('notVerified', [HostHomeController::class, 'notVerified']);
+        // this gets all homes
+        Route::get('allHomes', [HostHomeController::class, 'allHomes']);
+        // this accept the value of unverified home id so that they can be verified
+        Route::put('approveHome/{id}', [HostHomeController::class, 'approveHome']);
+        Route::get('guests', [AdminController::class, 'guests']);
+        Route::get('hosts', [AdminController::class, 'hosts']);
+        
+        Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
+        Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
+        Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
+
+    });
     
-    // this accept the value of a user id
-    Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
-    Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
-    Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
-    
-// });
+});
 
 Route::get('homepage', [HomepageController::class, 'index']);
 

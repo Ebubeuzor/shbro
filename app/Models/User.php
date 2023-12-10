@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
@@ -67,5 +69,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(SanctumPersonalAccessToken::class,'tokenable_id');
     }
 
+    public function userHasRole($role_name)
+    {
+        if (Auth::user()->adminStatus == Str::lower($role_name)) {
+            return true;
+        }else{
+            return false;
+        }
+    }
     
 }

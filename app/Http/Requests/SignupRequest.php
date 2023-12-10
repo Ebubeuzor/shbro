@@ -27,7 +27,18 @@ class SignupRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required',
+            'name' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $names = explode(' ', $value);
+        
+                    if (count($names) !== 2) {
+                        $fail('The name field must contain two names separated by a space.
+                        Your first and last name
+                        ');
+                    }
+                },
+            ],
             'email' => ['required ',' unique:users,email', new BannedEmail],
             'password' => ['required','min:6','max:255', new PasswordRequirements],
         ];

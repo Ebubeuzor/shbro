@@ -41,30 +41,30 @@ class AuthController extends Controller
 
     public function handleAuthCallback(): JsonResponse
     {
-        try {   
+        // try {   
             /** @var SocialiteUser $socialiteUser */
             $socialiteUser = Socialite::driver('google')->stateless()->user();
-        } catch (ClientException $e) {
+        // } catch (ClientException $e) {
             return response()->json(['error' => $socialiteUser->getEmail()], 422);
-        }
+        // }
 
-        $user = User::where('email', $socialiteUser->getEmail())->first();
+        // $user = User::where('email', $socialiteUser->getEmail())->first();
 
-        if (!$user) {
-            $user = User::create([
-                'name' => $socialiteUser->getName(),
-                'email' => $socialiteUser->getEmail(),
-                'google_id' => $socialiteUser->getId(),
-            ]);
+        // if (!$user) {
+        //     $user = User::create([
+        //         'name' => $socialiteUser->getName(),
+        //         'email' => $socialiteUser->getEmail(),
+        //         'google_id' => $socialiteUser->getId(),
+        //     ]);
 
-            Mail::to($user->email)->send(new WelcomeMail($user));
-        }
+        //     Mail::to($user->email)->send(new WelcomeMail($user));
+        // }
 
-        return response()->json([
-            'user' => $user,
-            'access_token' => $user->createToken('main')->plainTextToken,
-            'token_type' => 'Bearer',
-        ]);
+        // return response()->json([
+        //     'user' => $user,
+        //     'access_token' => $user->createToken('main')->plainTextToken,
+        //     'token_type' => 'Bearer',
+        // ]);
     }
 
     public function signup(SignupRequest $request) {

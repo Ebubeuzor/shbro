@@ -44,13 +44,14 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::middleware('googleSignup')->group(function(){
 
         Route::post('changePassword', [AuthController::class, 'changePassword']);
-    
+        
     });
     
     Route::apiResource('hosthomes',HostHomeController::class);
     
     Route::middleware('role:admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
+        Route::post("sendEmail", [AdminController::class, 'sendEmail']);
         
         
         Route::get('notVerified', [HostHomeController::class, 'notVerified']);
@@ -67,6 +68,11 @@ Route::middleware('auth:sanctum')->group(function(){
 
     });
     
+    
+    Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
+    Route::get('createWishlistItem/{wishcontainerid}/{hosthomeid}', [UserController::class, 'createWishlistItem']);
+
+
 });
 
 Route::get('homepage', [HomepageController::class, 'index']);
@@ -85,21 +91,21 @@ Route::get('/verify-tokens/{remToken}/{userToken}', function ($remToken, $userTo
     }
 
     Auth::login($user);
-
+    
     if (Auth::check()) {
         $recentToken = $user->tokens->last();
 
         if (!$recentToken) {
             return response()->json(['error' => 'User token not found'], 401);
         }
-
+        
         if ($recentToken->token === $userToken) {
             return response()->json([
                 'user' => Auth::user(),
                 'token' => $userToken
             ]);
         }
-
+        
         // Token mismatch
         return response()->json(['error' => 'Invalid user token'], 401);
     }

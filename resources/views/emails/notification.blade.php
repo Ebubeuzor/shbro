@@ -8,6 +8,6 @@
 <body>
     <div>Title: {{$title}}</div>
     <div>Hello {{$user->name}}</div>
-    <div>{{$message}}</div>
+    <div>{{$usermessage}}</div>
 </body>
 </html>

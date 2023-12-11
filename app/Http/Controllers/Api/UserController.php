@@ -160,7 +160,7 @@ class UserController extends Controller
             "containername" => 'required'
         ]);
 
-        $user = User::where('id',$id)->first();
+        $user = User::where('id',$id)->firstOrFail();
 
         $wishlistContainer = new Wishlistcontainer();
         $wishlistContainer->user_id = $user->id;
@@ -170,10 +170,10 @@ class UserController extends Controller
 
     }
     
-    public function createWishlistItem($userid,$hosthomeid)
+    public function createWishlistItem($wishcontainerid,$hosthomeid)
     {
-        $hosthome = HostHome::where('id',$hosthomeid)->first();
-        $wishlistcontainer = Wishlistcontainer::where('id',$userid)->first();
+        $hosthome = HostHome::where('id',$hosthomeid)->firstOrFail();
+        $wishlistcontainer = Wishlistcontainer::where('id',$wishcontainerid)->firstOrFail();
 
         $wishlistContainerItem = new WishlistContainerItem();
         $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
@@ -183,9 +183,10 @@ class UserController extends Controller
 
     }
 
+    
     public function destroy(User $user)
     {
-        //
+        $user->delete();
     }
 
     

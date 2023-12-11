@@ -34,7 +34,7 @@ return [
     'google' => [
         'client_id' => '729094171030-lqrcirtno74hoot9hus0dpuhjhm5fjku.apps.googleusercontent.com',
         'client_secret' => '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',
-        'redirect' => 'http://127.0.0.1:5173/auth/google',
+        'redirect' => 'http://localhost:5173/auth/google',
     ],
 
 ];

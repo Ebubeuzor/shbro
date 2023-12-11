@@ -30,7 +30,7 @@ class NotificationMail extends Mailable
         ->with([
             'user' => $this->user,
             'title' => $this->title,
-            'message' => $this->message
+            'usermessage' => $this->message
         ]);
         ;
     }

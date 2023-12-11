@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
+
     public function guests() {
 
         return GuestsResource::collection(
@@ -75,6 +76,44 @@ class AdminController extends Controller
         $user->delete();
         $user->hosthomes()->delete();
     }
+    
+    public function sendEmail(Request $request) {
+
+        $data = $request->validate([
+            "usertype" => "required",
+            "message" => "required"
+        ]);
+
+        $userType = $data['usertype'];
+        
+        if ($userType == "Host") {
+            $users = User::where('host', 1)->get();
+            foreach($users as $user){
+
+                $title = "A message for every host";
+                Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+
+            }
+            return response("Ok",200);
+        } 
+
+        elseif($userType == "Guest" || $userType == "All") {
+            $users = User::all();
+            foreach($users as $user){
+                $title = "A message for every one";
+                Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+            }
+            return response("Ok",200);
+        }
+        
+        else {
+            return response([
+                'error' => $data
+            ],422);
+        }
+        
+    }
 
 
+    
 }

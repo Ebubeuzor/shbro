@@ -16,8 +16,8 @@ class GoogleSignupMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->user()->google_id != null) {
-            abort(403,"You can't update your email if you used google to signup");
+        if ($request->user()->google_id != null) {
+            abort(403,"You can't update password if you used google to signup");
         }
 
         return $next($request);

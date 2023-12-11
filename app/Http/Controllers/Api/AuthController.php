@@ -45,7 +45,7 @@ class AuthController extends Controller
             /** @var SocialiteUser $socialiteUser */
             $socialiteUser = Socialite::driver('google')->stateless()->user();
         } catch (ClientException $e) {
-            return response()->json(['error' => 'Invalid credentials provided.'], 422);
+            return response()->json(['error' => $e->getMessage()], 422);
         }
 
         $user = User::where('email', $socialiteUser->getEmail())->first();

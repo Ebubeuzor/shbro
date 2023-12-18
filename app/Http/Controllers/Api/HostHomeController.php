@@ -28,9 +28,9 @@ use Illuminate\Support\Str;
 class HostHomeController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @lrd:start
+     * gets the details of every verified homes
+     * @lrd:end
      */
     public function index()
     {
@@ -39,6 +39,11 @@ class HostHomeController extends Controller
         );
     }
     
+    /**
+     * @lrd:start
+     * gets the details of every homes
+     * @lrd:end
+     */
     public function allHomes()
     {
         return HostHomeResource::collection(
@@ -46,6 +51,12 @@ class HostHomeController extends Controller
         );
     }
     
+    
+    /**
+     * @lrd:start
+     * gets the details of every unverified homes
+     * @lrd:end
+     */
     public function notVerified()
     {
         return HostHomeResource::collection(
@@ -131,11 +142,41 @@ class HostHomeController extends Controller
         return $relativePath;
     }
 
+    
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StoreHostHomeRequest  $request
-     * @return \Illuminate\Http\Response
+     * @lrd:start
+     * and the values which you will send as object must be in the following object
+     * 'property_type' => "required",
+     * 'guest_choice' => "required",
+     * 'address' => "required",
+     * 'guest' => "required",
+     * 'bedrooms' => "required",
+     * 'beds' => "required",
+     * 'bathrooms' => "required",
+     * 'amenities' => "required | array",
+     * 'hosthomephotos' => "required | array | min:5",
+     * 'hosthomevideo' => [
+     *     'required'],
+     * 'title' => "required",
+     * 'hosthomedescriptions' => "required|array| min:2",
+     * 'description' => "required",            
+     * 'reservations' => "required | array",
+     * 'reservation' => "required",
+     * 'price' => "required",
+     * 'discounts' => "required | array",
+     * 'rules' => "required | array",
+     * 'additionalRules' => "string",
+     * 'host_type' => "required",
+     * 'notice' => "required | array",
+     * 'checkin' => "required ",
+     * 'cancelPolicy' => "required",
+     * 'securityDeposit' => "required",
+     * this follows how the hosthomes was on the frontend
+     * amenities, hosthomephotos, hosthomedescriptions, reservations,discounts 
+     * rules,notice
+     * must be an array of only values 
+            
+     * @lrd:end
      */
     public function store(StoreHostHomeRequest $request)
     {
@@ -217,7 +258,7 @@ class HostHomeController extends Controller
 
         return response([
             "ok" => "Created"
-        ]);
+        ],201);
     }
 
     
@@ -307,12 +348,32 @@ class HostHomeController extends Controller
 
     }
 
-    
-    public function show(HostHome $hostHome)
+    /**
+     * @lrd:start
+     * this is for a user to see his house but only the admin can see every house
+     * @lrd:end
+     */
+    public function show($hostHomeId)
     {
-        return new HostHomeResource($hostHome);
+        $hostHome = HostHome::find($hostHomeId);
+        $user = Auth::user();
+
+        if ($hostHome && $user->hosthomes->contains('id', $hostHomeId)) {
+            return new HostHomeResource($hostHome);
+        }else if ($user->adminStatus != null) {
+            return new HostHomeResource($hostHome);
+        }else{
+            abort(403,'Unauthorized Access');
+        }
     }
     
+    
+    /**
+     * @lrd:start
+     * this accept the value of unverified home id so that they can be verified
+	 * {id} is the hosthome id
+     * @lrd:end
+     */
     public function approveHome($id)
     {
         $hostHome = HostHome::where('id', $id)->first();
@@ -328,6 +389,15 @@ class HostHomeController extends Controller
         return response()->json(['message'=>'approved'],200);
     }
     
+    
+    /**
+     * @lrd:start
+     * this accept the value of unverified home id so that they can be verified
+	 * {user} is the user id
+	 * {hosthomeid} is the hosthome id
+     * @lrd:end
+     * @LRDparam message use|required
+     */
     public function disapproveHome(Request $request, $user, $hosthomeid)
     {
         $data = $request->validate([
@@ -352,12 +422,11 @@ class HostHomeController extends Controller
         return response()->json(['message'=>'disapproved'],200);
     }
 
+    
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdateHostHomeRequest  $request
-     * @param  \App\Models\HostHome  $hostHome
-     * @return \Illuminate\Http\Response
+     * @lrd:start
+     * this is used to update the host home details the {hosthome} is the hosthome id the values are the same with the post except you dont have to include the arrays but if you want to update it overide all the other data
+     * @lrd:end
      */
     public function update(UpdateHostHomeRequest $request, HostHome $hostHome)
     {
@@ -501,6 +570,12 @@ class HostHomeController extends Controller
         }
     }
 
+    
+    /**
+     * @lrd:start
+     * this is used to delete the host home details the {hosthome} is the hosthome id 
+     * @lrd:end
+     */
     public function destroy(HostHome $hostHome)
     {
         $hostHome->delete();

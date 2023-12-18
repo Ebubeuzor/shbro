@@ -8,11 +8,18 @@ use App\Http\Requests\StoreNotificationRequest;
 use App\Http\Requests\UpdateNotificationRequest;
 use App\Http\Resources\NotificationResource;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotifyController extends Controller
 {
+ 
     
+    /**
+     * @lrd:start
+     * this gets all an authenticated user notification
+     * @lrd:end
+     */
     public function index()
     {
         $user = Auth::user();
@@ -20,7 +27,12 @@ class NotifyController extends Controller
             User::whereId($user->id)->get()
         );
     }
-
+    
+    /**
+     * @lrd:start
+     * this deletes all an authenticated user notification and it accepts the notification id in the url 
+     * @lrd:end
+     */
     public function destroy(Notification $notification)
     {
         $notification->delete();

@@ -39,12 +39,6 @@ const Signup=()=>{
 
       axiosClient.post('/signup',data)
       .then((data) => {
-        // setUser(data.user);
-        // setToken(data.token);
-        // setTimeout(() => {
-        //   console.log("After redirect");
-        //   navigate('/');
-        // }, 1000);
         console.log(data.data.link);
         window.location.href = data.data.link;
       })
@@ -67,7 +61,7 @@ const Signup=()=>{
 
     
     useEffect(() => {
-      fetch('http://127.0.0.1:8000/api/auth', {
+      fetch('https://shortletbooking.com/api/auth', {
           headers : {
               'Content-Type': 'application/json',
               'Accept': 'application/json'

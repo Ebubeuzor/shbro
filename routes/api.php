@@ -14,23 +14,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
 
 Route::middleware('auth:sanctum')->group(function(){
 
-    // This requests an authenticated user details
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::get('/user', [UserController::class, 'getUserInfo']); 
 
     Route::apiResource('/userDetail', UserController::class);
     
@@ -40,6 +27,10 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::get('logout', [AuthController::class, 'logout']);
 
+    Route::post('createCard/{id}', [UserController::class, 'createCard']);
+
+    Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
+    Route::get('getUserCards/{userid}', [UserController::class, 'getUserCards']);
     
     Route::middleware('googleSignup')->group(function(){
 
@@ -55,10 +46,11 @@ Route::middleware('auth:sanctum')->group(function(){
         
         
         Route::get('notVerified', [HostHomeController::class, 'notVerified']);
-        // this gets all homes
+        
         Route::get('allHomes', [HostHomeController::class, 'allHomes']);
-        // this accept the value of unverified home id so that they can be verified
+        
         Route::put('approveHome/{id}', [HostHomeController::class, 'approveHome']);
+        Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
         Route::get('hosts', [AdminController::class, 'hosts']);
         
@@ -70,7 +62,6 @@ Route::middleware('auth:sanctum')->group(function(){
     
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
-    Route::get('createWishlistItem/{wishcontainerid}/{hosthomeid}', [UserController::class, 'createWishlistItem']);
 
 
 });
@@ -83,58 +74,8 @@ Route::get('auth', [AuthController::class, 'redirectToAuth']);
 Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
 Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail']);
 
-Route::get('/verify-tokens/{remToken}/{userToken}', function ($remToken, $userToken) {
-    $user = User::where('remember_token', $remToken)->first();
+Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
 
-    if (!$user) {
-        return response()->json(['error' => 'Invalid remember token'], 401);
-    }
+Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
-    Auth::login($user);
-    
-    if (Auth::check()) {
-        $recentToken = $user->tokens->last();
-
-        if (!$recentToken) {
-            return response()->json(['error' => 'User token not found'], 401);
-        }
-        
-        if ($recentToken->token === $userToken) {
-            return response()->json([
-                'user' => Auth::user(),
-                'token' => $userToken
-            ]);
-        }
-        
-        // Token mismatch
-        return response()->json(['error' => 'Invalid user token'], 401);
-    }
-
-    // Failed to authenticate the user
-    return response()->json(['error' => 'User authentication failed'], 401);
-});
-
-Route::get('/view-count', function () {
-    $viewCountCookie = Cookie::get('view_count');
-
-    if (!$viewCountCookie) {
-        $viewCount = Visitor::firstOrNew(['id' => 1]);
-        $viewCount->increment('views');
-        $viewCount->save();
-
-        $response = response()->json(['views' => $viewCount->views]);
-        $response->cookie('view_count', 1);
-
-        return $response;
-    } else {
-        $viewCount = Visitor::find(1);
-        return response()->json(['views' => $viewCount->views]);
-    }
-});
-
-Route::get('/visitor', function () {
-    
-    $viewCount = Visitor::find(1);
-    return response()->json(['views' => $viewCount->views]);
-    
-});
+Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);

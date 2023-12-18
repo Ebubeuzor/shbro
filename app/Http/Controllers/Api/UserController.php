@@ -3,26 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
+use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
 use App\Mail\VerifyUser;
 use App\Models\HostHome;
 use App\Models\Notification;
+use App\Models\Tip;
 use App\Models\User;
+use App\Models\UserCard;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @lrd:start
+     * this gets the details of every user that is not  verified
+     * @lrd:end
      */
     public function index()
     {
@@ -36,16 +41,41 @@ class UserController extends Controller
         //
     }
 
+    /**
+     * @lrd:start
+     * This requests an authenticated user details this is a get request
+     * @lrd:end
+     */
+    public function getUserInfo(Request $request)
+    {
+        return $request->user();
+    }
+    
+    /**
+     * @lrd:start
+     * Not in use
+     * @lrd:end
+     */
     public function store(Request $request)
     {
         //
     }
-
+    
+    /**
+     * @lrd:start
+     * Not in use
+     * @lrd:end
+     */
     public function show(User $user)
     {
         //
     }
-
+    
+    /**
+     * @lrd:start
+     * Not in use
+     * @lrd:end
+     */
     public function edit(User $user)
     {
         //
@@ -89,6 +119,13 @@ class UserController extends Controller
 
         return $relativePath;
     }
+    
+    /**
+     * @lrd:start
+     * This is a put request and it is used to update a user information as you can see it accept a value in the url this value is an authenticated user id
+     * and also when the user google_id is null disable the input tag for the email the google_id is what tells you the user used google to sign up and userid is the auth user id
+     * @lrd:end
+     */
 
     public function update(UserDetailsUpdateRequest $request, $userDetail)
     {
@@ -131,7 +168,17 @@ class UserController extends Controller
             $notify->user_id = $user->id;
             $notify->Message = "You Government id is " . $data['status'];
             $notify->save();
+            
+            if ($data['status'] != "Verified") {
+                $tip = new Tip();
+                $tip->user_id = $user;
+                $tip->message = "You Government id is " . $data['status'];
+                $tip->url = "/AddGovvernmentId";
+                $tip->save();
+            }
+            
             Mail::to($user->email)->send(new VerifyUser($data['status']));
+
         }
         elseif(isset($data['government_id'])){
             $user->update([
@@ -154,36 +201,102 @@ class UserController extends Controller
     }
 
     
-    public function createWishlist(Request $request,$id)
+    /**
+     * @lrd:start
+     * This is a put request and it is used to update a user information as you can see it accept a value in the url this value is an authenticated user id
+     * and also when the user google_id is null disable the input tag for the email the google_id is what tells you the user used google to sign up and userid is the auth user id
+     * @lrd:end
+     */
+    public function createWishlist(StoreWishlistResource $request,$id)
     {
-        $data = $request->validate([
-            "containername" => 'required'
-        ]);
+        $data = $request->validated();
 
-        $user = User::where('id',$id)->firstOrFail();
+        if (trim(isset($data['containername']))) {
+            $user = User::where('id',$id)->firstOrFail();
 
-        $wishlistContainer = new Wishlistcontainer();
-        $wishlistContainer->user_id = $user->id;
-        $wishlistContainer->name = $data['containername'];
-        $wishlistContainer->save();
-        return response("Ok",201);
+            $wishlistContainer = new Wishlistcontainer();
+            $wishlistContainer->user_id = $user->id;
+            $wishlistContainer->name = $data['containername'];
+            $wishlistContainer->save();
+            return response("Ok",201);
+        }
+        elseif(trim(isset($data['wishcontainerid'])) &&  trim(isset($data['wishcontainerid']))){
+            $hosthome = HostHome::where('id',$data['hosthomeid'])->firstOrFail();
+            $wishlistcontainer = Wishlistcontainer::where('id',$data['wishcontainerid'])->firstOrFail();
+
+            $wishlistContainerItem = new WishlistContainerItem();
+            $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
+            $wishlistContainerItem->host_home_id = $hosthome->id;
+            $wishlistContainerItem->save();
+            return response("Ok",201);
+        }
+        else{
+            return response("You are not seeting it right",422);
+        }
 
     }
     
-    public function createWishlistItem($wishcontainerid,$hosthomeid)
+    /**
+     * @lrd:start
+     * This is a post request and it is used to create a user card information as you can see it accept a value in the url this value is an authenticated user id
+     * @lrd:end
+     */
+    public function createCard(StoreCreateUserCardRequest $request, $id)
     {
-        $hosthome = HostHome::where('id',$hosthomeid)->firstOrFail();
-        $wishlistcontainer = Wishlistcontainer::where('id',$wishcontainerid)->firstOrFail();
-
-        $wishlistContainerItem = new WishlistContainerItem();
-        $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
-        $wishlistContainerItem->host_home_id = $hosthome->id;
-        $wishlistContainerItem->save();
-        return response("Ok",201);
-
+        $user =  User::where('id', $id)->first();
+        $data = $request->validated();
+        $userCard = new UserCard();
+        $userCard->user_id = $user->id;
+        $userCard->card_number = $data['card_number'];
+        $userCard->expiry_data = $data['expiry_data'];
+        $userCard->CVV = $data['CVV'];
+        $userCard->save();
+        return response("OK",201);
     }
-
     
+
+    /**
+     * @lrd:start
+     * This is a get request and it is used to get users card
+     * two values a value for the userCardId and a value in the url this value is an authenticated user id
+     * @lrd:end
+     */
+
+    public function getUserCards($userid)
+    {
+        $user = User::where('id', $userid)->first();
+            
+        $userCard = UserCard::where('user_id', $user->id)->get();
+
+        return response([
+            "data" => $userCard
+        ],200);
+    }
+    
+
+    /**
+     * @lrd:start
+     * This is a get request and it is used to select a user card as you can see it accept 
+     * two values a value for the userCardId and a value an authenticated user id
+     * @lrd:end
+     */
+    public function selectCard($userCardId, $userid)
+    {
+        $user = User::where('id', $userid)->first();
+        $userCard = UserCard::where('id', $userCardId)->first();
+
+        if ($user && $userCard) {
+            
+            UserCard::where('user_id', $userid)->update(['Selected' => null]);
+
+            $userCard->update([
+                'Selected' => 'Selected'
+            ]);
+        }
+        return response("OK",200);
+    }
+    
+
     public function destroy(User $user)
     {
         $user->delete();

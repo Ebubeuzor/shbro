@@ -18,7 +18,7 @@ const Login=()=>{
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/auth', {
+    fetch('https://shortletbooking.com/api/auth', {
         headers : {
             'Content-Type': 'application/json',
             'Accept': 'application/json'

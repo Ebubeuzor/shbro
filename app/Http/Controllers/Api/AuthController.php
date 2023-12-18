@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\EmailVerified;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\SignupRequest;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
 use App\Models\User;
+use App\Models\Visitor;
 use App\Rules\PasswordRequirements;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\ClientException;
@@ -21,6 +23,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
@@ -67,6 +70,16 @@ class AuthController extends Controller
         ]);
     }
 
+    
+    /**
+     * @lrd:start
+     * this is used to register a user and you must give an object with the following 
+     * 'name' 
+     * 'email'
+     * 'password'
+     * this won't authenticate the user it return a link to a page that tells a user that an email has been sent to there email 
+     * @lrd:end
+     */
     public function signup(SignupRequest $request) {
         $data = $request->validated();
         $user = User::create([
@@ -86,6 +99,52 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * @lrd:start
+     * now after the user click on the verify button in their email address you should see
+     * remtoken and ustoken in the frontend url param pass it in the api you are consuming
+     * if it is correct it should return the current user info and the token which will be used to authenticate the user
+     * @lrd:end
+     */
+    public function authUserFromMain ($remToken, $userToken) {
+        $user = User::where('remember_token', $remToken)->first();
+    
+        if (!$user) {
+            return response()->json(['error' => 'Invalid remember token'], 401);
+        }
+    
+        Auth::login($user);
+        
+        if (Auth::check()) {
+            $recentToken = $user->tokens->last();
+    
+            if (!$recentToken) {
+                return response()->json(['error' => 'User token not found'], 401);
+            }
+            
+            if ($recentToken->token === $userToken) {
+                return response()->json([
+                    'user' => Auth::user(),
+                    'token' => $userToken
+                ]);
+            }
+            
+            // Token mismatch
+            return response()->json(['error' => 'Invalid user token'], 401);
+        }
+    
+        // Failed to authenticate the user
+        return response()->json(['error' => 'User authentication failed'], 401);
+    }
+
+    /**
+     * @lrd:start
+     * this is used to login a user and you must give an object with the following 
+     * 'email'
+     * 'password'
+     * if it is correct it should return the current user info and the token which will be used to authenticate the user
+     * @lrd:end
+     */
     public function login(LoginRequest $request){
         $data = $request->validated();
         if (Auth::attempt($data)) {
@@ -104,18 +163,22 @@ class AuthController extends Controller
         }
     }
 
-    public function changePassword(Request $request){
-        $data = $request->validate([
-            'password' => 'required',
-            'password_confirmation' => 'required',
-            'newPassword' => ['required','min:6' ,'max:255', new PasswordRequirements],
-        ]);
+    
+    /**
+     * @lrd:start
+     * this is used to update an auth user password
+     * @lrd:end
+     */
+
+    public function changePassword(ChangePasswordRequest $request){
+        $data = $request->validated();
         $user = Auth::user();
         $updateUser = User::where('email', '=', $user->email)->first();
-        if (Hash::check($data['password'],$updateUser->password)) {
+        if (Hash::check($data['old_password'],$updateUser->password)) {
             if ($data['newPassword'] == $data['password_confirmation']) {
                 $updateUser->password = Hash::make($data['newPassword']);
                 $updateUser->save();
+                return response("Ok",200);
             }else{
                 return response([
                     'message' => 'New Password does not match'
@@ -128,6 +191,46 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * @lrd:start
+     * this is used to get register visitors numbers
+     * @lrd:end 
+     */
+    public function getVisitorInfo () {
+    
+        $viewCount = Visitor::find(1);
+        return response()->json(['views' => $viewCount->views]);
+        
+    }
+
+    /**
+     * @lrd:start
+     * this is used to register visitors in the site
+     * @lrd:end
+     */
+    public function registerVisitor () {
+        $viewCountCookie = Cookie::get('view_count');
+    
+        if (!$viewCountCookie) {
+            $viewCount = Visitor::firstOrNew(['id' => 1]);
+            $viewCount->increment('views');
+            $viewCount->save();
+    
+            $response = response()->json(['views' => $viewCount->views]);
+            $response->cookie('view_count', 1);
+    
+            return $response;
+        } else {
+            $viewCount = Visitor::find(1);
+            return response()->json(['views' => $viewCount->views]);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * this logs out an authenticated user 
+     * @lrd:end
+     */
     public function logout(Request $request) {
         $user = $request->user();
         $user->currentAccessToken()->delete();

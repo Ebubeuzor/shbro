@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Mail;
 class AdminController extends Controller
 {
 
+    
+    /**
+     * @lrd:start
+     * this gets all the registered users 
+     * @lrd:end
+     */
     public function guests() {
 
         return GuestsResource::collection(
@@ -20,12 +26,25 @@ class AdminController extends Controller
 
     }
     
+    
+    /**
+     * @lrd:start
+     * this gets all the hosts
+     * @lrd:end
+     */
     public function hosts() {
 
         User::where('host',1)->get();
 
     }
     
+    
+    /**
+     * @lrd:start
+     * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * @lrd:end
+     * @LRDparam message use|required
+     */
     public function banGuest(Request $request, $id) {
 
         $data = $request->validate([
@@ -45,6 +64,13 @@ class AdminController extends Controller
         ]);
     }
     
+    
+    /**
+     * @lrd:start
+     * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * @lrd:end
+     * @LRDparam message use|required
+     */
     public function suspendGuest(Request $request, $id) {
 
         $data = $request->validate([
@@ -64,6 +90,13 @@ class AdminController extends Controller
         ]);
     }
     
+    
+    /**
+     * @lrd:start
+     * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * @lrd:end
+     * @LRDparam message use|required
+     */
     public function deleteGuest(Request $request, $id) {
 
         $data = $request->validate([
@@ -73,10 +106,17 @@ class AdminController extends Controller
         $user = User::where('id', $id)->get();
         $title = "Your account has been terminated";
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
-        $user->delete();
+        $user->forceDelete();
         $user->hosthomes()->delete();
     }
     
+    /**
+     * @lrd:start
+     * this is used to update the homepage
+     * @lrd:end
+     * @LRDparam usertype use|required
+     * @LRDparam message use|required
+     */
     public function sendEmail(Request $request) {
 
         $data = $request->validate([

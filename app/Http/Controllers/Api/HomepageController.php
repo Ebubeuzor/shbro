@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HomepageRequest;
 use App\Http\Resources\HomepageResource;
 use App\Models\Homepage;
 use Illuminate\Http\Request;
@@ -12,6 +13,11 @@ use Illuminate\Support\Facades\File;
 class HomepageController extends Controller
 {
     
+    /**
+     * @lrd:start
+     * this gets the homepage data
+     * @lrd:end
+     */
     public function index()
     {
         return HomepageResource::collection(
@@ -59,13 +65,15 @@ class HomepageController extends Controller
         return $relativePath;
     }
 
-    public function store(Request $request)
+    
+    /**
+     * @lrd:start
+     * this is used to update the homepage
+     * @lrd:end
+     */
+    public function store(HomepageRequest $request)
     {
-        $data = $request->validate([
-            'image' => 'required|string',
-            'title' => 'required|string',
-            'subtitle' => 'required|string',
-        ]);
+        $data = $request->validated();
         
         $attributes = [];
         $attributes['image'] = $this->saveImage($data['image']);

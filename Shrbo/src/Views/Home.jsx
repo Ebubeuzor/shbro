@@ -46,6 +46,10 @@ export default function Home() {
       axiosClient.get('user')
       .then((data) => {
         setUser(data.data);
+        axiosClient.get('guests')
+        .then((data) => {
+          console.log(data);
+        })
       })
     }, []);
     

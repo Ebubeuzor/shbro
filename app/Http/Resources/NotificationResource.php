@@ -14,9 +14,18 @@ class NotificationResource extends JsonResource
      */
     public function toArray($request)
     {
+        $firstNotification = $this->notifications->first();
+
+        if (!$firstNotification) {
+            return [];
+        }
+
         return [
-            'id' => $this->notifications->first()->id,
-            'message' => $this->notifications->first()->Message
+            'id' => $firstNotification->id,
+            'message' => $firstNotification->Message,
+            'time' => $firstNotification->created_at,
         ];
     }
+
+
 }

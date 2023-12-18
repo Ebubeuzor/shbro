@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Password;
 class ForgotPassword extends Controller
 {
     
+    
+    /**
+     * @lrd:start
+     * is used to send password reset link to a user
+     * @lrd:end
+     * @LRDparam email use|required
+     */
     public function sendPasswordResetEmail(Request $request)
     {
         $request->validate(['email' => 'required|email']);

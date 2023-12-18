@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCreateUserCardRequest;
+use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
@@ -203,11 +204,12 @@ class UserController extends Controller
     
     /**
      * @lrd:start
-     * This is a put request and it is used to update a user information as you can see it accept a value in the url this value is an authenticated user id
-     * and also when the user google_id is null disable the input tag for the email the google_id is what tells you the user used google to sign up and userid is the auth user id
+     * This is used to create a wishlistcontainer and wishlistitem
+     * or use an existing wishlistcontainer and wishlistitem
+     * and userid is an auth user id 
      * @lrd:end
      */
-    public function createWishlist(StoreWishlistResource $request,$id)
+    public function createWishlist(StoreWishlistRequest $request,$id)
     {
         $data = $request->validated();
 
@@ -218,6 +220,12 @@ class UserController extends Controller
             $wishlistContainer->user_id = $user->id;
             $wishlistContainer->name = $data['containername'];
             $wishlistContainer->save();
+            $hosthome = HostHome::where('id',$data['hosthomeid'])->firstOrFail();
+
+            $wishlistContainerItem = new WishlistContainerItem();
+            $wishlistContainerItem->wishlistcontainer_id = $wishlistContainer->id;
+            $wishlistContainerItem->host_home_id = $hosthome->id;
+            $wishlistContainerItem->save();
             return response("Ok",201);
         }
         elseif(trim(isset($data['wishcontainerid'])) &&  trim(isset($data['wishcontainerid']))){

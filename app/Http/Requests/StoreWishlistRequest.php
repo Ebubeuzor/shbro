@@ -13,7 +13,7 @@ class StoreWishlistRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,7 +24,9 @@ class StoreWishlistRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            "containername" => 'string',
+            'wishcontainerid' => 'exists:App\Models\Wishlistcontainer,id',
+            'hosthomeid' => 'exists:App\Models\Hosthome,id',
         ];
     }
 }

@@ -42,5 +42,4 @@ Route::get('/route-list', function () {
     });
 
     return response()->json(['routes' => $routes], 200);
-    
 });

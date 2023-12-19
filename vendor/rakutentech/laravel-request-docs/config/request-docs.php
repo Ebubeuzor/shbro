@@ -63,7 +63,7 @@ return [
         // license that you want to display
         'license' => 'Apache 2.0',
         'license_url' => 'https://www.apache.org/licenses/LICENSE-2.0.html',
-        'server_url' => env('APP_URL', 'http://localhost'),
+        'server_url' => env('APP_URL', 'https://shortletbooking.com'),
         //openapi 3.0.x doesn't support request body for delete operation
         //ref: https://github.com/OAI/OpenAPI-Specification/pull/2117
         'delete_with_body' => false,

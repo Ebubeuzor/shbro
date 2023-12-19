@@ -21,19 +21,3 @@ jobs:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-
-  Migrate-Database:
-    name: Run PHP Artisan Migrate
-    runs-on: ubuntu-latest
-    needs: FTP-Deploy-Action
-    steps:
-      - name: SSH into Server
-        uses: appleboy/ssh-action/
-        with:
-          host: ${{ secrets.SERVER }}
-          username: shorcjrk
-          port: 21098
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/shorcjrk/public_html
-            php artisan migrate

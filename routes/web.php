@@ -33,13 +33,3 @@ Route::post('/resetPassword', [ForgotPassword::class, 'resetPassword'])->name('c
 Route::get('/docs', function () {
     return redirect('/request-docs');
 });
-
-Route::get('/route-list', function () {
-    $routes = collect(Route::getRoutes())->map(function ($route) {
-        return [
-            'uri' => $route->uri(),
-        ];
-    });
-
-    return response()->json(['routes' => $routes], 200);
-});

@@ -29,3 +29,7 @@ Route::get('/email/verify', function () {
 Route::get('/reset-password', [ForgotPassword::class, 'returnView'])->name('password.reset');
 
 Route::post('/resetPassword', [ForgotPassword::class, 'resetPassword'])->name('changePassword'); 
+
+Route::get('/docs', function () {
+    return redirect('/request-docs');
+});

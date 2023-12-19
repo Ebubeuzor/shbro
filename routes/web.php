@@ -37,10 +37,7 @@ Route::get('/docs', function () {
 Route::get('/route-list', function () {
     $routes = collect(Route::getRoutes())->map(function ($route) {
         return [
-            'method' => implode('|', $route->methods()),
             'uri' => $route->uri(),
-            'name' => $route->getName(),
-            'action' => $route->getActionName(),
         ];
     });
 

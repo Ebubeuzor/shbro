@@ -209,40 +209,51 @@ class UserController extends Controller
      * and userid is an auth user id 
      * @lrd:end
      */
-    public function createWishlist(StoreWishlistRequest $request,$id)
+    public function createWishlist(StoreWishlistRequest $request, $id)
     {
         $data = $request->validated();
 
         if (trim(isset($data['containername']))) {
-            $user = User::where('id',$id)->firstOrFail();
+            $user = User::where('id', $id)->firstOrFail();
 
             $wishlistContainer = new Wishlistcontainer();
             $wishlistContainer->user_id = $user->id;
             $wishlistContainer->name = $data['containername'];
             $wishlistContainer->save();
-            $hosthome = HostHome::where('id',$data['hosthomeid'])->firstOrFail();
 
-            $wishlistContainerItem = new WishlistContainerItem();
-            $wishlistContainerItem->wishlistcontainer_id = $wishlistContainer->id;
-            $wishlistContainerItem->host_home_id = $hosthome->id;
-            $wishlistContainerItem->save();
-            return response("Ok",201);
-        }
-        elseif(trim(isset($data['wishcontainerid'])) &&  trim(isset($data['wishcontainerid']))){
-            $hosthome = HostHome::where('id',$data['hosthomeid'])->firstOrFail();
-            $wishlistcontainer = Wishlistcontainer::where('id',$data['wishcontainerid'])->firstOrFail();
+            $hosthome = HostHome::where('id', $data['hosthomeid'])->firstOrFail();
 
-            $wishlistContainerItem = new WishlistContainerItem();
-            $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
-            $wishlistContainerItem->host_home_id = $hosthome->id;
-            $wishlistContainerItem->save();
-            return response("Ok",201);
-        }
-        else{
-            return response("You are not seeting it right",422);
-        }
+            // Check if the combination already exists before saving
+            if (!$wishlistContainer->items()->where('host_home_id', $hosthome->id)->exists()) {
+                $wishlistContainerItem = new WishlistContainerItem();
+                $wishlistContainerItem->wishlistcontainer_id = $wishlistContainer->id;
+                $wishlistContainerItem->host_home_id = $hosthome->id;
+                $wishlistContainerItem->save();
 
+                return response("Ok", 201);
+            } else {
+                return response("Item already exists in the wishlist container", 422);
+            }
+        } elseif (trim(isset($data['wishcontainerid'])) &&  trim(isset($data['wishcontainerid']))) {
+            $hosthome = HostHome::where('id', $data['hosthomeid'])->firstOrFail();
+            $wishlistcontainer = Wishlistcontainer::where('id', $data['wishcontainerid'])->firstOrFail();
+
+            // Check if the combination already exists before saving
+            if (!$wishlistcontainer->items()->where('host_home_id', $hosthome->id)->exists()) {
+                $wishlistContainerItem = new WishlistContainerItem();
+                $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
+                $wishlistContainerItem->host_home_id = $hosthome->id;
+                $wishlistContainerItem->save();
+
+                return response("Ok", 201);
+            } else {
+                return response("Item already exists in the wishlist container", 422);
+            }
+        } else {
+            return response("You are not setting it right", 422);
+        }
     }
+
     
     /**
      * @lrd:start
@@ -307,7 +318,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
+        $user->forceDelete();
     }
 
     

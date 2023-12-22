@@ -382,7 +382,7 @@ class HostHomeController extends Controller
             "verified" => 1,
         ]);
         
-        $hostHome->user->update([
+        $hostHome->user()->update([
             "host" => 1,
         ]);
         

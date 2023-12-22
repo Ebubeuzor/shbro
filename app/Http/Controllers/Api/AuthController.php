@@ -149,13 +149,20 @@ class AuthController extends Controller
         $data = $request->validated();
         if (Auth::attempt($data)) {
             $user = Auth::user();
-            $user->update(['last_login_at' => Carbon::now()]);
-            /** @var User $user  */
-            $token = $user->createToken('main')->plainTextToken;
-            return response([
-                'user' => $user,
-                'token' => $token
-            ]);
+            if ($user->google_id == null) {
+                if($user->email_verified_at != null){
+                    $user->update(['last_login_at' => Carbon::now()]);
+                    /** @var User $user  */
+                    $token = $user->createToken('main')->plainTextToken;
+                    return response([
+                        'user' => $user,
+                        'token' => $token
+                    ]);
+                }else {
+                    return response("Please verify your email",422);
+                }
+            }
+            
         }else{
             return response([
                 'message' => 'Provided email address or password is incorrect'

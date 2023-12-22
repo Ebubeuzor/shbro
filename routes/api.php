@@ -49,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function(){
         
         Route::get('allHomes', [HostHomeController::class, 'allHomes']);
         
-        Route::put('approveHome/{id}', [HostHomeController::class, 'approveHome']);
+        Route::get('approveHome/{id}', [HostHomeController::class, 'approveHome']);
         Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
         Route::get('hosts', [AdminController::class, 'hosts']);
@@ -62,6 +62,8 @@ Route::middleware('auth:sanctum')->group(function(){
     
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
+
+
 
 
 });

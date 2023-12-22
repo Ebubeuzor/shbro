@@ -30,6 +30,3 @@ Route::get('/reset-password', [ForgotPassword::class, 'returnView'])->name('pass
 
 Route::post('/resetPassword', [ForgotPassword::class, 'resetPassword'])->name('changePassword'); 
 
-Route::get('/docs', function () {
-    return redirect('/request-docs');
-});

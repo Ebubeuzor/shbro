@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ProcessEmailReminders implements ShouldQueue
 {
@@ -17,12 +18,14 @@ class ProcessEmailReminders implements ShouldQueue
     
     public function handle()
     {
+        Log::info("Testing");
+
         $users = User::whereNull('email_verified_at')->get();
         
         
         foreach ($users as $user) {
             if ($user->google_id == null ) {
-                SendEmailToUnverifiedUser::dispatch($user)->delay(now()->addDay());
+                SendEmailToUnverifiedUser::dispatch($user);
             }
         }
     }

@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->job(new ProcessEmailReminders)->everyFourMinutes();
+        $schedule->job(new ProcessEmailReminders)->daily();
     }
 
     /**

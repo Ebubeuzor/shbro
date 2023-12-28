@@ -17,7 +17,8 @@ jobs:
           fetch-depth: 2
 
       - name: Copy CPanel Environment File
-        run: cp /home/shorcjrk/public_html/.env .env
+        run: curl -o $GITHUB_WORKSPACE/.env https://shortletbooking.com:2083/cpsess2775129077/frontend/jupiter/filemanager/editit.html?file=.env&fileop=&dir=%2fhome%2fshorcjrk%2fpublic_html&dirop=&charset=&file_charset=utf-8&baseurl=&basedir=&edit=1&login=1&post_login=70412385407538
+        
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader

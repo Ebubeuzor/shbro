@@ -32,5 +32,5 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
 
-      - name: Run Migrations on CPanel (via SSH)
-        run: php artisan migrate
+      - name: Run Migrations on CPanel
+        run: php artisan migrate --force

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\EmailVerified;
+use App\Events\UserNotificationEvent;
 use App\Listeners\GenerateTokenOnEmailVerification;
+use App\Listeners\UserNotificationListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -23,6 +25,7 @@ class EventServiceProvider extends ServiceProvider
         
         EmailVerified::class => [
         GenerateTokenOnEmailVerification::class,
+        
     ],
     ];
 

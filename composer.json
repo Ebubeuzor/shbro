@@ -6,12 +6,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
+        "beyondcode/laravel-websockets": "^2.0@beta",
         "guzzlehttp/guzzle": "^7.2",
         "kingflamez/laravelrave": "^4.2",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/socialite": "^5.9",
         "laravel/tinker": "^2.7",
+        "pusher/pusher-php-server": "7.0",
         "rakutentech/laravel-request-docs": "^2.27"
     },
     "require-dev": {

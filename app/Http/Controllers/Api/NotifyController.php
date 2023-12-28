@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Http\Requests\StoreNotificationRequest;
@@ -10,6 +11,7 @@ use App\Http\Resources\NotificationResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NotifyController extends Controller
 {
@@ -28,6 +30,22 @@ class NotifyController extends Controller
         );
     }
     
+    public function sendNotificationToUser()
+    {
+        $user = Auth::user();
+
+        // Create a new notification record in the database
+        $notification = new Notification();
+        $notification->user_id = $user->id;  // Assuming you want to save the user ID
+        $notification->Message = 'Test notification message';
+        $notification->save();
+        Log::info('Notification saved: ' . $notification->id);
+        // Broadcast the NewNotificationEvent to notify the WebSocket clients
+        broadcast(new NewNotificationEvent($notification, $notification->id));
+
+        return response()->json(['message' => 'Notification sent successfully']);
+    }
+
     /**
      * @lrd:start
      * this deletes all an authenticated user notification and it accepts the notification id in the url 

@@ -1,4 +1,4 @@
-name: Publish Website to CPanel
+name: Publish Website to CPanel with Composer Install and Migrations
 
 on:
   push:
@@ -9,11 +9,15 @@ jobs:
   FTP-Deploy-Action:
     name: FTP-Deploy-Action
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2.1.0
         with:
           fetch-depth: 2
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
@@ -21,3 +25,14 @@ jobs:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+
+      - name: Run Composer Install and Migrations on CPanel (via SSH)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER }}
+          username: ${{ secrets.SSH_PRIVATE_NAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/shorcjrk/public_html  
+            composer install
+            php artisan migrate

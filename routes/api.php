@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::get('notification', [NotifyController::class, 'index']);
     
+    Route::get('sendNotificationToUser', [NotifyController::class, 'sendNotificationToUser']);
+    
     Route::delete('notification/{notification}', [NotifyController::class, 'destroy']);
     
     Route::get('logout', [AuthController::class, 'logout']);

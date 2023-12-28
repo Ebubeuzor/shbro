@@ -16,15 +16,8 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Copy CPanel Environment File
-        run: curl -o $GITHUB_WORKSPACE/.env https://shortletbooking.com:2083/cpsess2775129077/frontend/jupiter/filemanager/editit.html?file=.env&fileop=&dir=%2fhome%2fshorcjrk%2fpublic_html&dirop=&charset=&file_charset=utf-8&baseurl=&basedir=&edit=1&login=1&post_login=70412385407538
-        
-
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Clear Laravel Config Cache
-        run: php artisan config:clear
 
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.3
@@ -33,5 +26,3 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
 
-      - name: Run Migrations on CPanel
-        run: php artisan migrate --force

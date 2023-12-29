@@ -19,8 +19,7 @@ use Illuminate\Http\Request;
 */
 
 
-Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmail');
-
+Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

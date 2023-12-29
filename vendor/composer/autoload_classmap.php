@@ -8,7 +8,7 @@ $baseDir = dirname($vendorDir);
 return array(
     'App\\Console\\Kernel' => $baseDir . '/app/Console/Kernel.php',
     'App\\Events\\EmailVerified' => $baseDir . '/app/Events/EmailVerified.php',
-    'App\\Events\\UserNotificationEvent' => $baseDir . '/app/Events/UserNotificationEvent.php',
+    'App\\Events\\NewNotificationEvent' => $baseDir . '/app/Events/NewNotificationEvent.php',
     'App\\Exceptions\\Handler' => $baseDir . '/app/Exceptions/Handler.php',
     'App\\Http\\Controllers\\Api\\AdminController' => $baseDir . '/app/Http/Controllers/Api/AdminController.php',
     'App\\Http\\Controllers\\Api\\AuthController' => $baseDir . '/app/Http/Controllers/Api/AuthController.php',
@@ -53,7 +53,6 @@ return array(
     'App\\Jobs\\SendEmailToUnverifiedUser' => $baseDir . '/app/Jobs/SendEmailToUnverifiedUser.php',
     'App\\Listeners\\GenerateTokenOnEmailVerification' => $baseDir . '/app/Listeners/GenerateTokenOnEmailVerification.php',
     'App\\Listeners\\SendEmailVerificationNotification' => $baseDir . '/app/Listeners/SendEmailVerificationNotification.php',
-    'App\\Listeners\\UserNotificationListener' => $baseDir . '/app/Listeners/UserNotificationListener.php',
     'App\\Mail\\NotificationMail' => $baseDir . '/app/Mail/NotificationMail.php',
     'App\\Mail\\VerifyUser' => $baseDir . '/app/Mail/VerifyUser.php',
     'App\\Mail\\VerifyYourEmail' => $baseDir . '/app/Mail/VerifyYourEmail.php',

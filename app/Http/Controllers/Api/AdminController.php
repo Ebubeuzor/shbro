@@ -42,8 +42,8 @@ class AdminController extends Controller
     /**
      * @lrd:start
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * send this as object message use|required
      * @lrd:end
-     * @LRDparam message use|required
      */
     public function banGuest(Request $request, $id) {
 
@@ -68,8 +68,8 @@ class AdminController extends Controller
     /**
      * @lrd:start
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * send this as object message use|required
      * @lrd:end
-     * @LRDparam message use|required
      */
     public function suspendGuest(Request $request, $id) {
 
@@ -94,8 +94,8 @@ class AdminController extends Controller
     /**
      * @lrd:start
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
+     * send this as object message use|required
      * @lrd:end
-     * @LRDparam message use|required
      */
     public function deleteGuest(Request $request, $id) {
 
@@ -107,15 +107,15 @@ class AdminController extends Controller
         $title = "Your account has been terminated";
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
-        $user->hosthomes()->delete();
+        $user->hosthomes()->forceDelete();
     }
     
     /**
      * @lrd:start
      * this is used to update the homepage
+     * send this as object usertype use|required
      * @lrd:end
-     * @LRDparam usertype use|required
-     * @LRDparam message use|required
+     * send this as object message use|required
      */
     public function sendEmail(Request $request) {
 

@@ -8,6 +8,7 @@ use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
+use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
 use App\Models\HostHome;
 use App\Models\Notification;
@@ -18,6 +19,7 @@ use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -257,7 +259,8 @@ class UserController extends Controller
     
     /**
      * @lrd:start
-     * This is a post request and it is used to create a user card information as you can see it accept a value in the url this value is an authenticated user id
+     * This is a post request and it is used to create a user card information as 
+     * you can see it accept a value in the url this value is an authenticated user id
      * @lrd:end
      */
     public function createCard(StoreCreateUserCardRequest $request, $id)
@@ -315,10 +318,58 @@ class UserController extends Controller
         return response("OK",200);
     }
     
+    /**
+     * @lrd:start
+     * This is a get request and it is used to deactivate an authenticated user
+     * and delete his token if successful it should show 204
+     * @lrd:end
+     */
+    public function deactivateAccount()
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            // Delete the user's access token if it exists
+            /** @var User $user  */
+            $currentAccessToken = $user->currentAccessToken();
+            
+            if ($currentAccessToken) {
+                $currentAccessToken->delete();
+            }
+
+            // Deactivate the user's account
+            $user->update(['is_active' => false]);
+
+            return response('', 204);
+        }
+
+        return response('User not found.', 404);
+    }
+    
+    /**
+     * @lrd:start
+     * This is a get request and it is used to deactivate an authenticated user
+     * and delete his token 
+     * send as email use|required
+     * @lrd:end
+     */
+    public function reactivateAccount(Request $request)
+    {
+        $user = User::where('email',$request->email)->first();
+
+        if ($user) {
+            Mail::to($user->email)->send(new ActivateAccount($user));
+            return response('Mail sent',204);
+        }else {
+            return response('User not found.',422);
+        }
+
+    }
 
     public function destroy(User $user)
     {
         $user->forceDelete();
+        $user->hosthomes()->forceDelete();
     }
 
     

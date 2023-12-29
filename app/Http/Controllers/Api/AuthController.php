@@ -58,6 +58,7 @@ class AuthController extends Controller
                 'name' => $socialiteUser->getName(),
                 'email' => $socialiteUser->getEmail(),
                 'google_id' => $socialiteUser->getId(),
+                'remember_token' => Str::random(40)
             ]);
 
             Mail::to($user->email)->send(new WelcomeMail($user));
@@ -101,7 +102,7 @@ class AuthController extends Controller
 
     /**
      * @lrd:start
-     * now after the user click on the verify button in their email address you should see
+     * now after the user click on the verify or activate your account button in their email address you should see
      * remtoken and ustoken in the frontend url param pass it in the api you are consuming
      * if it is correct it should return the current user info and the token which will be used to authenticate the user
      * @lrd:end
@@ -150,7 +151,9 @@ class AuthController extends Controller
         if (Auth::attempt($data)) {
             $user = Auth::user();
             if ($user->google_id == null) {
-                if($user->email_verified_at != null){
+                if(!$user->is_active){
+                    return response("Your account has been deactivated",422);
+                }elseif($user->email_verified_at != null){
                     $user->update(['last_login_at' => Carbon::now()]);
                     /** @var User $user  */
                     $token = $user->createToken('main')->plainTextToken;
@@ -162,7 +165,9 @@ class AuthController extends Controller
                     return response("Please verify your email",422);
                 }
             }
-            
+            elseif(!$user->is_active){
+                return response("Your account has been deactivated",422);
+            }
         }else{
             return response([
                 'message' => 'Provided email address or password is incorrect'

@@ -17,6 +17,7 @@ class VerificationController extends Controller
             if ($user->email_verified_at == null) {
                     
                 $user->email_verified_at = date('Y-m-d H:i:s');
+                $user->is_active = true;
                 $user->save();
 
                 $user->createToken('main')->plainTextToken;

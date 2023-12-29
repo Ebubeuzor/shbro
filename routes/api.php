@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function(){
     
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
+    Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
 
 
 
@@ -83,3 +84,4 @@ Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'aut
 Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
+Route::post('/reactivateAccount', [UserController::class, 'reactivateAccount']);

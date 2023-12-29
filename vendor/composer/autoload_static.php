@@ -649,7 +649,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
     public static $classMap = array (
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Events\\EmailVerified' => __DIR__ . '/../..' . '/app/Events/EmailVerified.php',
-        'App\\Events\\UserNotificationEvent' => __DIR__ . '/../..' . '/app/Events/UserNotificationEvent.php',
+        'App\\Events\\NewNotificationEvent' => __DIR__ . '/../..' . '/app/Events/NewNotificationEvent.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Api\\AdminController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AdminController.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
@@ -694,7 +694,6 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Jobs\\SendEmailToUnverifiedUser' => __DIR__ . '/../..' . '/app/Jobs/SendEmailToUnverifiedUser.php',
         'App\\Listeners\\GenerateTokenOnEmailVerification' => __DIR__ . '/../..' . '/app/Listeners/GenerateTokenOnEmailVerification.php',
         'App\\Listeners\\SendEmailVerificationNotification' => __DIR__ . '/../..' . '/app/Listeners/SendEmailVerificationNotification.php',
-        'App\\Listeners\\UserNotificationListener' => __DIR__ . '/../..' . '/app/Listeners/UserNotificationListener.php',
         'App\\Mail\\NotificationMail' => __DIR__ . '/../..' . '/app/Mail/NotificationMail.php',
         'App\\Mail\\VerifyUser' => __DIR__ . '/../..' . '/app/Mail/VerifyUser.php',
         'App\\Mail\\VerifyYourEmail' => __DIR__ . '/../..' . '/app/Mail/VerifyYourEmail.php',

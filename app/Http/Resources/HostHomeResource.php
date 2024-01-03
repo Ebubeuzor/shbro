@@ -41,8 +41,10 @@ class HostHomeResource extends JsonResource
             'checkin' => $this->check_in_time,
             'cancelPolicy' => $this->cancellation_policy,
             'securityDeposit' => $this->security_deposit,
+            'listing_status' => $this->listing_status,
             'adminStatus' => "Pending Approval",
             'status' => $this->verified == 0 ? "Not published" : "Published",
+            'created_on' => $this->created_at->format('Y-m-d'),
         ];
     }
 }

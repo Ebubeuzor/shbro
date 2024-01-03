@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\BookingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ForgotPassword;
 use App\Http\Controllers\VerificationController;
@@ -18,6 +19,8 @@ use Illuminate\Http\Request;
 |
 */
 
+
+// Route::match(['get', 'post'],'/rave/callback/{userid},{usertoken},{hosthomeid}', [BookingsController::class, 'callback'])->name('callback');
 
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 

@@ -64,6 +64,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Wishlistcontainer::class);
     }
 
+    public function tips(){
+        return $this->hasMany(Tip::class);
+    }
+
+    public function userCards(){
+        return $this->hasMany(UserCard::class);
+    }
+
     public function usertokens()
     {
         return $this->hasMany(SanctumPersonalAccessToken::class,'tokenable_id');

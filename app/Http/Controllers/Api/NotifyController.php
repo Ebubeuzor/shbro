@@ -30,6 +30,23 @@ class NotifyController extends Controller
         );
     }
     
+    /**
+     * @lrd:start
+     * install laravel-echo and pusher-js
+     * and then Configure Laravel Echo
+     * use these values
+     * broadcaster: 'pusher',
+     * key: Laravel8ee0b2f6fbb5f883afe1,
+     * cluster: 'mt1',
+     * wsHost: domain.pusher.com`,
+     * wsPort: 80,
+     * wssPort:  443,
+     * forceTLS: 'https',
+     * enabledTransports: ['ws', 'wss'],
+     * the channel is private-App.Models.User.{id} id being the auth user id
+     * and then listen to NewNotificationEvent
+     * @lrd:end
+     */
     public function sendNotificationToUser()
     {
         $user = Auth::user();

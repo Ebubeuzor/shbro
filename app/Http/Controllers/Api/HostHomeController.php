@@ -204,7 +204,26 @@ class HostHomeController extends Controller
         $hostHome->cancellation_policy = $data['cancelPolicy'];
         $hostHome->security_deposit = $data['securityDeposit'];
 
+        $price = $data['price'];
+        $securityDeposit = $data['securityDeposit'];
+
+        $host_fees_percentage = 0.20;
+        $service_fee_percentage = 0.05;
+        $tax_percentage = 0.05;
+
+        $host_fees = $price * $host_fees_percentage;
+        $service_fee = $price * $service_fee_percentage;
+        $tax = $price * $tax_percentage;
+
+        $total = $price + $securityDeposit + $host_fees + $service_fee + $tax;
+
+        $hostHome->host_fees = $host_fees;
+        $hostHome->service_fee = $service_fee;
+        $hostHome->tax = $tax;
+        $hostHome->total = $total;
+
         $hostHome->save();
+
 
         $amenities = $data['amenities'];
         $images = $data['hosthomephotos'];

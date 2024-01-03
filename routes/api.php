@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BookingsController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ForgotPassword;
 use App\Http\Controllers\Api\HomepageController;
 use App\Http\Controllers\Api\HostHomeController;
@@ -33,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function(){
 
     Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
     Route::get('getUserCards/{userid}', [UserController::class, 'getUserCards']);
+    Route::get('getUserWishlistContainers', [UserController::class, 'getUserWishlistContainers']);
+    Route::delete('deleteUserWishlistContainers', [UserController::class, 'deleteUserWishlistContainers']);
     
     Route::middleware('googleSignup')->group(function(){
 
@@ -40,6 +44,8 @@ Route::middleware('auth:sanctum')->group(function(){
         
     });
     
+
+
     Route::apiResource('hosthomes',HostHomeController::class);
     
     Route::middleware('role:admin')->group(function(){
@@ -64,11 +70,16 @@ Route::middleware('auth:sanctum')->group(function(){
     
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
+    Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
 
 
-
-
+    Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment'])->name('pay');
+       
+    Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
+        Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
+        Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
+    });
 });
 
 Route::get('homepage', [HomepageController::class, 'index']);

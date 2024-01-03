@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('hosthomes', function (Blueprint $table) {
+        Schema::table('host_homes', function (Blueprint $table) {
             $table->softDeletes();
         });
     }

@@ -34,8 +34,8 @@ class AdminController extends Controller
      */
     public function hosts() {
 
-        User::where('host',1)->get();
-
+        $user = User::where('host',1)->get();
+        return response()->json(['users' => $user]);
     }
     
     

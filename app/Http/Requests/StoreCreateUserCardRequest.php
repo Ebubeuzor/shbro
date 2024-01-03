@@ -25,7 +25,7 @@ class StoreCreateUserCardRequest extends FormRequest
     {
         return [
             "card_number" => 'required',
-            "expiry_data" => 'required',
+            "expiry_data" => 'required | min:4 | max:4',
             "CVV" => 'required | min:3 | max:3',
         ];
     }

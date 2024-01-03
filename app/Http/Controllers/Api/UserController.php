@@ -38,6 +38,17 @@ class UserController extends Controller
             User::Where('verified' , "Not Verified")->get()
         );
     }
+    /**
+     * @lrd:start
+     * this gets the tips of an auth user
+     * @lrd:end
+     */
+    public function userTips()
+    {
+        $user = Auth::user();
+        $tips = $user->tips;
+        return response($tips);
+    }
 
     public function create()
     {
@@ -255,8 +266,43 @@ class UserController extends Controller
             return response("You are not setting it right", 422);
         }
     }
-
     
+    
+    /**
+     * @lrd:start
+     * This is a get request and it is used to get users wishlistContainers
+     * @lrd:end
+     */
+    public function getUserWishlistContainers()
+    {
+        
+        $user = User::where('id', auth()->id())->firstOrFail();
+        $userWishlist = $user->wishlistcontainers()->get();
+        return response()->json(['userWishlist' => $userWishlist]);
+    }
+    
+    
+    /**
+     * @lrd:start
+     * This is a delete request and it is used to delete users wishlistContainers
+     * @lrd:end
+     */
+    public function deleteUserWishlistContainers()
+    {
+        // Get the authenticated user
+        $user = User::find(auth()->id());
+
+        // Delete all wishlist containers and their items for the user
+        if ($user) {
+            $user->wishlistcontainers()->delete();
+
+            return response()->json(['message' => 'All wishlist containers and items deleted successfully']);
+        }
+
+        return response()->json(['message' => 'User not found'], 404);
+    }
+    
+
     /**
      * @lrd:start
      * This is a post request and it is used to create a user card information as 

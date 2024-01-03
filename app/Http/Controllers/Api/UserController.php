@@ -287,6 +287,7 @@ class UserController extends Controller
      * This is a delete request and it is used to delete users wishlistContainers
      * @lrd:end
      */
+
     public function deleteUserWishlistContainers()
     {
         // Get the authenticated user
@@ -294,7 +295,11 @@ class UserController extends Controller
 
         // Delete all wishlist containers and their items for the user
         if ($user) {
-            $user->wishlistcontainers()->delete();
+            // Use each to delete each container and its items
+            $user->wishlistcontainers->each(function ($wishlistcontainer) {
+                $wishlistcontainer->items()->delete();
+                $wishlistcontainer->delete();
+            });
 
             return response()->json(['message' => 'All wishlist containers and items deleted successfully']);
         }

@@ -63,6 +63,8 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "banned" => "banned"
         ]);
+
+        return response("Ok",200);
     }
     
     
@@ -91,6 +93,7 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "suspend" => "suspend"
         ]);
+        return response("Ok",200);
     }
     
     
@@ -112,6 +115,7 @@ class AdminController extends Controller
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
+        return response("Ok",200);
     }
     
     /**

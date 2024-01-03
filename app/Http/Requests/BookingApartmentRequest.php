@@ -30,6 +30,10 @@ class BookingApartmentRequest extends FormRequest
             'infants' => 'required',
             'check_in' => 'required',
             'check_out' => 'required',
+            'option' => 'required',
+            'card_number' => 'number',
+            'expiry_data' => 'number',
+            'CVV' => 'number | min:4 | max:4',
         ];
     }
 }

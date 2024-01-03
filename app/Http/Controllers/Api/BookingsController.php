@@ -33,7 +33,7 @@ class BookingsController extends Controller
         // Generate a payment reference
         $reference = Flutterwave::generateReference();
         $recentToken = $user->usertokens->last();
-        $data = [
+        $data2 = [
             'payment_options' => 'card',
             'amount' => $hostHome->price,
             'email' => $user->email,
@@ -49,6 +49,7 @@ class BookingsController extends Controller
                 "title" => 'Shortlet Bookings Payment',
                 "description" => "Payment for Apartment"
             ],
+            // $data['pets']
             'card' => [
                 'card_no' => $selectedUserCard->card_number,
                 'cvv' => $selectedUserCard->CVV,
@@ -57,10 +58,10 @@ class BookingsController extends Controller
             ],
         ];
 
-        $payment = Flutterwave::initializePayment($data);
+        $payment = Flutterwave::initializePayment($data2);
         
         if ($payment['status'] !== 'success') {
-            return response()->json(['message' => $data]);
+            return response()->json(['message' => $data2]);
         }
 
 

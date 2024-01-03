@@ -44,6 +44,7 @@ class AdminController extends Controller
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
      * send this as object message use|required
      * @lrd:end
+     * @LRDparam message use|required
      */
     public function banGuest(Request $request, $id) {
 
@@ -51,7 +52,7 @@ class AdminController extends Controller
             "message" => "required"
         ]);
 
-        $user = User::where('id', $id)->get();
+        $user = User::where('id', $id)->first();
         $title = "Your account has been banned from this company";
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         
@@ -70,14 +71,16 @@ class AdminController extends Controller
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
      * send this as object message use|required
      * @lrd:end
+     * @LRDparam message use|required
      */
+
     public function suspendGuest(Request $request, $id) {
 
         $data = $request->validate([
             "message" => "required"
         ]);
 
-        $user = User::where('id', $id)->get();
+        $user = User::where('id', $id)->first();
         $title = "Your account has been suspended for 30 days";
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         
@@ -96,6 +99,7 @@ class AdminController extends Controller
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
      * send this as object message use|required
      * @lrd:end
+     * @LRDparam message use|required
      */
     public function deleteGuest(Request $request, $id) {
 
@@ -103,7 +107,7 @@ class AdminController extends Controller
             "message" => "required"
         ]);
 
-        $user = User::where('id', $id)->get();
+        $user = User::where('id', $id)->first();
         $title = "Your account has been terminated";
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
@@ -112,10 +116,11 @@ class AdminController extends Controller
     
     /**
      * @lrd:start
-     * this is used to update the homepage
-     * send this as object usertype use|required
+     * this is used to Send an email to guest and host and all
+     * usertype hould be Host || Guest || All
      * @lrd:end
-     * send this as object message use|required
+     * @LRDparam message use|required
+     * @LRDparam usertype use|required
      */
     public function sendEmail(Request $request) {
 

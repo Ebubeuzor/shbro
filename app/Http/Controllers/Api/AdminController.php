@@ -115,7 +115,7 @@ class AdminController extends Controller
         Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
-        return response("Ok",200);
+        return response("Ok",200); 
     }
     
     /**

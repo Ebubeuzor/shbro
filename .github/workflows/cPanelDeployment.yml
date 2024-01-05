@@ -25,3 +25,4 @@ jobs:
           server: ${{ secrets.SERVER }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
+          sync-state: .ftp-deploy-sync-state.json

@@ -128,7 +128,7 @@ class AdminController extends Controller
      */
     public function sendEmail(Request $request) {
 
-        $data = $request->validate([
+        $data = $request->validate([ 
             "usertype" => "required",
             "message" => "required"
         ]);

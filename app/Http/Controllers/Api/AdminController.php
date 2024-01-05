@@ -117,7 +117,7 @@ class AdminController extends Controller
         $user->hosthomes()->forceDelete();
         return response("Ok",200); 
     }
-    
+     
     /**
      * @lrd:start
      * this is used to Send an email to guest and host and all

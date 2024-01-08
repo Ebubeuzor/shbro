@@ -18,6 +18,7 @@ jobs:
         host: ${{ secrets.SERVER }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         script: |
           cd /home/shorcjrk/public_html/
           git pull origin main

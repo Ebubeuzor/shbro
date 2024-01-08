@@ -24,5 +24,3 @@ jobs:
           cd /home/shorcjrk/public_html/
           git pull origin main
           git status
-
-          

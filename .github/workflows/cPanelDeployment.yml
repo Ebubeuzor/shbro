@@ -1,29 +1,26 @@
-name: Publish Website to CPanel with Composer Install and Migrations
+name: Deploy
 
 on:
+  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches:
-      - main
+    branches: [ main ]
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  FTP-Deploy-Action:
-    name: FTP-Deploy-Action
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2.1.0
-        with:
-          fetch-depth: 2
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
-        with:
-          server: ${{ secrets.SERVER }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-
-          
+    steps:       
+    - name: Deploy using ssh
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          cd /home/shorcjrk/public_html/
+          git pull origin main
+          git status

@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Jlorente\Laravel\CreditCards\Facades\CreditCardValidator;
 
 class UserController extends Controller
 {
@@ -281,6 +282,46 @@ class UserController extends Controller
         return response()->json(['userWishlist' => $userWishlist]);
     }
     
+    /**
+     * @lrd:start
+     * This is used to rename a wishlist container name
+     * id is the id of UserWishlistContainer
+     * @lrd:end
+     * @LRDparam name use|required
+     */
+    public function editUserWishlistContainerName(Request $request,$id)
+    {
+        $data = $request->validate([
+            'name' => 'required'
+        ]);
+
+        $user = User::where('id', auth()->id())->firstOrFail();
+        if ($user) {
+            $wishlistcontainer = Wishlistcontainer::where('id',$id)->where('user_id',auth()->id())->first();
+            $wishlistcontainer->update([
+                'name' => $data['name']
+            ]);
+        }
+        return response()->json("Updated",200);
+    }
+    
+    /**
+     * @lrd:start
+     * This is used to delete a user wishlist container 
+     * id is the id of UserWishlistContainer
+     * @lrd:end
+     */
+    public function deleteUserWishlistContainer($id)
+    {
+        $user = User::where('id', auth()->id())->firstOrFail();
+        if ($user) {
+            $wishlistcontainer = Wishlistcontainer::where('id',$id)->where('user_id',auth()->id())->first();
+            $wishlistcontainer->items()->delete();
+            $wishlistcontainer->delete();
+        }
+        return response()->json("Deleted",200);
+    }
+    
     
     /**
      * @lrd:start
@@ -318,12 +359,25 @@ class UserController extends Controller
     {
         $user =  User::where('id', $id)->first();
         $data = $request->validated();
+        $cardtype = null;
+        $cardNumber = $data['card_number'];
+        if (strlen($cardNumber) >= 16 && Str::startsWith($cardNumber,'5')) {
+            $cardtype = "Verve";
+        }elseif (CreditCardValidator::isVisa($cardNumber)) {
+            $cardtype = "Visa";
+        }elseif (CreditCardValidator::isMastercard($cardNumber)) {
+            $cardtype = "Master";
+        }else {
+            return response("Incorrect Card Number or Card Not Supported",422);
+        }
         $userCard = new UserCard();
         $userCard->user_id = $user->id;
-        $userCard->card_number = $data['card_number'];
+        $userCard->card_number = $cardNumber;
         $userCard->expiry_data = $data['expiry_data'];
         $userCard->CVV = $data['CVV'];
+        $userCard->cardtype = $cardtype;
         $userCard->save();
+        
         return response("OK",201);
     }
     

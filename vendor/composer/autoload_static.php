@@ -151,6 +151,11 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
             'KitLoong\\AppLogger\\' => 19,
             'KingFlamez\\Rave\\' => 16,
         ),
+        'J' => 
+        array (
+            'Jlorente\\Laravel\\CreditCards\\' => 29,
+            'Jlorente\\CreditCards\\' => 21,
+        ),
         'I' => 
         array (
             'Illuminate\\Support\\' => 19,
@@ -525,6 +530,14 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         array (
             0 => __DIR__ . '/..' . '/kingflamez/laravelrave/src',
         ),
+        'Jlorente\\Laravel\\CreditCards\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jlorente/laravel-credit-cards/src',
+        ),
+        'Jlorente\\CreditCards\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jlorente/php-credit-cards/src',
+        ),
         'Illuminate\\Support\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Macroable',
@@ -654,6 +667,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Api\\AdminController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AdminController.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
+        'App\\Http\\Controllers\\Api\\BookingsController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/BookingsController.php',
         'App\\Http\\Controllers\\Api\\ChatController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/ChatController.php',
         'App\\Http\\Controllers\\Api\\ForgotPassword' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/ForgotPassword.php',
         'App\\Http\\Controllers\\Api\\HomepageController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/HomepageController.php',
@@ -675,6 +689,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Http\\Middleware\\TrustProxies' => __DIR__ . '/../..' . '/app/Http/Middleware/TrustProxies.php',
         'App\\Http\\Middleware\\ValidateSignature' => __DIR__ . '/../..' . '/app/Http/Middleware/ValidateSignature.php',
         'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
+        'App\\Http\\Requests\\BookingApartmentRequest' => __DIR__ . '/../..' . '/app/Http/Requests/BookingApartmentRequest.php',
         'App\\Http\\Requests\\ChangePasswordRequest' => __DIR__ . '/../..' . '/app/Http/Requests/ChangePasswordRequest.php',
         'App\\Http\\Requests\\HomepageRequest' => __DIR__ . '/../..' . '/app/Http/Requests/HomepageRequest.php',
         'App\\Http\\Requests\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/LoginRequest.php',
@@ -686,6 +701,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Http\\Requests\\UpdateHostHomeRequest' => __DIR__ . '/../..' . '/app/Http/Requests/UpdateHostHomeRequest.php',
         'App\\Http\\Requests\\UpdateNotificationRequest' => __DIR__ . '/../..' . '/app/Http/Requests/UpdateNotificationRequest.php',
         'App\\Http\\Requests\\UserDetailsUpdateRequest' => __DIR__ . '/../..' . '/app/Http/Requests/UserDetailsUpdateRequest.php',
+        'App\\Http\\Resources\\BookingsResource' => __DIR__ . '/../..' . '/app/Http/Resources/BookingsResource.php',
         'App\\Http\\Resources\\GuestsResource' => __DIR__ . '/../..' . '/app/Http/Resources/GuestsResource.php',
         'App\\Http\\Resources\\HomepageResource' => __DIR__ . '/../..' . '/app/Http/Resources/HomepageResource.php',
         'App\\Http\\Resources\\HostHomeResource' => __DIR__ . '/../..' . '/app/Http/Resources/HostHomeResource.php',
@@ -2979,6 +2995,12 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'Illuminate\\View\\ViewFinderInterface' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewFinderInterface.php',
         'Illuminate\\View\\ViewName' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewName.php',
         'Illuminate\\View\\ViewServiceProvider' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/View/ViewServiceProvider.php',
+        'Jlorente\\CreditCards\\CreditCardTypeConfig' => __DIR__ . '/..' . '/jlorente/php-credit-cards/src/CreditCardTypeConfig.php',
+        'Jlorente\\CreditCards\\CreditCardTypeConfigList' => __DIR__ . '/..' . '/jlorente/php-credit-cards/src/CreditCardTypeConfigList.php',
+        'Jlorente\\CreditCards\\CreditCardValidator' => __DIR__ . '/..' . '/jlorente/php-credit-cards/src/CreditCardValidator.php',
+        'Jlorente\\Laravel\\CreditCards\\CreditCardsServiceProvider' => __DIR__ . '/..' . '/jlorente/laravel-credit-cards/src/CreditCardsServiceProvider.php',
+        'Jlorente\\Laravel\\CreditCards\\Facades\\CreditCardValidator' => __DIR__ . '/..' . '/jlorente/laravel-credit-cards/src/Facades/CreditCardValidator.php',
+        'Jlorente\\Laravel\\CreditCards\\Rules\\CreditCardRule' => __DIR__ . '/..' . '/jlorente/laravel-credit-cards/src/Rules/CreditCardRule.php',
         'KingFlamez\\Rave\\Facades\\Rave' => __DIR__ . '/..' . '/kingflamez/laravelrave/src/Facades/Rave.php',
         'KingFlamez\\Rave\\Helpers\\Banks' => __DIR__ . '/..' . '/kingflamez/laravelrave/src/Helpers/Banks.php',
         'KingFlamez\\Rave\\Helpers\\Beneficiary' => __DIR__ . '/..' . '/kingflamez/laravelrave/src/Helpers/Beneficiary.php',

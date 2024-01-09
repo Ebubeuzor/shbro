@@ -62,6 +62,8 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('guests', [AdminController::class, 'guests']);
         Route::get('hosts', [AdminController::class, 'hosts']);
         
+        Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
+        Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
         Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
         Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);

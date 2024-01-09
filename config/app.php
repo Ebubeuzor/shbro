@@ -181,6 +181,7 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        \Jlorente\Laravel\CreditCards\CreditCardsServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -209,6 +210,7 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+        'CreditCardValidator' => \Jlorente\Laravel\CreditCards\Facades\CreditCardValidator::class,
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 

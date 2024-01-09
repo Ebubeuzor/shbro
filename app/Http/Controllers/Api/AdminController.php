@@ -33,10 +33,18 @@ class AdminController extends Controller
      * @lrd:end
      */
     public function hosts() {
-
-        $user = User::where('host',1)->get();
-        return response()->json(['users' => $user]);
+        $users = User::where('host', 1)->get();
+    
+        $responseData = [];
+        foreach ($users as $user) {
+            $verifiedHomesCount = $user->hosthomes()->where('verified', 1)->count();
+            $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
+        }
+    
+        return response()->json(['data' => $responseData]);
     }
+    
+    
     
     
     /**

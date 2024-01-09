@@ -8,6 +8,7 @@
         "php": "^8.0.2",
         "beyondcode/laravel-websockets": "^2.0@beta",
         "guzzlehttp/guzzle": "^7.2",
+        "jlorente/laravel-credit-cards": "^1.0",
         "kingflamez/laravelrave": "^4.2",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",

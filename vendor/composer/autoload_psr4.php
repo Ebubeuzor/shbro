@@ -86,6 +86,8 @@ return array(
     'Laravel\\Sail\\' => array($vendorDir . '/laravel/sail/src'),
     'KitLoong\\AppLogger\\' => array($vendorDir . '/kitloong/laravel-app-logger/src'),
     'KingFlamez\\Rave\\' => array($vendorDir . '/kingflamez/laravelrave/src'),
+    'Jlorente\\Laravel\\CreditCards\\' => array($vendorDir . '/jlorente/laravel-credit-cards/src'),
+    'Jlorente\\CreditCards\\' => array($vendorDir . '/jlorente/php-credit-cards/src'),
     'Illuminate\\Support\\' => array($vendorDir . '/laravel/framework/src/Illuminate/Macroable', $vendorDir . '/laravel/framework/src/Illuminate/Collections', $vendorDir . '/laravel/framework/src/Illuminate/Conditionable'),
     'Illuminate\\' => array($vendorDir . '/laravel/framework/src/Illuminate'),
     'GuzzleHttp\\UriTemplate\\' => array($vendorDir . '/guzzlehttp/uri-template/src'),

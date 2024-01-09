@@ -1664,6 +1664,146 @@
             "install-path": "../hamcrest/hamcrest-php"
         },
         {
+            "name": "jlorente/laravel-credit-cards",
+            "version": "1.0.3",
+            "version_normalized": "1.0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jlorente/laravel-credit-cards.git",
+                "reference": "1d569683aa120d29a94d5b8a40e5d0095996eff1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jlorente/laravel-credit-cards/zipball/1d569683aa120d29a94d5b8a40e5d0095996eff1",
+                "reference": "1d569683aa120d29a94d5b8a40e5d0095996eff1",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": ">=5.6",
+                "jlorente/php-credit-cards": "^1.0.2",
+                "php": ">=7.0.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^3.6",
+                "phpunit/phpunit": "^8.0.0"
+            },
+            "time": "2023-09-07T11:38:31+00:00",
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Jlorente\\Laravel\\CreditCards\\CreditCardsServiceProvider"
+                    ],
+                    "aliases": {
+                        "PayU": "Jlorente\\Laravel\\CreditCards\\Facades\\CreditCard"
+                    }
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Jlorente\\Laravel\\CreditCards\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "José Lorente",
+                    "email": "jose.lorente.martin@gmail.com"
+                }
+            ],
+            "description": "Laravel >=5.6 integration for the PHP Credit Cards package that allows to perform operations on debit and credit cards like format, validate brand, number and Luhn algorithm.",
+            "keywords": [
+                "american express",
+                "card",
+                "cards",
+                "creditcard",
+                "creditcards",
+                "debit",
+                "diners club",
+                "discover",
+                "jlorente",
+                "laravel",
+                "mastercard",
+                "php",
+                "unionpay",
+                "validate",
+                "visa"
+            ],
+            "support": {
+                "issues": "https://github.com/jlorente/laravel-credit-cards/issues",
+                "source": "https://github.com/jlorente/laravel-credit-cards/tree/1.0.3"
+            },
+            "install-path": "../jlorente/laravel-credit-cards"
+        },
+        {
+            "name": "jlorente/php-credit-cards",
+            "version": "1.0.2",
+            "version_normalized": "1.0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jlorente/php-credit-cards.git",
+                "reference": "747c0f18c7a82df5f54436e30a1da14319469099"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jlorente/php-credit-cards/zipball/747c0f18c7a82df5f54436e30a1da14319469099",
+                "reference": "747c0f18c7a82df5f54436e30a1da14319469099",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.3",
+                "php": ">=7.2",
+                "phpunit/phpunit": "^8.0.0"
+            },
+            "time": "2023-09-07T11:30:55+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Jlorente\\CreditCards\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "José Lorente",
+                    "email": "jose.lorente.martin@gmail.com"
+                }
+            ],
+            "description": "A PHP package to perform operations on debit and credit cards like format, validate brand, number and Luhn algorithm. It validates popular brands like Visa, Mastercard, American Express, etc.",
+            "keywords": [
+                "american express",
+                "card",
+                "cards",
+                "creditcard",
+                "creditcards",
+                "debit",
+                "diners club",
+                "discover",
+                "jlorente",
+                "mastercard",
+                "php",
+                "unionpay",
+                "validate",
+                "visa"
+            ],
+            "support": {
+                "issues": "https://github.com/jlorente/php-credit-cards/issues",
+                "source": "https://github.com/jlorente/php-credit-cards/tree/1.0.2"
+            },
+            "install-path": "../jlorente/php-credit-cards"
+        },
+        {
             "name": "kingflamez/laravelrave",
             "version": "v4.2.1",
             "version_normalized": "4.2.1.0",

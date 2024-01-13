@@ -28,6 +28,7 @@ class UserDetailsUpdateRequest extends FormRequest
             'lastName' => 'string',
             'phone' => 'string',
             'email' => 'unique:users,email',
+            'verification_type' => 'string',
             'government_id' => 'string',
             'live_photo' => 'string',
             'country' => 'string',

@@ -28,7 +28,5 @@ class ProcessEmailReminders implements ShouldQueue
                 SendEmailToUnverifiedUser::dispatch($user);
             }
         }
-
-        sleep(60);
     }
 }

@@ -195,9 +195,10 @@ class UserController extends Controller
             Mail::to($user->email)->send(new VerifyUser($data['status']));
 
         }
-        elseif(isset($data['government_id'])){
+        elseif(isset($data['government_id']) && isset($data['verification_type'])){
             $user->update([
                 'verified' => "Not Verified",
+                'verification_type' => $data['verification_type'],
                 'government_id' => $this->saveImage($data['government_id'])
             ]);
         }
@@ -207,7 +208,7 @@ class UserController extends Controller
                 'live_photo' => $this->saveImage($data['live_photo'])
             ]);
         }else{
-            return response("",422);
+            return response("Please fill out all fields",422);
         }
         
         $user->save();
@@ -419,8 +420,37 @@ class UserController extends Controller
             $userCard->update([
                 'Selected' => 'Selected'
             ]);
+            return response("OK",200);
+        }else {
+            return response("This Card does not belong to this user.",403);
         }
-        return response("OK",200);
+    }
+
+    /**
+     * @lrd:start
+     * This is to delete a user card as you can see it accept 
+     * two values a value for the userCardId and a value an authenticated user id
+     * @lrd:end
+     */
+    public function deleteUserCard($userCardId, $userid)
+    {
+        $user = User::where('id', $userid)->first();
+        $userCard = UserCard::where('id', $userCardId)->first();
+
+        if ($user && $userCard) {
+            
+            $usercardtodelete = UserCard::where('user_id', $userid);
+
+            if ($usercardtodelete) {
+                $userCard->delete();
+            } else {
+                return response("This Card does not belong to this user.",403);
+            }
+            
+            return response("OK",200);
+        }else {
+            return response("This Card does not belong to this user.",403);
+        }
     }
     
     /**

@@ -23,6 +23,7 @@ class VerifyYourEmail extends Mailable
     public function __construct($user)
     {
         $this->user = $user;
+        info("Email Sent");
     }
 
     public function build()

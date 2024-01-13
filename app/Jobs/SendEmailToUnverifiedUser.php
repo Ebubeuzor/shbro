@@ -29,15 +29,14 @@ class SendEmailToUnverifiedUser implements ShouldQueue
     {
 
         try {
-            Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
-
+            
             if ($this->user->email_verified_at == null) {
                 $deleteAttempts = $this->user->delete_attempts ?? 0;
-
+                
                 if ($deleteAttempts < 50000000) {
+                    Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
                     $this->user->update(['delete_attempts' => $deleteAttempts + 1]);
 
-                    SendEmailToUnverifiedUser::dispatch($this->user);
                 } else {
                     $this->user->forceDelete();
                 }

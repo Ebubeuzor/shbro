@@ -18,7 +18,6 @@ class ProcessEmailReminders implements ShouldQueue
     
     public function handle()
     {
-        Log::info("Testing");
 
         $users = User::whereNull('email_verified_at')->get();
         

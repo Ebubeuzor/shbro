@@ -195,17 +195,11 @@ class UserController extends Controller
             Mail::to($user->email)->send(new VerifyUser($data['status']));
 
         }
-        elseif(isset($data['government_id']) && isset($data['verification_type'])){
+        elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){
             $user->update([
                 'verified' => "Not Verified",
                 'verification_type' => $data['verification_type'],
                 'government_id' => $this->saveImage($data['government_id'])
-            ]);
-        }
-        elseif(isset($data['live_photo'])){
-            $user->update([
-                'verified' => "Not Verified",
-                'live_photo' => $this->saveImage($data['live_photo'])
             ]);
         }else{
             return response("Please fill out all fields",422);

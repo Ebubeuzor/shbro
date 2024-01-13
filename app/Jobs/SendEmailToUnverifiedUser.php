@@ -24,9 +24,10 @@ class SendEmailToUnverifiedUser implements ShouldQueue
     {
         $this->user = $user;
     }
-
+    
     public function handle()
     {
+        Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
 
         try {
             
@@ -34,7 +35,6 @@ class SendEmailToUnverifiedUser implements ShouldQueue
                 $deleteAttempts = $this->user->delete_attempts ?? 0;
                 
                 if ($deleteAttempts < 50000000) {
-                    Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
                     $this->user->update(['delete_attempts' => $deleteAttempts + 1]);
 
                 } else {

@@ -199,7 +199,8 @@ class UserController extends Controller
             $user->update([
                 'verified' => "Not Verified",
                 'verification_type' => $data['verification_type'],
-                'government_id' => $this->saveImage($data['government_id'])
+                'government_id' => $this->saveImage($data['government_id']),
+                'live_photo' => $this->saveImage($data['live_photo'])
             ]);
         }else{
             return response("Please fill out all fields",422);

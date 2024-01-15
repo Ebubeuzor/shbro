@@ -66,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
         Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
         Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
+        Route::put('unbanGuest/{id}', [AdminController::class, 'unbanGuest']);
+        Route::put('unsuspendGuest/{id}', [AdminController::class, 'unsuspendGuest']);
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
         Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
 

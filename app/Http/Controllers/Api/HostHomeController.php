@@ -435,7 +435,8 @@ class HostHomeController extends Controller
         $tip->url = "/hosthome/?hosthomeid=" . $hosthomeid;
         $tip->save();
 
-        Mail::to($user->email)->send(new NotificationMail($user,$data['message'],$title));
+        $useremail = User::find($user);
+        Mail::to($useremail->email)->send(new NotificationMail($useremail,$data['message'],$title));
         
 
         return response()->json(['message'=>'disapproved'],200);

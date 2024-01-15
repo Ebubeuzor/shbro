@@ -24,7 +24,7 @@ class StoreCreateUserCardRequest extends FormRequest
     public function rules()
     {
         return [
-            "card_number" => 'required',
+            "card_number" => 'required | unique:user_cards,card_number',
             "expiry_data" => 'required | min:4 | max:4',
             "CVV" => 'required | min:3 | max:3',
         ];

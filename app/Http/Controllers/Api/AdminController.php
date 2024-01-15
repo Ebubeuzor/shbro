@@ -104,6 +104,62 @@ class AdminController extends Controller
         return response("Ok",200);
     }
     
+    /**
+     * @lrd:start
+     * Accept the value of a user id and message. Send an object that contains a message, which is the message you want to send to the user.
+     * Send this as object message use|required
+     * @lrd:end
+     * @LRDparam message use|required
+     */
+    public function unbanGuest(Request $request, $id) {
+
+        $data = $request->validate([
+            "message" => "required"
+        ]);
+
+        $user = User::where('id', $id)->first();
+        $title = "Your account has been unbanned";
+        Mail::to($user->email)->send(new NotificationMail($user, $data['message'], $title));
+
+        $user->update([
+            "banned" => null
+        ]);
+
+        $user->hosthomes()->update([
+            "banned" => null
+        ]);
+
+        return response("Ok", 200);
+    }
+
+    /**
+     * @lrd:start
+     * Accept the value of a user id and message. Send an object that contains a message, which is the message you want to send to the user.
+     * Send this as object message use|required
+     * @lrd:end
+     * @LRDparam message use|required
+     */
+    public function unsuspendGuest(Request $request, $id) {
+
+        $data = $request->validate([
+            "message" => "required"
+        ]);
+
+        $user = User::where('id', $id)->first();
+        $title = "Your account has been unsuspended";
+        Mail::to($user->email)->send(new NotificationMail($user, $data['message'], $title));
+
+        $user->update([
+            "suspend" => null
+        ]);
+
+        $user->hosthomes()->update([
+            "suspend" => null
+        ]);
+
+        return response("Ok", 200);
+    }
+
     
     /**
      * @lrd:start

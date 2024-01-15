@@ -19,6 +19,8 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'banned' => $this->banned,
+            'suspend' => $this->suspend,
             'idStatus' => $this->verified,
             'verification_type' => $this->verification_type,
             'photo' => URL::to($this->government_id),

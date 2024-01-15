@@ -19,6 +19,8 @@ class GuestsResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'banned' => $this->banned,
+            'suspend' => $this->suspend,
             'verified' => $this->verified,
             'image' => URL::to($this->profilePicture),
             'created_at' => $this->created_at->format('Y-m-d'),

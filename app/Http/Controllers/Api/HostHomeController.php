@@ -47,7 +47,7 @@ class HostHomeController extends Controller
     public function allHomes()
     {
         return HostHomeResource::collection(
-            HostHome::all()
+            HostHome::where('disapproved',null)->get()
         );
     }
     
@@ -411,7 +411,8 @@ class HostHomeController extends Controller
     
     /**
      * @lrd:start
-     * this accept the value of unverified home id so that they can be verified
+     * this accept the value of unverified home id so that 
+     * they can be disapproved
 	 * {user} is the user id
 	 * {hosthomeid} is the hosthome id
      * @lrd:end
@@ -436,6 +437,12 @@ class HostHomeController extends Controller
         $tip->save();
 
         $useremail = User::find($user);
+        $hostHome = HostHome::find($hosthomeid);
+
+        $hostHome->update([
+            'disapproved' => 'disapproved'
+        ]);
+
         Mail::to($useremail->email)->send(new NotificationMail($useremail,$data['message'],$title));
         
 

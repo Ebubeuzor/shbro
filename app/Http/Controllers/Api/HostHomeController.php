@@ -36,6 +36,7 @@ class HostHomeController extends Controller
     {
         return HostHomeResource::collection(
             HostHome::where('verified', 1)
+                    ->where('disapproved',null)
                     ->whereNull('banned')
                     ->whereNull('suspend')
                     ->get()
@@ -66,7 +67,10 @@ class HostHomeController extends Controller
     public function notVerified()
     {
         return HostHomeResource::collection(
-            HostHome::where('verified',0)->get()
+            HostHome::where('verified',0)
+            ->where('disapproved',null)
+            ->whereNull('banned')
+            ->whereNull('suspend')->get()
         );
     }
 

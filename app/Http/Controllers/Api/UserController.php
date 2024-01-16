@@ -357,12 +357,12 @@ class UserController extends Controller
         $data = $request->validated();
         $cardtype = null;
         $cardNumber = $data['card_number'];
-        if (strlen($cardNumber) >= 16 && Str::startsWith($cardNumber,'5')) {
-            $cardtype = "Verve";
+        if (CreditCardValidator::isMastercard($cardNumber)) {
+            $cardtype = "Master";
         }elseif (CreditCardValidator::isVisa($cardNumber)) {
             $cardtype = "Visa";
-        }elseif (CreditCardValidator::isMastercard($cardNumber)) {
-            $cardtype = "Master";
+        }elseif (strlen($cardNumber) >= 16 && Str::startsWith($cardNumber,'5')) {
+            $cardtype = "Verve";
         }else {
             return response("Incorrect Card Number or Card Not Supported",422);
         }
@@ -478,10 +478,9 @@ class UserController extends Controller
     
     /**
      * @lrd:start
-     * This is a get request and it is used to deactivate an authenticated user
-     * and delete his token 
-     * send as email use|required
+     * This is a put request and it is used to reactivate a user account
      * @lrd:end
+     * @LRDparam email use|required
      */
     public function reactivateAccount(Request $request)
     {

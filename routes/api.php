@@ -100,4 +100,4 @@ Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'aut
 Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
-Route::post('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);

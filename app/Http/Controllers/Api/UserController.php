@@ -459,7 +459,6 @@ class UserController extends Controller
         $user = Auth::user();
 
         if ($user) {
-            // Delete the user's access token if it exists
             /** @var User $user  */
             $currentAccessToken = $user->currentAccessToken();
             

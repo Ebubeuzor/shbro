@@ -35,7 +35,10 @@ class HostHomeController extends Controller
     public function index()
     {
         return HostHomeResource::collection(
-            HostHome::where('verified',1)->get()
+            HostHome::where('verified', 1)
+                    ->whereNull('banned')
+                    ->whereNull('suspend')
+                    ->get()
         );
     }
     
@@ -47,7 +50,10 @@ class HostHomeController extends Controller
     public function allHomes()
     {
         return HostHomeResource::collection(
-            HostHome::where('disapproved',null)->get()
+            HostHome::where('disapproved',null)
+            ->whereNull('banned')
+            ->whereNull('suspend')
+            ->get()
         );
     }
     

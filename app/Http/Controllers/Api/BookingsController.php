@@ -14,11 +14,12 @@ use KingFlamez\Rave\Facades\Rave as Flutterwave;
 class BookingsController extends Controller
 {
     
-    public function bookApartment(BookingApartmentRequest $request,HostHome $hostHome,User $user){
+    public function bookApartment(BookingApartmentRequest $request,$hostHomeId,$userId){
         $data = $request->validated();
-
+        
+        $user = User::find($userId);
+        $hostHome = HostHome::find($hostHomeId);
         $selectedUserCard = $user->userCards()->where('Selected', true)->first();
-
         $booking = new Booking();
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];
@@ -35,7 +36,7 @@ class BookingsController extends Controller
         $recentToken = $user->usertokens->last();
         $data2 = [
             'payment_options' => 'card',
-            'amount' => $hostHome->price,
+            'amount' => $hostHome->total,
             'email' => $user->email,
             'tx_ref' => $reference,
             'currency' => "NGN",
@@ -70,5 +71,44 @@ class BookingsController extends Controller
         ]);
     }
 
+    // public function callback($userid, $usertoken, $hosthomeid)
+    // {
+    //     $status = request()->status;
+
+    //     $transactionID = Flutterwave::getTransactionIDFromCallback();
+    //     $data = Flutterwave::verifyTransaction($transactionID);
+
+    //     $user = User::where('id', $userid)->first();
+    //     $hosthome = HostHome::find($hosthomeid);
+    //     $amount = $data['data']['amount'];
+    //     $id = $data['data']['id'];
+
+    //     if ($status == 'completed') {
+    //         $totalIncome = new MyTotalIncome();
+            
+    //         $totalIncome->create(
+    //             ["totalAmount" => $amount,
+    //             "purchase_date" => now()->toDateString(),]
+    //         );
+    //         Mail::to('ebubeuzor17@gmail.com')->send(new UserBoughtItem($user));
+    //         return redirect()->route('successPage');
+    //     } elseif ($status == 'cancelled') {
+    //         return redirect()->route('failedPage');
+    //     } else {
+    //         return redirect()->route('failedPage');
+    //     }
+    // }
+
+    public function successful(){
+        return view('Successful');
+    }
+
+    public function failed(){
+        return view('Failed');
+    }
+
+    public function cancelled(){
+        return view('Failed');
+    }
 
 }

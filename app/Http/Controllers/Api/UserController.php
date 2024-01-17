@@ -30,7 +30,7 @@ class UserController extends Controller
 {
     /**
      * @lrd:start
-     * this gets the details of every user that is not  verified
+     * this gets the details of every user that is not  verified so that they can be verified by the admin
      * @lrd:end
      */
     public function index()

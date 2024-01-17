@@ -79,8 +79,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
 
 
-    Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment'])->name('pay');
-       
+    
+    Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');

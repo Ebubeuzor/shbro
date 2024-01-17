@@ -119,7 +119,7 @@ body, h1, h2, h3, p, button {
       
           <div class="text-center flex justify-center">
             <a href="/" class="mt-4 text-blue-500">
-              <button class="btn"><a href="http://127.0.0.1:5173/">Back to Home</a></button>
+              <button class="btn"><a href="http://localhost:5173/">Back to Home</a></button>
             </a>
           </div>
         </div>

@@ -613,9 +613,9 @@ class HostHomeController extends Controller
      * this is used to delete the host home details the {hosthome} is the hosthome id 
      * @lrd:end
      */
-    public function destroy(HostHome $hostHome)
+    public function destroy($id)
     {
-        $hostHome->forceDelete();
+        $hostHome = HostHome::find($id); 
         $hostHome->hosthomedescriptions()->delete();
         $hostHome->hosthomediscounts()->delete();
         $hostHome->hosthomenotices()->delete();
@@ -623,6 +623,7 @@ class HostHomeController extends Controller
         $hostHome->hosthomephotos()->delete();
         $hostHome->hosthomereservations()->delete();
         $hostHome->hosthomerules()->delete();
+        $hostHome->forceDelete();
         return response('This home has been deleted',200);
     }
     

@@ -26,7 +26,7 @@ class HostHomeResource extends JsonResource
             'beds' => $this->beds,
             'bathrooms' => $this->bathrooms,
             'amenities' => $this->hosthomeoffers,
-            'hosthomephotos' => URL::to($this->hosthomephotos),
+            'hosthomephotos' => $this->hosthomephotosUrls(),
             'hosthomevideo' => URL::to($this->video),
             'title' => $this->title,
             'hosthomedescriptions' => $this->hosthomedescriptions,
@@ -46,5 +46,15 @@ class HostHomeResource extends JsonResource
             'status' => $this->verified == 0 ? "Not published" : "Published",
             'created_on' => $this->created_at->format('Y-m-d'),
         ];
+    }
+
+    protected function hosthomephotosUrls()
+    {
+        return collect($this->hosthomephotos)->map(function ($photo) {
+            $photoData = json_decode($photo, true);
+
+            // Assuming 'image' is the key for the image URL in each photo data
+            return url($photoData['image']);
+        })->toArray();
     }
 }

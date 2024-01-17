@@ -615,7 +615,7 @@ class HostHomeController extends Controller
      */
     public function destroy(HostHome $hostHome)
     {
-        $hostHome->delete();
+        $hostHome->forceDelete();
         $hostHome->hosthomedescriptions()->delete();
         $hostHome->hosthomediscounts()->delete();
         $hostHome->hosthomenotices()->delete();
@@ -623,6 +623,7 @@ class HostHomeController extends Controller
         $hostHome->hosthomephotos()->delete();
         $hostHome->hosthomereservations()->delete();
         $hostHome->hosthomerules()->delete();
+        return response('This home has been deleted',200);
     }
     
 

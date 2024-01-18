@@ -38,6 +38,7 @@ class UserDetailsUpdateRequest extends FormRequest
             'state' => 'string',
             'city' => 'string',
             'status' => 'string',
+            'profilePicture' => 'string',
         ];
     }
 }

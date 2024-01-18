@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
+use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
 
 class BookingsController extends Controller
@@ -71,33 +73,30 @@ class BookingsController extends Controller
         ]);
     }
 
-    // public function callback($userid, $usertoken, $hosthomeid)
-    // {
-    //     $status = request()->status;
+    public function callback($userid, $usertoken, $hosthomeid)
+    {
+        $status = request()->status;
 
-    //     $transactionID = Flutterwave::getTransactionIDFromCallback();
-    //     $data = Flutterwave::verifyTransaction($transactionID);
+        $transactionID = Flutterwave::getTransactionIDFromCallback();
+        $data = Flutterwave::verifyTransaction($transactionID);
 
-    //     $user = User::where('id', $userid)->first();
-    //     $hosthome = HostHome::find($hosthomeid);
-    //     $amount = $data['data']['amount'];
-    //     $id = $data['data']['id'];
-
-    //     if ($status == 'completed') {
-    //         $totalIncome = new MyTotalIncome();
+        $user = User::where('id', $userid)->first();
+        $amount = $data['data']['amount'];
+        $id = $data['data']['id'];
+        
+        if ($status == 'completed' || $status == 'successful') {
+            $hosthome = HostHome::find($hosthomeid);
             
-    //         $totalIncome->create(
-    //             ["totalAmount" => $amount,
-    //             "purchase_date" => now()->toDateString(),]
-    //         );
-    //         Mail::to('ebubeuzor17@gmail.com')->send(new UserBoughtItem($user));
-    //         return redirect()->route('successPage');
-    //     } elseif ($status == 'cancelled') {
-    //         return redirect()->route('failedPage');
-    //     } else {
-    //         return redirect()->route('failedPage');
-    //     }
-    // }
+            $hosthome->update(
+                ["listing_status" => 1]
+            );
+            $message = $user->name . " has booked your apartment";
+            Mail::to($hosthome->user->email)->send(new NotificationMail($hosthome->user, $message, "Your apartment has been booked"));
+            return redirect()->route('successPage');
+        }else {
+            return redirect()->route('failedPage');
+        }
+    }
 
     public function successful(){
         return view('Successful');

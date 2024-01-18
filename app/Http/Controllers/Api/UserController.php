@@ -170,6 +170,11 @@ class UserController extends Controller
                 'phone' => $data['phone']
             ]);
         }
+        elseif(trim(! empty($data['profilePicture']))){
+            $user->update([
+                'profilePicture' => $this->saveImage($data['phone'])
+            ]);
+        }
         elseif(trim(! empty($data['emergency_no']))){
             $user->update([
                 'emergency_no' => $data['emergency_no']

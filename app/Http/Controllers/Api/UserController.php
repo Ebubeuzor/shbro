@@ -172,7 +172,7 @@ class UserController extends Controller
         }
         elseif(trim(! empty($data['profilePicture']))){
             $user->update([
-                'profilePicture' => $this->saveImage($data['phone'])
+                'profilePicture' => $this->saveImage($data['profilePicture'])
             ]);
         }
         elseif(trim(! empty($data['emergency_no']))){

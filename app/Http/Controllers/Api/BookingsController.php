@@ -21,7 +21,7 @@ class BookingsController extends Controller
         
         $user = User::find($userId);
         $hostHome = HostHome::find($hostHomeId);
-        $selectedUserCard = $user->userCards()->where('Selected', true)->first();
+        $selectedUserCard = $user->userCards()->where('Selected', 'Selected')->first();
         $booking = new Booking();
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];

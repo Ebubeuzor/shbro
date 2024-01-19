@@ -113,17 +113,14 @@ class BookingsController extends Controller
             'callback_url' => route('callback'),
             'channels' => ['card'], // Specify that you want to accept card payments
             'metadata' => json_encode($metadata),
-            
+            'card' => [
+                'card_number' => $selectedUserCard->card_number,
+                'cvv' => $selectedUserCard->CVV,
+                'expiry_month' => substr($selectedUserCard->expiry_data, 0, 2),
+                'expiry_year' => '20' . substr($selectedUserCard->expiry_data, -2),
+            ],
         ];
         
-        // Initialize the payment on Paystack
-        $payment = Paystack::getAuthorizationUrl()->initialize($data2);
-        
-
-        
-
-        $data2['metadata'] = json_encode($metadata);
-
         // Initialize the payment on Paystack
         $payment = Paystack::getAuthorizationUrl()->initialize($data2);
 
@@ -135,6 +132,7 @@ class BookingsController extends Controller
             'payment_link' => $payment->data->authorization_url,
         ]);
     }
+
 
     // public function callback($userid, $usertoken, $hosthomeid)
     // {

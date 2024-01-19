@@ -106,6 +106,7 @@ class BookingsController extends Controller
         $recentToken = $user->tokens->last();
 
         $total = $hostHome->total * 100;
+        return response($total);
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
             'email' => $user->email,

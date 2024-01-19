@@ -106,7 +106,7 @@ class BookingsController extends Controller
         $recentToken = $user->tokens->last();
 
         $data2 = [
-            'amount' => 1000000 * 100, // Paystack expects amount in kobo
+            'amount' => $hostHome->total * 100, // Paystack expects amount in kobo
             'email' => $user->email,
             'reference' => $reference,
             'currency' => 'NGN',
@@ -120,6 +120,10 @@ class BookingsController extends Controller
                 'expiry_year' => '20' . substr($selectedUserCard->expiry_data, -2),
             ],
         ];
+        
+        return response([
+            "data" => $data2
+        ]);
         
         // Initialize the payment on Paystack
         $payment = Paystack::getAuthorizationUrl()->initialize($data2);

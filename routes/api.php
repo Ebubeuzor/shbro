@@ -69,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::put('unbanGuest/{id}', [AdminController::class, 'unbanGuest']);
         Route::put('unsuspendGuest/{id}', [AdminController::class, 'unsuspendGuest']);
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
-        Route::put('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
+        Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
 
     });
     
@@ -101,3 +101,4 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+Route::post('/filterHomepage', [UserController::class, 'filterHomepage']);

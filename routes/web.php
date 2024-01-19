@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 */
 
 
-Route::match(['get', 'post'],'/rave/callback/{userid},{usertoken},{hosthomeid}', [BookingsController::class, 'callback'])->name('callback');
+Route::match(['get'],'/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 

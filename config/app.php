@@ -159,6 +159,7 @@ return [
         /*
          * Laravel Framework Service Providers...
          */
+        Unicodeveloper\Paystack\PaystackServiceProvider::class,
         Illuminate\Auth\AuthServiceProvider::class,
         Illuminate\Broadcasting\BroadcastServiceProvider::class,
         Illuminate\Bus\BusServiceProvider::class,
@@ -211,6 +212,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         'CreditCardValidator' => \Jlorente\Laravel\CreditCards\Facades\CreditCardValidator::class,
+        'Paystack' => Unicodeveloper\Paystack\Facades\Paystack::class,
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 

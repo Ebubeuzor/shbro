@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
@@ -497,6 +498,57 @@ class UserController extends Controller
             return response('User not found.',422);
         }
 
+    }
+
+    /**
+     * @lrd:start
+     * Filters host homes based on specified criteria.
+     * JSON response containing filtered host home data.
+     * and if consumed will will return a 200 status code
+     * @lrd:end
+     */
+    public function filterHomepage(FilterHomepageRequest $request)
+    {
+        $data = $request->validated();
+        $propertyType = $data['property_type'];
+        $minBedrooms = $data['bedrooms'];
+        $minBeds = $data['beds'];
+        $minBathrooms = $data['bathrooms'];
+        $maxPrice = $data['price'];
+        $amenities = $data['amenities'];
+    
+        $query = HostHome::query();
+    
+        if ( ! empty($propertyType)) {
+            $query->whereIn('property_type', $propertyType);
+        }
+    
+        if ( ! empty($minBedrooms)) {
+            $query->where('bedroom', '>=', $minBedrooms);
+        }
+    
+        if ( ! empty($minBeds)) {
+            $query->where('beds', '>=', $minBeds);
+        }
+    
+        if ( ! empty($data['bedrooms'])) {
+            $query->where('bathrooms', '>=', $minBathrooms);
+        }
+    
+        if ( ! empty($data['price'])) {
+            $query->where('price', '<=', $maxPrice);
+        }
+    
+        if ( ! empty($data['amenities'])) {
+            $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                $q->whereIn('offer', $amenities);
+            });
+        }
+        
+        $result = $query->get();
+        $result->load('hosthomephotos');
+        
+        return response()->json(['data' => $result], 200);
     }
 
     public function destroy(User $user)

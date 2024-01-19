@@ -11,31 +11,31 @@ return new class extends Migration
      *
      * @return void
      */
-    // public function up()
-    // {
-    //     Schema::create('bookings', function (Blueprint $table) {
-    //         $table->id();
-    //         $table->string('adults');
-    //         $table->string('children');
-    //         $table->string('pets');
-    //         $table->string('infants');
-    //         $table->string('check_in');
-    //         $table->string('check_out');
-    //         $table->string('paymentStatus')->nullable();
-    //         $table->string('paymentId')->nullable();
-    //         $table->foreignIdFor(\App\Models\User::class,"user_id");
-    //         $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
-    //         $table->timestamps();
-    //     });
-    // }
+    public function up()
+    {
+        Schema::create('bookings', function (Blueprint $table) {
+            $table->id();
+            $table->string('adults');
+            $table->string('children');
+            $table->string('pets');
+            $table->string('infants');
+            $table->string('check_in');
+            $table->string('check_out');
+            $table->string('paymentStatus')->nullable();
+            $table->string('paymentId')->nullable();
+            $table->foreignIdFor(\App\Models\User::class,"user_id");
+            $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
      *
      * @return void
      */
-    // public function down()
-    // {
-    //     Schema::dropIfExists('bookings');
-    // }
+    public function down()
+    {
+        Schema::dropIfExists('bookings');
+    }
 };

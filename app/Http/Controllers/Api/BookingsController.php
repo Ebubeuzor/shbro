@@ -105,25 +105,21 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = $hostHome->total * 100;
+        $total = intval($hostHome->total * 100);
+
         $data2 = [
-            'amount' => intval($total), // Paystack expects amount in kobo
+            'amount' => 1000000, // Paystack expects amount in kobo
             'email' => $user->email,
             'reference' => $reference,
             'currency' => 'NGN',
-            'callback_url' => route('callback'),
-            'channels' => ['card'], // Specify that you want to accept card payments
-            'metadata' => json_encode($metadata),
-            'card' => [
-                'card_number' => $selectedUserCard->card_number,
-                'cvv' => $selectedUserCard->CVV,
-                'expiry_month' => substr($selectedUserCard->expiry_data, 0, 2),
-                'expiry_year' => '20' . substr($selectedUserCard->expiry_data, -2),
-            ],
+            "orderID" => 23456,
+            'callback_url' => route('callback')
         ];
+
+        return Paystack::getAuthorizationUrl($data2)->redirectNow();
         
         // Initialize the payment on Paystack
-        $payment = Paystack::getAuthorizationUrl()->initialize($data2);
+        $payment = Paystack::getAuthorizationUrl($data2)->initialize();
 
         if (!$payment->status) {
             return response()->json(['message' => 'Payment initialization failed']);

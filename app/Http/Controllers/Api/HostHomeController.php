@@ -211,6 +211,7 @@ class HostHomeController extends Controller
         $hostHome->price = $data['price'];
         $hostHome->host_type = $data['host_type'];
         $hostHome->check_in_time = $data['checkin'];
+        $hostHome->check_out_time = $data['checkout'];
         $hostHome->cancellation_policy = $data['cancelPolicy'];
         $hostHome->security_deposit = $data['securityDeposit'];
 
@@ -484,6 +485,7 @@ class HostHomeController extends Controller
             'price' => $data['price'],
             'host_type' => $data['host_type'],
             'check_in_time' => $data['checkin'],
+            'check_out_time' => $data['checkout'],
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ]);

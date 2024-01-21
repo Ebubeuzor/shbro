@@ -38,6 +38,7 @@ class UpdateHostHomeRequest extends FormRequest
             'host_type' => "required",
             'notice' => "array",
             'checkin' => "required ",
+            'checkout' => "required ",
             'cancelPolicy' => "required",
             'securityDeposit' => "required",
         ];

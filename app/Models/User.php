@@ -42,6 +42,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'name' => 'string', 
+        'email' => 'string', 
+        'id' => 'integer', 
     ];
 
     public function getVerifiedAttriutes($value){

@@ -52,4 +52,8 @@ class HostHome extends Model
     public function hosthomerules(){
         return $this->hasMany(Hosthomerule::class);
     }
+    
+    public function bookings(){
+        return $this->hasMany(Booking::class);
+    }
 }

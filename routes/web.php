@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 */
 
 
-Route::match(['get'],'/payment/callback', [BookingsController::class, 'callback'])->name('callback');
+Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 
@@ -32,3 +32,6 @@ Route::get('/reset-password', [ForgotPassword::class, 'returnView'])->name('pass
 
 Route::post('/resetPassword', [ForgotPassword::class, 'resetPassword'])->name('changePassword'); 
 
+Route::get('/successful', [BookingsController::class, 'successful'])->name('successPage');
+Route::get('/cancelled', [BookingsController::class, 'cancelled'])->name('cancelledPage');
+Route::get('/failed', [BookingsController::class, 'failed'])->name('failedPage');

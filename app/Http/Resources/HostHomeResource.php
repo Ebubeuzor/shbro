@@ -39,6 +39,7 @@ class HostHomeResource extends JsonResource
             'host_type' => $this->host_type,
             'notices' => $this->hosthomenotices,
             'checkin' => $this->check_in_time,
+            'checkout' => $this->check_out_time,
             'cancelPolicy' => $this->cancellation_policy,
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,

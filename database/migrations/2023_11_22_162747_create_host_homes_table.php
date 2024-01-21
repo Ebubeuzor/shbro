@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string("price");
             $table->string("host_type");
             $table->string("check_in_time");
+            $table->string("check_out_time");
             $table->string("cancellation_policy");
             $table->string("security_deposit");
             $table->integer("verified")->default(0);

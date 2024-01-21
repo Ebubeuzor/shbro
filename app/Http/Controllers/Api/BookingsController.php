@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
+use App\Http\Resources\BookedResource;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -103,7 +105,7 @@ class BookingsController extends Controller
      *       "10th February 2024 - 15th February 2024"
      *     ],
      *     "dateDifference": 3
-     *   }
+     *   } etc
      * @lrd:end
      */
     public function bookApartment(BookingApartmentRequest $request, $hostHomeId, $userId)
@@ -115,6 +117,12 @@ class BookingsController extends Controller
         // Convert check_in and check_out to DateTime objects
         $checkIn = \DateTime::createFromFormat('d/m/Y', $data['check_in']);
         $checkOut = \DateTime::createFromFormat('d/m/Y', $data['check_out']);
+
+        // Ensure that check_in and check_out are present or future dates
+        $currentDate = new \DateTime();
+        if ($checkIn < $currentDate || $checkOut < $currentDate) {
+            return response("Invalid date. Dates must be present or future dates.", 400);
+        }
 
         $dateDifference = $checkOut->diff($checkIn)->days;
 
@@ -345,6 +353,45 @@ class BookingsController extends Controller
         }
     }
 
+    public function checkingOut()
+    {
+        // Get bookings where the check_out date is greater than or equal to the present day
+        $bookings = Booking::where('check_out', '>=', Carbon::today()->toDateString())->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    public function currentlyHosting(){
+        $bookings = Booking::whereNotNull('checked_in')->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    public function arrivingSoon()
+    {
+        // Get bookings where the check_in date is the present day
+        $bookings = Booking::where('check_in', Carbon::today()->toDateString())->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    public function upcomingReservation(){
+        $bookings = Booking::where('checked_in', null)->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
 
     public function successful(){
         return view('Successful');

@@ -16,6 +16,10 @@ class Booking extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function hosthome(){
+        return $this->belongsTo(HostHome::class);
+    }
+
     public function getFormattedCheckInAttribute()
     {
         return Carbon::createFromFormat('Y-m-d', $this->attributes['check_in'])->format('j F Y');

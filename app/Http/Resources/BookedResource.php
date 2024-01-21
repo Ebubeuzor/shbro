@@ -16,8 +16,10 @@ class BookedResource extends JsonResource
     {
         return [
             'name' => $this->user->name,
-            'check_in' => $this->formattedCheckIn,
-            'check_out' => $this->formattedCheckOut,
+            'check_in_date' => $this->formattedCheckIn,
+            'check_out_date' => $this->formattedCheckOut,
+            'check_out_time' => $this->hosthome->check_in_time,
+            'check_out_time' => $this->hosthome->check_out_time,
         ];
     }
 }

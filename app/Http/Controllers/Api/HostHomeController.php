@@ -217,17 +217,14 @@ class HostHomeController extends Controller
         $price = $data['price'];
         $securityDeposit = $data['securityDeposit'];
 
-        $host_fees_percentage = 0.20;
-        $service_fee_percentage = 0.05;
+        $service_fee_percentage = 0.10;
         $tax_percentage = 0.05;
 
-        $host_fees = $price * $host_fees_percentage;
         $service_fee = $price * $service_fee_percentage;
         $tax = $price * $tax_percentage;
 
-        $total = $price + $securityDeposit + $host_fees + $service_fee + $tax;
+        $total = $price + $securityDeposit + $service_fee + $tax;
 
-        $hostHome->host_fees = $host_fees;
         $hostHome->service_fee = $service_fee;
         $hostHome->tax = $tax;
         $hostHome->total = $total;
@@ -468,6 +465,17 @@ class HostHomeController extends Controller
     public function update(UpdateHostHomeRequest $request, HostHome $hostHome)
     {
         $data = $request->validated();
+
+        $price = $data['price'];
+        $securityDeposit = $data['securityDeposit'];
+
+        $service_fee_percentage = 0.10;
+        $tax_percentage = 0.05;
+
+        $service_fee = $price * $service_fee_percentage;
+        $tax = $price * $tax_percentage;
+
+        $total = $price + $securityDeposit + $service_fee + $tax;
         
         $hostHome->update([
             'property_type' => $data['property_type'],
@@ -484,6 +492,9 @@ class HostHomeController extends Controller
             'price' => $data['price'],
             'host_type' => $data['host_type'],
             'check_in_time' => $data['checkin'],
+            'service_fee' => $service_fee,
+            'tax' => $tax,
+            'total' => $total,
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ]);

@@ -42,7 +42,7 @@ class StoreHostHomeRequest extends FormRequest
             'description' => "required",
             'reservation' => "required",
             'reservations' => "required | array",
-            'price' => "required",
+            'price' => "required|numeric",
             'discounts' => "required | array",
             'rules' => "required | array",
             'additionalRules' => "string",
@@ -50,7 +50,7 @@ class StoreHostHomeRequest extends FormRequest
             'notice' => "required | array",
             'checkin' => "required ",
             'cancelPolicy' => "required",
-            'securityDeposit' => "required",
+            'securityDeposit' => "required|numeric",
         ];
     }
 }

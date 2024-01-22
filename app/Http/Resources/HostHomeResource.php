@@ -43,6 +43,8 @@ class HostHomeResource extends JsonResource
             'cancelPolicy' => $this->cancellation_policy,
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,
+            'vat' => $this->tax,
+            'guest_fee' => $this->service_fee,
             'adminStatus' => "Pending Approval",
             'status' => $this->verified == 0 ? "Not published" : "Published",
             'created_on' => $this->created_at->format('Y-m-d'),

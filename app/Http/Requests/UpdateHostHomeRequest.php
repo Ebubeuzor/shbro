@@ -31,7 +31,7 @@ class UpdateHostHomeRequest extends FormRequest
             'description' => "required",
             'reservation' => "required",
             'reservations' => "array",
-            'price' => "required",
+            'price' => "required|numeric",
             'discounts' => "array",
             'rules' => "array",
             'additionalRules' => "string",
@@ -39,7 +39,7 @@ class UpdateHostHomeRequest extends FormRequest
             'notice' => "array",
             'checkin' => "required ",
             'cancelPolicy' => "required",
-            'securityDeposit' => "required",
+            'securityDeposit' => "required|numeric",
         ];
     }
 }

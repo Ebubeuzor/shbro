@@ -2,7 +2,11 @@
 
 namespace App\Console;
 
+use App\Jobs\CheckInNotificationJob;
+use App\Jobs\FewHoursReminderJob;
 use App\Jobs\ProcessEmailReminders;
+use App\Jobs\TwoDayReminderJob;
+use App\Models\Booking;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -17,6 +21,21 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new ProcessEmailReminders)->daily();
+
+        $bookings = Booking::where('paymentStatus','success')->get(); 
+
+        foreach ($bookings as $booking) {
+            
+            // Schedule the TwoDayReminderJob two days before the check-in date
+            $schedule->job(new TwoDayReminderJob($booking))->everyMinute();
+    
+            // Schedule the FewHoursReminderJob a few hours before the check-in time
+            $schedule->job(new FewHoursReminderJob($booking))->everyMinute();
+    
+            // Schedule the CheckInNotificationJob at the check-in time
+            $schedule->job(new CheckInNotificationJob($booking))->everyMinute();
+            
+        }       
     }
 
     /**

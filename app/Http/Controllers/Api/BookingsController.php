@@ -128,7 +128,7 @@ class BookingsController extends Controller
 
         // Retrieve the booking with the specified hostHomeId
         $bookings = Booking::where('host_home_id', $hostHomeId)
-        ->whereNotNull('paymentStatus')
+        ->where('paymentStatus','success')
         ->get();
 
         foreach ($bookings as $booking) {
@@ -145,7 +145,7 @@ class BookingsController extends Controller
             // Check if the HostHome is already booked for the selected dates
             $isBooked = Booking::where('host_home_id', $hostHomeId)
             ->where('id', '!=', $booking->id)
-            ->whereNotNull('paymentStatus')
+            ->where('paymentStatus','success')
             ->where(function ($query) use ($checkIn, $checkOut) {
                 $query->where(function ($query) use ($checkIn, $checkOut) {
                     $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
@@ -209,6 +209,7 @@ class BookingsController extends Controller
         $booking->children = $data['children'];
         $booking->pets = $data['pets'];
         $booking->infants = $data['infants'];
+        $booking->duration_of_stay = $dateDifference;
         $booking->check_in = $checkIn->format('Y-m-d');
         $booking->check_out = $checkOut->format('Y-m-d');
         $booking->user_id = $user->id;
@@ -333,15 +334,23 @@ class BookingsController extends Controller
                     $hostHome->update([
                         'listing_status' => 1
                     ]);
-        
+
+                    $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
+                    $durationOfStay = $hostHome->duration_of_stay;
+                    $checkoutDate = $checkInDateTime->addDays($durationOfStay);
+
                     $booking->update([
                         "paymentStatus" => $status,
-                        'transactionID' => $transactionID
+                        'transactionID' => $transactionID,
+                        'check_out_time' => $checkoutDate->format('g:i A')
                     ]);
                     // Notify host about the booking
                     $message = $user->name . " has booked your apartment";
                     $host = User::find($hostHome->user_id);
                     Mail::to($host->email)->send(new NotificationMail($host, $message, "Your apartment has been booked"));
+                    $guestMessage = "Your checkin date and time is " . $booking->check_in . " " . $hostHome->check_in_time . "\n";
+                    $guestMessage .= "Your checkout date and time is " . $booking->check_out . " " . $booking->check_out_time . "\n";
+                    Mail::to($user->email)->send(new NotificationMail($host, $guestMessage, "Your checkin and checkout time"));
         
                     return redirect()->route('successPage');
                 } else {

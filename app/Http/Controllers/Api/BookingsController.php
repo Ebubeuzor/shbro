@@ -145,7 +145,7 @@ class BookingsController extends Controller
             // Check if the HostHome is already booked for the selected dates
             $isBooked = Booking::where('host_home_id', $hostHomeId)
             ->where('id', '!=', $booking->id)
-            ->where('paymentStatus','success')
+            ->where('paymentStatus', 'success')
             ->where(function ($query) use ($checkIn, $checkOut) {
                 $query->where(function ($query) use ($checkIn, $checkOut) {
                     $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
@@ -153,9 +153,14 @@ class BookingsController extends Controller
                 })->orWhere(function ($query) use ($checkIn, $checkOut) {
                     $query->whereRaw('? > DATE(check_in)', [$checkOut->format('Y-m-d')])
                         ->whereRaw('? <= DATE(check_out)', [$checkOut->format('Y-m-d')]);
+                })->orWhere(function ($query) use ($checkIn, $checkOut) {
+                    $query->whereRaw('? = DATE(check_in)', [$checkIn->format('Y-m-d')])
+                        ->whereRaw('? = DATE(check_out)', [$checkOut->format('Y-m-d')]);
                 });
             })
             ->exists();
+
+
 
             if ($isBooked) {
                 $bookedDates = Booking::where('host_home_id', $hostHomeId)

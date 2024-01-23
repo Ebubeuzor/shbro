@@ -7,6 +7,7 @@ use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
+use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
 use App\Mail\ActivateAccount;
@@ -282,6 +283,36 @@ class UserController extends Controller
         $user = User::where('id', auth()->id())->firstOrFail();
         $userWishlist = $user->wishlistcontainers()->get();
         return response()->json(['userWishlist' => $userWishlist]);
+    }
+    
+    /**
+     * @lrd:start
+     * Get the user's wishlist containers and associated items.
+     * This endpoint serves a GET request to retrieve the wishlist containers of the authenticated user.
+     * Each wishlist container includes details about the container itself and its associated items.
+     * @lrd:end
+     */
+    public function getUserWishlistContainersAndItems()
+    {
+        $user = User::where('id', auth()->id())->firstOrFail();
+
+        // Eager load wishlist containers with associated items and hosthomes
+        $userWishlist = $user->wishlistcontainers()->get();
+
+        // Transform the userWishlist to include hosthomes details
+        $formattedWishlist = $userWishlist->map(function ($wishlistContainer) {
+            return [
+                'wishlistContainer' => $wishlistContainer,
+                'items' => $wishlistContainer->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'hosthomes' => new HostHomeResource(HostHome::find($item->host_home_id)),
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json(['userWishlist' => $formattedWishlist]);
     }
     
     /**

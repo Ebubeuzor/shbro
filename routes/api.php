@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
+    Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
 
 
     

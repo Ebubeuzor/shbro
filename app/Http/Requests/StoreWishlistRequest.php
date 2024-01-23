@@ -26,7 +26,7 @@ class StoreWishlistRequest extends FormRequest
         return [
             "containername" => 'nullable| string',
             'wishcontainerid' => 'nullable| exists:App\Models\Wishlistcontainer,id',
-            'hosthomeid' => 'nullable| exists:App\Models\Hosthome,id',
+            'hosthomeid' => 'nullable| exists:App\Models\HostHome,id',
         ];
     }
 }

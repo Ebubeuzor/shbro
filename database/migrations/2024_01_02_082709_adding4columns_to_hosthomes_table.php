@@ -14,7 +14,6 @@ return new class extends Migration
     public function up()
     {
         Schema::table('host_homes', function (Blueprint $table) {
-            $table->integer('host_fees');
             $table->integer('service_fee');
             $table->integer('tax');
             $table->integer('total');
@@ -29,10 +28,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('host_homes', function (Blueprint $table) {
-            $table->integer('host_fees');
-            $table->integer('service_fee');
-            $table->integer('tax');
-            $table->integer('total');
+            
         });
     }
 };

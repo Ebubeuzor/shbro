@@ -24,9 +24,9 @@ class StoreWishlistRequest extends FormRequest
     public function rules()
     {
         return [
-            "containername" => 'string',
-            'wishcontainerid' => 'exists:App\Models\Wishlistcontainer,id',
-            'hosthomeid' => 'exists:App\Models\Hosthome,id',
+            "containername" => 'nullable| string',
+            'wishcontainerid' => 'nullable| exists:App\Models\Wishlistcontainer,id',
+            'hosthomeid' => 'nullable| exists:App\Models\Hosthome,id',
         ];
     }
 }

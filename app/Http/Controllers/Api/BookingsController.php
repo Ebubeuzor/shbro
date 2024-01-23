@@ -190,6 +190,9 @@ class BookingsController extends Controller
         $selectedUserCard = "";
         if ($data['option'] == 1) {
             $selectedUserCard = $user->userCards()->where('Selected', 'Selected')->first();
+            if (!$selectedUserCard) {
+                return response("No card selected",400);
+            }
         }elseif ($data['option'] == 2) {
             $selectedUserCard = [
                 "card_number" => $data["card_number"],
@@ -221,7 +224,7 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = intval($hostHome->total * 100) * $dateDifference;
+        $total = (((intval($hostHome->price) + intval($hostHome->service_fee) + intval($hostHome->tax)) * $dateDifference) + intval($hostHome->security_deposit)) * 100;
 
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
@@ -322,36 +325,45 @@ class BookingsController extends Controller
         $recentToken = $user->tokens->last();
         $booking = Booking::findOrFail($bookingId);
         $transactionID = $data['data']['id'];
-
+        
         if ($recentToken->token === $userToken && 
-            $user->remember_token == $userrem && 
-            $booking->user_id == $user->id) {
+        $user->remember_token == $userrem && 
+        $booking->user_id == $user->id) {
                 
                 if ($status == 'success') {
                     $hostHome = HostHome::find($hostHomeId);
-        
+                    
                     // Update host home listing status
                     $hostHome->update([
                         'listing_status' => 1
                     ]);
-
+                    
                     $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
                     $durationOfStay = $hostHome->duration_of_stay;
                     $checkoutDate = $checkInDateTime->addDays($durationOfStay);
+                    $amount = $data['data']['amount'];
+                    $hostfee = 0.07;
+                    $hostBalance = ($amount/100) * $hostfee;
 
                     $booking->update([
                         "paymentStatus" => $status,
                         'transactionID' => $transactionID,
+                        'securityDeposit' => $hostHome->security_deposit,
+                        'hostBalance' => $hostBalance,
                         'check_out_time' => $checkoutDate->format('g:i A')
                     ]);
                     // Notify host about the booking
                     $message = $user->name . " has booked your apartment";
                     $host = User::find($hostHome->user_id);
                     Mail::to($host->email)->send(new NotificationMail($host, $message, "Your apartment has been booked"));
-                    $guestMessage = "Your checkin date and time is " . $booking->check_in . " " . $hostHome->check_in_time . "\n";
-                    $guestMessage .= "Your checkout date and time is " . $booking->check_out . " " . $booking->check_out_time . "\n";
-                    Mail::to($user->email)->send(new NotificationMail($host, $guestMessage, "Your checkin and checkout time"));
-        
+                    $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j');
+                    $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j');
+                    $checkInTime = $hostHome->check_in_time;
+
+                    $guestMessage = "Your check-in date and time is " . $checkInDate . " " . $checkInTime . "\n";
+                    $guestMessage .= "Your checkout date and time is " . $checkOutDate . " " . $booking->check_out_time . "\n";
+
+                    Mail::to($user->email)->send(new NotificationMail($host, $guestMessage, "Your check-in and checkout time"));
                     return redirect()->route('successPage');
                 } else {
                     return redirect()->route('failedPage');

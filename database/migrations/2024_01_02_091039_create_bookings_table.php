@@ -25,6 +25,8 @@ return new class extends Migration
             $table->integer('duration_of_stay');
             $table->string('paymentStatus')->nullable();
             $table->string('paymentId')->nullable();
+            $table->string('securityDeposit')->nullable();
+            $table->string('hostBalance')->nullable();
             $table->string('twoDayReminder')->nullable();
             $table->string('fewHoursReminder')->nullable();
             $table->string('checkInNotification')->nullable();

@@ -230,8 +230,13 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
-        if (trim(isset($data['containername']))) {
+        if (isset($data['containername'])) {
             $user = User::where('id', $id)->firstOrFail();
+
+            // Check if a wishlist container with the same name already exists for the user
+            if ($user->wishlistcontainers()->where('name', $data['containername'])->exists()) {
+                return response("Wishlist container with the same name already exists", 422);
+            }
 
             $wishlistContainer = new Wishlistcontainer();
             $wishlistContainer->user_id = $user->id;
@@ -251,7 +256,7 @@ class UserController extends Controller
             } else {
                 return response("Item already exists in the wishlist container", 422);
             }
-        } elseif (trim(isset($data['wishcontainerid'])) &&  trim(isset($data['wishcontainerid']))) {
+        } elseif (isset($data['wishcontainerid']) && isset($data['hosthomeid'])) {
             $hosthome = HostHome::where('id', $data['hosthomeid'])->firstOrFail();
             $wishlistcontainer = Wishlistcontainer::where('id', $data['wishcontainerid'])->firstOrFail();
 
@@ -270,6 +275,7 @@ class UserController extends Controller
             return response("You are not setting it right", 422);
         }
     }
+
     
     
     /**

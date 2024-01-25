@@ -276,8 +276,40 @@ class UserController extends Controller
         }
     }
 
-    
-    
+    /**
+     * @lrd:start
+     * Remove an item from the user's wishlist.
+     *
+     * This endpoint allows authenticated users to remove an item from their wishlist. 
+     * The user must own the wishlist item to perform the removal.
+     *
+     * @param int $wishlistItemId The ID of the wishlist item to be removed.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully removed the item from the wishlist.
+     * - 403: Unauthorized to remove the item (e.g., user does not own the wishlist item).
+     * - 404: Wishlist item not found.
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the wishlist item with the given ID is not found.
+     * @lrd:end
+     */
+    public function removeFromWishlist($wishlistItemId)
+    {
+        $wishlistItem = WishlistContainerItem::findOrFail($wishlistItemId);
+
+        // Check if the authenticated user owns the wishlist item
+        $user = auth()->user();
+
+        if ($user && $wishlistItem->wishlistcontainer->user_id === $user->id) {
+            $wishlistItem->delete();
+
+            return response("Item removed from the wishlist", 200);
+        } else {
+            return response("Unauthorized to remove the item", 403);
+        }
+    }
+
     /**
      * @lrd:start
      * This is a get request and it is used to get users wishlistContainers

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Wishlistcontainer;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\URL;
 
@@ -15,6 +16,7 @@ class HostHomeResource extends JsonResource
      */
     public function toArray($request)
     {
+        $user = $request->user();
         return [
             'id' => $this->id,
             'user' => $this->user,
@@ -48,7 +50,16 @@ class HostHomeResource extends JsonResource
             'adminStatus' => "Pending Approval",
             'status' => $this->verified == 0 ? "Not published" : "Published",
             'created_on' => $this->created_at->format('Y-m-d'),
+            'addedToWishlist' => $user ? $this->isAddedToWishlist($user->id, $this->id) : false,
+        
         ];
+    }
+
+    protected function isAddedToWishlist($userId, $hostHomeId)
+    {
+        return Wishlistcontainer::whereHas('items', function ($query) use ($hostHomeId) {
+            $query->where('host_home_id', $hostHomeId);
+        })->where('user_id', $userId)->exists();
     }
 
     protected function hosthomephotosUrls()

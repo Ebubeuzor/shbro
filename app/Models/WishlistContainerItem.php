@@ -14,4 +14,10 @@ class WishlistContainerItem extends Model
     public function hosthomes(){
         return $this->belongsTo(HostHome::class);
     }
+
+    public function wishlistcontainer(){
+        return $this->belongsTo(Wishlistcontainer::class);
+    }
+
+
 }

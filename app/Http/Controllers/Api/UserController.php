@@ -4,18 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterHomepageRequest;
+use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
 use App\Models\HostHome;
 use App\Models\Notification;
 use App\Models\Tip;
 use App\Models\User;
+use App\Models\Userbankinfo;
 use App\Models\UserCard;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
@@ -335,22 +338,55 @@ class UserController extends Controller
         $user = User::where('id', auth()->id())->firstOrFail();
 
         // Eager load wishlist containers with associated items and hosthomes
-        $userWishlist = $user->wishlistcontainers()->get();
+        $userWishlist = $user->wishlistcontainers()->with('items')->get();
 
-        // Transform the userWishlist to include hosthomes details
+        // Transform the userWishlist to include hosthomes details without items
         $formattedWishlist = $userWishlist->map(function ($wishlistContainer) {
             return [
-                'wishlistContainer' => $wishlistContainer,
+                'wishlistContainer' => [
+                    'id' => $wishlistContainer->id,
+                    'user_id' => $wishlistContainer->user_id,
+                    'name' => $wishlistContainer->name,
+                    'created_at' => $wishlistContainer->created_at,
+                    'updated_at' => $wishlistContainer->updated_at,
+                ],
+                'itemsLength' => count($wishlistContainer->items),
                 'items' => $wishlistContainer->items->map(function ($item) {
+                    $hostHome = HostHome::find($item->host_home_id);
                     return [
                         'id' => $item->id,
-                        'hosthomes' => new HostHomeResource(HostHome::find($item->host_home_id)),
+                        'hosthomes' => [
+                            'id' => $hostHome->id,
+                            'hosthomephotos' => collect($hostHome->hosthomephotos)->map(function ($photo) {
+                                $photoData = json_decode($photo, true);
+                                return url($photoData['image']);
+                            })->toArray(),
+                        ],
                     ];
                 }),
             ];
         });
 
         return response()->json(['userWishlist' => $formattedWishlist]);
+    }
+    
+    /**
+     * @lrd:start
+     * Get all wishlist container items for a specific wishlist container.
+     * @lrd:end
+     */
+    public function getWishlistContainerItems($wishlistContainerId)
+    {
+        // Find the wishlist container
+        $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);
+
+        // Retrieve all wishlist container items for the given wishlist container
+        $wishlistContainerItems = $wishlistContainer->items;
+
+        // Transform the wishlistContainerItems using the WishlistContainerItemResource
+        $formattedItems = WishlistContainerItemResource::collection($wishlistContainerItems);
+
+        return response()->json(['wishlistContainerItems' => $formattedItems]);
     }
     
     /**
@@ -452,6 +488,47 @@ class UserController extends Controller
         return response("OK",201);
     }
     
+    /**
+     * @lrd:start
+     * Create a user's bank account information.
+     *
+     * This endpoint allows an authenticated user to create their bank account information.
+     * 
+     * @param \App\Http\Requests\StoreCreateUserBankAccountRequest $request The HTTP request containing the bank account information.
+     * @param int $id The ID of the authenticated user.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 201: Successfully created the user's bank account information.
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the user with the given ID is not found.
+     * 
+     * @lrd:end
+     */
+    public function createUserBankInfo(StoreCreateUserBankAccountRequest $request, $id)
+    {
+        try {
+            // Retrieve the authenticated user
+            $user = User::findOrFail($id);
+
+            // Validate the request data
+            $data = $request->validated();
+
+            // Create and save the user's bank account information
+            $userAccount = new Userbankinfo();
+            $userAccount->user_id = $user->id;
+            $userAccount->account_number = $data['account_number'];
+            $userAccount->account_name = $data['account_name'];
+            $userAccount->bank_name = $data['bank_name'];
+            $userAccount->save();
+
+            return response("OK", 201);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response("User not found", 404);
+        }
+    }
+
+    
 
     /**
      * @lrd:start
@@ -470,6 +547,42 @@ class UserController extends Controller
             "data" => $userCard
         ],200);
     }
+
+
+    /**
+     * @lrd:start
+     * Retrieve user's bank account information.
+     *
+     * This endpoint allows an authenticated user to retrieve their stored bank account information.
+     * 
+     * @param int $userid The ID of the authenticated user.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the user's bank account information.
+     * - 404: User not found.
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the user with the given ID is not found.
+     * 
+     * @lrd:end
+     */
+    public function getUserBankInfos($userid)
+    {
+        try {
+            // Retrieve the authenticated user
+            $user = User::findOrFail($userid);
+                
+            // Retrieve the user's bank account information
+            $userBankInfo = Userbankinfo::where('user_id', $user->id)->get();
+
+            return response([
+                "data" => $userBankInfo
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response("User not found", 404);
+        }
+    }
+
     
 
     /**
@@ -493,6 +606,50 @@ class UserController extends Controller
             return response("OK",200);
         }else {
             return response("This Card does not belong to this user.",403);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Select a user's bank account information.
+     *
+     * This endpoint allows an authenticated user to select a specific bank account information from their stored options.
+     * 
+     * @param int $userbankinfoId The ID of the user bank account information to be selected.
+     * @param int $userid The ID of the authenticated user.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully selected the user's bank account information.
+     * - 403: The specified bank account does not belong to the user.
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the user or bank account information with the given IDs is not found.
+     * 
+     * @lrd:end
+     */
+    public function selectBankInfo($userbankinfoId, $userid)
+    {
+        try {
+            // Retrieve the authenticated user and user bank account information
+            $user = User::findOrFail($userid);
+            $userbankinfo = Userbankinfo::findOrFail($userbankinfoId);
+
+            if ($user && $userbankinfo) {
+                
+                // Deselect all other bank account information for the user
+                Userbankinfo::where('user_id', $userid)->update(['Selected' => null]);
+
+                // Update the selected status for the specified bank account information
+                $userbankinfo->update([
+                    'Selected' => 'Selected'
+                ]);
+
+                return response("OK", 200);
+            } else {
+                return response("This bank account does not belong to this user.", 403);
+            }
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response("User or bank account information not found", 404);
         }
     }
 

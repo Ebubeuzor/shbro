@@ -32,11 +32,15 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('logout', [AuthController::class, 'logout']);
 
     Route::post('createCard/{id}', [UserController::class, 'createCard']);
+    Route::post('createUserBankinfo/{id}', [UserController::class, 'createUserBankinfo']);
 
     Route::delete('deleteUserCard/{userCardId}/{userid}', [UserController::class, 'deleteUserCard']);
     Route::delete('removeFromWishlist/{wishlistItemId}', [UserController::class, 'removeFromWishlist']);
     Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
+    Route::get('selectBankInfo/{userbankinfoId}/{userid}', [UserController::class, 'selectBankInfo']);
     Route::get('getUserCards/{userid}', [UserController::class, 'getUserCards']);
+    Route::get('getWishlistContainerItems/{userid}', [UserController::class, 'getWishlistContainerItems']);
+    Route::get('getUserBankInfos/{userid}', [UserController::class, 'getUserBankInfos']);
     Route::get('getUserWishlistContainers', [UserController::class, 'getUserWishlistContainers']);
     Route::delete('deleteUserWishlistContainers', [UserController::class, 'deleteUserWishlistContainers']);
     

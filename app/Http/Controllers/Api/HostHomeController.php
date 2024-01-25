@@ -215,7 +215,6 @@ class HostHomeController extends Controller
         $hostHome->security_deposit = $data['securityDeposit'];
 
         $price = $data['price'];
-        $securityDeposit = $data['securityDeposit'];
 
         $service_fee_percentage = 0.10;
         $tax_percentage = 0.05;
@@ -223,7 +222,7 @@ class HostHomeController extends Controller
         $service_fee = $price * $service_fee_percentage;
         $tax = $price * $tax_percentage;
 
-        $total = $price + $securityDeposit + $service_fee + $tax;
+        $total = $price + $service_fee + $tax;
 
         $hostHome->service_fee = $service_fee;
         $hostHome->tax = $tax;

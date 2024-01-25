@@ -229,8 +229,9 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = (((intval($hostHome->price) + intval($hostHome->service_fee) + intval($hostHome->tax)) * $dateDifference) + intval($hostHome->security_deposit)) * 100;
-
+        $total = ((intval($hostHome->total) * $dateDifference) + intval($hostHome->security_deposit)) * 100;
+        info((intval($hostHome->total) * $dateDifference));
+        info(intval($hostHome->security_deposit));
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
             'email' => $user->email,
@@ -348,11 +349,22 @@ class BookingsController extends Controller
                     $checkoutDate = $checkInDateTime->addDays($durationOfStay);
                     $amount = $data['data']['amount'];
                     $hostfee = 0.07;
-                    $hostBalance = ($amount/100) * $hostfee;
+                    $host_service_charge = ($amount/100) * $hostfee;
+                    $guest_service_charge = (($amount/100) * 0.10);
+                    $vat_charge = (($amount/100) * 0.05);
+                    $hostBalance = (($amount/100) - ($host_service_charge + $vat_charge + $guest_service_charge))  - intval($hostHome->security_deposit);
+                    $profit = ($host_service_charge + $guest_service_charge + $vat_charge) - intval($hostHome->security_deposit);
+                    $paymentType = $data['data']['authorization']['card_type'];
 
                     $booking->update([
+                        "totalamount" => ($amount/100),
                         "paymentStatus" => $status,
-                        'transactionID' => $transactionID,
+                        'paymentId' => $transactionID,
+                        'paymentType' => $paymentType,
+                        'host_service_charge' => $host_service_charge,
+                        'guest_service_charge' => $guest_service_charge,
+                        'profit' => $profit,
+                        'vat_charge' => $vat_charge,
                         'securityDeposit' => $hostHome->security_deposit,
                         'hostBalance' => $hostBalance,
                         'check_out_time' => $checkoutDate->format('g:i A')

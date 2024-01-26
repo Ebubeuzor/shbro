@@ -56,4 +56,9 @@ class HostHome extends Model
     public function bookings(){
         return $this->hasMany(Booking::class);
     }
+
+    public function wishlistItems()
+    {
+        return $this->hasMany(WishlistContainerItem::class);
+    }
 }

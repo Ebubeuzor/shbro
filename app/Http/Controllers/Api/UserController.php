@@ -278,40 +278,66 @@ class UserController extends Controller
             return response("You are not setting it right", 422);
         }
     }
-
     /**
      * @lrd:start
-     * Remove an item from the user's wishlist.
+     * Remove a HostHome from the user's wishlist.
      *
-     * This endpoint allows authenticated users to remove an item from their wishlist. 
-     * The user must own the wishlist item to perform the removal.
+     * This endpoint allows authenticated users to remove a HostHome from their wishlist. 
+     * The user must own the HostHome in the wishlist to perform the removal.
      *
-     * @param int $wishlistItemId The ID of the wishlist item to be removed.
+     * @param int $hostHomeId The ID of the HostHome to be removed from the wishlist.
      *
      * @return \Illuminate\Http\Response
      * 
-     * - 200: Successfully removed the item from the wishlist.
-     * - 403: Unauthorized to remove the item (e.g., user does not own the wishlist item).
-     * - 404: Wishlist item not found.
+     * - 200: Successfully removed the HostHome from the wishlist.
+     * - 403: Unauthorized to remove the item (e.g., user does not own the HostHome in the wishlist).
+     * - 404: HostHome not found.
      * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the wishlist item with the given ID is not found.
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the HostHome with the given ID is not found.
+     * 
+     * Example Request:
+     * ```
+     * DELETE /api/wishlist/{hostHomeId}
+     * ```
+     * 
+     * Example Response (Success):
+     * ```
+     * {
+     *     "message": "HostHome successfully removed from the wishlist"
+     * }
+     * ```
+     * 
+     * Example Response (Unauthorized):
+     * ```
+     * {
+     *     "error": "Unauthorized to remove the item"
+     * }
+     * ```
+     * 
+     * Example Response (Not Found):
+     * ```
+     * {
+     *     "error": "HostHome not found"
+     * }
      * @lrd:end
      */
-    public function removeFromWishlist($wishlistItemId)
-    {
-        $wishlistItem = WishlistContainerItem::findOrFail($wishlistItemId);
 
-        // Check if the authenticated user owns the wishlist item
-        $user = auth()->user();
-
-        if ($user && $wishlistItem->wishlistcontainer->user_id === $user->id) {
-            $wishlistItem->delete();
-
-            return response("Item removed from the wishlist", 200);
-        } else {
-            return response("Unauthorized to remove the item", 403);
-        }
-    }
+     public function removeFromWishlist($hostHomeId)
+     {
+         $hostHome = HostHome::findOrFail($hostHomeId);
+     
+         // Check if the authenticated user owns the HostHome in their wishlist
+         $user = auth()->user();
+     
+         if ($user && $hostHome->user_id === $user->id) {
+             // Remove all wishlist items associated with this HostHome
+             $hostHome->wishlistItems()->delete();
+     
+             return response("HostHome removed from the wishlist", 200);
+         } else {
+             return response("Unauthorized to remove the item", 403);
+         }
+     }
 
     /**
      * @lrd:start
@@ -742,40 +768,43 @@ class UserController extends Controller
         $minBathrooms = $data['bathrooms'];
         $maxPrice = $data['price'];
         $amenities = $data['amenities'];
-    
-        $query = HostHome::query();
-    
-        if ( ! empty($propertyType)) {
+
+        $query = HostHome::where('verified', 1)
+                        ->whereNull('disapproved')
+                        ->whereNull('banned')
+                        ->whereNull('suspend');
+
+        if (!empty($propertyType)) {
             $query->whereIn('property_type', $propertyType);
         }
-    
-        if ( ! empty($minBedrooms)) {
+
+        if (!empty($minBedrooms)) {
             $query->where('bedroom', '>=', $minBedrooms);
         }
-    
-        if ( ! empty($minBeds)) {
+
+        if (!empty($minBeds)) {
             $query->where('beds', '>=', $minBeds);
         }
-    
-        if ( ! empty($data['bedrooms'])) {
+
+        if (!empty($data['bedrooms'])) {
             $query->where('bathrooms', '>=', $minBathrooms);
         }
-    
-        if ( ! empty($data['price'])) {
+
+        if (!empty($data['price'])) {
             $query->where('price', '<=', $maxPrice);
         }
-    
-        if ( ! empty($data['amenities'])) {
+
+        if (!empty($data['amenities'])) {
             $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
                 $q->whereIn('offer', $amenities);
             });
         }
-        
-        $result = $query->get();
-        $result->load('hosthomephotos');
-        
-        return response()->json(['data' => $result], 200);
+
+        $result = $query->with('hosthomephotos')->get();
+
+        return response()->json(['data' => HostHomeResource::collection($result)], 200);
     }
+
 
     public function destroy(User $user)
     {

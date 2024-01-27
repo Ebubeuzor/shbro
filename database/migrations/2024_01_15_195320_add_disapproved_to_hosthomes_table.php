@@ -13,9 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('host_homes', function (Blueprint $table) {
-            $table->string('disapproved')->nullable();
-        });
+        // Schema::table('host_homes', function (Blueprint $table) {
+        //     $table->string('disapproved')->nullable();
+        // });
     }
 
     /**

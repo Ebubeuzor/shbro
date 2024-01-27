@@ -388,7 +388,7 @@ class BookingsController extends Controller
                     $guestMessage = "Your check-in date and time is " . $checkInDate . " " . $checkInTime . "\n";
                     $guestMessage .= "Your checkout date and time is " . $checkOutDate . " " . $booking->check_out_time . "\n";
 
-                    Mail::to($user->email)->send(new NotificationMail($host, $guestMessage, "Your check-in and checkout time"));
+                    Mail::to($user->email)->send(new NotificationMail($user, $guestMessage, "Your check-in and checkout time"));
                     return redirect()->route('successPage');
                 } else {
                     return redirect()->route('failedPage');

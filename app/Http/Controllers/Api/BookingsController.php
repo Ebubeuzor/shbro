@@ -9,6 +9,7 @@ use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\User;
+use App\Models\UserTrip;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -222,6 +223,7 @@ class BookingsController extends Controller
         $booking->check_out = $checkOut->format('Y-m-d');
         $booking->user_id = $user->id;
         $booking->host_home_id = $hostHome->id;
+        $booking->hostId = $hostHome->user_id;
         $booking->save();
 
         // Generate a payment reference
@@ -345,15 +347,14 @@ class BookingsController extends Controller
                     ]);
                     
                     $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
-                    $durationOfStay = $hostHome->duration_of_stay;
+                    $durationOfStay = $booking->duration_of_stay;
                     $checkoutDate = $checkInDateTime->addDays($durationOfStay);
                     $amount = $data['data']['amount'];
-                    $hostfee = 0.07;
-                    $host_service_charge = ($amount/100) * $hostfee;
-                    $guest_service_charge = (($amount/100) * 0.10);
-                    $vat_charge = (($amount/100) * 0.05);
-                    $hostBalance = (($amount/100) - ($host_service_charge + $vat_charge + $guest_service_charge))  - intval($hostHome->security_deposit);
-                    $profit = ($host_service_charge + $guest_service_charge + $vat_charge) - intval($hostHome->security_deposit);
+                    $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
+                    $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
+                    $guest_service_charge = (intval($hostHome->service_fee) * $durationOfStay);
+                    $vat_charge = (intval($hostHome->tax) * $durationOfStay);
+                    $profit = (($amount/100) - $hostBalance) - intval($hostHome->security_deposit);
                     $paymentType = $data['data']['authorization']['card_type'];
 
                     $booking->update([
@@ -369,12 +370,19 @@ class BookingsController extends Controller
                         'hostBalance' => $hostBalance,
                         'check_out_time' => $checkoutDate->format('g:i A')
                     ]);
+
+                    $userTrip = new UserTrip();
+                    $userTrip->user_id = $booking->user_id;
+                    $userTrip->booking_id = $booking->id;
+                    $userTrip->save();
+
                     // Notify host about the booking
                     $message = $user->name . " has booked your apartment";
                     $host = User::find($hostHome->user_id);
                     Mail::to($host->email)->send(new NotificationMail($host, $message, "Your apartment has been booked"));
-                    $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j');
-                    $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j');
+                    $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
+                    $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
+                    
                     $checkInTime = $hostHome->check_in_time;
 
                     $guestMessage = "Your check-in date and time is " . $checkInDate . " " . $checkInTime . "\n";
@@ -389,46 +397,6 @@ class BookingsController extends Controller
         }else {
             abort(404,"No record found");
         }
-    }
-
-    public function checkingOut()
-    {
-        // Get bookings where the check_out date is greater than or equal to the present day
-        $bookings = Booking::where('check_out', '>=', Carbon::today()->toDateString())->get();
-
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
-
-        return response(['bookings' => $bookingsResource]);
-    }
-
-    public function currentlyHosting(){
-        $bookings = Booking::whereNotNull('checked_in')->get();
-
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
-
-        return response(['bookings' => $bookingsResource]);
-    }
-
-    public function arrivingSoon()
-    {
-        // Get bookings where the check_in date is the present day
-        $bookings = Booking::where('check_in', Carbon::today()->toDateString())->get();
-
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
-
-        return response(['bookings' => $bookingsResource]);
-    }
-
-    public function upcomingReservation(){
-        $bookings = Booking::where('checked_in', null)->get();
-
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
-
-        return response(['bookings' => $bookingsResource]);
     }
 
     public function successful(){

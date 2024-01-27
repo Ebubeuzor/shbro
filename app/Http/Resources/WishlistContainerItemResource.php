@@ -19,7 +19,8 @@ class WishlistContainerItemResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'hosthomes' => new HostHomeResource($hostHome),
+            'name' => $this->name,
+            'hosthomes' => new HostHomeResource($hostHome)
         ];
     }
 }

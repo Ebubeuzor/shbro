@@ -28,16 +28,15 @@ class Booking extends Model
     public function getFormattedCheckOutAttribute()
     {
         $checkOutDate = Carbon::createFromFormat('Y-m-d', $this->attributes['check_out']);
-        
-        if ($checkOutDate->isToday()) {
-            return 'Today';
-        }
 
-        if ($checkOutDate->isFuture()) {
+        if (Carbon::today()->gt($checkOutDate)) {
             return 'Expired';
+        } elseif ($checkOutDate->isToday()) {
+            return 'Today';
+        } else {
+            return $checkOutDate->format('j F Y');
         }
-
-        return $checkOutDate->format('j F Y');
     }
+
 
 }

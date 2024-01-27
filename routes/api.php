@@ -42,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('getWishlistContainerItems/{userid}', [UserController::class, 'getWishlistContainerItems']);
     Route::get('getUserBankInfos/{userid}', [UserController::class, 'getUserBankInfos']);
     Route::get('getUserWishlistContainers', [UserController::class, 'getUserWishlistContainers']);
+    Route::get('upcomingReservation', [UserController::class, 'upcomingReservation']);
+    Route::get('arrivingSoon', [UserController::class, 'arrivingSoon']);
+    Route::get('checkingOut', [UserController::class, 'checkingOut']);
+    Route::get('currentlyHosting', [UserController::class, 'currentlyHosting']);
+    Route::get('userTrips', [UserController::class, 'userTrips']);
     Route::delete('deleteUserWishlistContainers', [UserController::class, 'deleteUserWishlistContainers']);
     
     Route::middleware('googleSignup')->group(function(){

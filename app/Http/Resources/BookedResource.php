@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\HostHome;
+use App\Models\User;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class BookedResource extends JsonResource
@@ -15,11 +17,11 @@ class BookedResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'name' => $this->user->name,
+            'name' => User::find($this->user_id)->name,
             'check_in_date' => $this->formattedCheckIn,
             'check_out_date' => $this->formattedCheckOut,
-            'check_out_time' => $this->hosthome->check_in_time,
-            'check_out_time' => $this->hosthome->check_out_time,
+            'check_in_time' => HostHome::find($this->host_home_id)->check_in_time,
+            'check_out_time' => $this->check_out_time,
         ];
     }
 }

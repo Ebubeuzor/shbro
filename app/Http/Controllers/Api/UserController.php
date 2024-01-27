@@ -8,21 +8,26 @@ use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
+use App\Http\Resources\BookedResource;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
+use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\Notification;
 use App\Models\Tip;
 use App\Models\User;
 use App\Models\Userbankinfo;
 use App\Models\UserCard;
+use App\Models\UserTrip;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -278,6 +283,7 @@ class UserController extends Controller
             return response("You are not setting it right", 422);
         }
     }
+
     /**
      * @lrd:start
      * Remove a HostHome from the user's wishlist.
@@ -476,6 +482,35 @@ class UserController extends Controller
             });
 
             return response()->json(['message' => 'All wishlist containers and items deleted successfully']);
+        }
+
+        return response()->json(['message' => 'User not found'], 404);
+    }
+    
+    
+    /**
+     * @lrd:start
+     * Retrieve trips for the authenticated user.
+    *
+    * This endpoint allows an authenticated user to retrieve a list of their trips.
+    *
+    * @return \Illuminate\Http\Response
+    * 
+    * - 200: Successfully retrieved the user's trips.
+    * - 404: User not found.
+     * @lrd:end
+     */
+
+    public function userTrips()
+    {
+        // Get the authenticated user
+        $user = User::find(auth()->id());
+
+        // Delete all wishlist containers and their items for the user
+        if ($user) {
+            return UserTripResource::collection(
+                UserTrip::where('user_id',$user->id)->get()
+            );
         }
 
         return response()->json(['message' => 'User not found'], 404);
@@ -803,6 +838,142 @@ class UserController extends Controller
         $result = $query->with('hosthomephotos')->get();
 
         return response()->json(['data' => HostHomeResource::collection($result)], 200);
+    }
+
+    
+    /**
+     * @lrd:start
+     * Retrieve bookings for checking out.
+     *
+     * This endpoint allows a host to retrieve a list of bookings where guests are checking out.
+     * Bookings are filtered based on the check_out date being greater than or equal to the present day,
+     * successful payment status, the authenticated host's ID, and the check_out_time being greater than or equal to the current time.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the list of bookings for checking out.
+     * 
+     * @lrd:end
+     */
+    public function checkingOut()
+    {
+        // Get bookings for checking out
+        $bookings = Booking::where('check_out', '=', Carbon::today()->toDateString())
+                        ->where('paymentStatus', 'success')
+                        ->where('hostId', auth()->id())
+                        ->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
+                        ->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+
+    /**
+     * Retrieve currently hosted bookings.
+     *
+     * This endpoint allows a host to retrieve a list of currently hosted bookings.
+     * Bookings are filtered based on the check_out date being less than or equal to the present day,
+     * the check_in date being greater than or equal to the present day,
+     * successful payment status, the authenticated host's ID, and the check_out_time being less than or equal to the current time.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the list of currently hosted bookings.
+     * 
+     * 
+     * @lrd:end
+     */
+    public function currentlyHosting()
+    {
+        // Get currently hosted bookings using a join
+        $bookings = Booking::select('bookings.*')
+                        ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+                        ->where('check_out', '<=', Carbon::today()->toDateString())
+                        ->where('check_in', '>=', Carbon::today()->toDateString())
+                        ->where('paymentStatus', 'success')
+                        ->where('hostId', auth()->id())
+                        ->where('host_homes.check_in_time', '>=', Carbon::now()->format('g:i A'))
+                        ->where('check_out_time', '<=', Carbon::now()->format('g:i A'))
+                        ->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    /**
+     * Retrieve bookings arriving soon.
+     *
+     * This endpoint allows a host to retrieve a list of bookings for the same day and before the check_in_time.
+     * Bookings are filtered based on the check_in date being the present day,
+     * successful payment status, the authenticated host's ID, and the check_in_time from the related HostHome model being greater than the current time.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the list of bookings arriving soon.
+     * @lrd:end
+     */
+    public function arrivingSoon()
+    {
+        // Get bookings where the check_in date is the present day using a join
+        $bookings = Booking::select('bookings.*')
+                    ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+                    ->whereDate('check_in', '=', Carbon::today()->toDateString())
+                    ->where('paymentStatus', 'success')
+                    ->where('hostId', auth()->id())
+                    ->where(function ($query) {
+                            $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
+                                ->orWhere(function ($q) {
+                                    // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
+                                    $q->where('host_homes.check_in_time', '12:00 PM')
+                                        ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
+                                });
+                        })->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    /**
+     * Retrieve upcoming reservations.
+     * This endpoint allows a host to retrieve a list of upcoming reservations.
+     * Reservations are filtered based on the check_in date being before or on the present day,
+     * successful payment status, the authenticated host's ID, and the check_in_time from the related HostHome model
+     * being less than the current time.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the list of upcoming reservations.
+     * 
+     * @lrd:end
+     */
+    public function upcomingReservation()
+    {
+        // Get upcoming reservations using a join
+        $bookings = Booking::select('bookings.*')
+                    ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+                    ->whereDate('check_in', '>=', Carbon::today()->toDateString())
+                    ->where('paymentStatus', 'success')
+                    ->where('hostId', auth()->id())
+                    ->where(function ($query) {
+                        $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
+                            ->orWhere(function ($q) {
+                                // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
+                                $q->where('host_homes.check_in_time', '12:00 PM')
+                                    ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
+                            });
+                    })->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
     }
 
 

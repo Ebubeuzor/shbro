@@ -40,6 +40,7 @@ return new class extends Migration
             $table->string('paidHostApproval')->nullable();
             $table->string('paidHostdate')->nullable();
             $table->string('paidHostPaymentId')->nullable();
+            $table->integer('hostId')->nullable();
             $table->foreignIdFor(\App\Models\User::class,"user_id");
             $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
             $table->timestamps();

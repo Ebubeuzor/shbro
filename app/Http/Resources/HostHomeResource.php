@@ -3,7 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Models\Wishlistcontainer;
+use Illuminate\Console\View\Components\Info;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 class HostHomeResource extends JsonResource
@@ -14,9 +16,12 @@ class HostHomeResource extends JsonResource
      * @param  \Illuminate\Http\Request  $request
      * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
      */
+    
     public function toArray($request)
     {
         $user = $request->user();
+        
+        Log::info(auth()->user());
         return [
             'id' => $this->id,
             'user' => $this->user,
@@ -57,6 +62,7 @@ class HostHomeResource extends JsonResource
 
     protected function isAddedToWishlist($userId, $hostHomeId)
     {
+        Log::info($userId . " " . $hostHomeId);
         return Wishlistcontainer::whereHas('items', function ($query) use ($hostHomeId) {
             $query->where('host_home_id', $hostHomeId);
         })->where('user_id', $userId)->exists();

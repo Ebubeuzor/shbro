@@ -24,7 +24,8 @@ class FilterHomepageRequest extends FormRequest
     public function rules()
     {
         return [
-            'price' => 'nullable',
+            'min_price' => 'required',
+            'max_price' => 'required',
             'bedrooms' => 'nullable',
             'beds' => 'nullable',
             'bathrooms' => 'nullable',

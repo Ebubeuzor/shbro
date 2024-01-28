@@ -88,10 +88,11 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
-
-
+    
+    
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
+    Route::get('/getAllBookingDates', [BookingsController::class, 'getAllBookingDates']);
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
@@ -112,4 +113,6 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+
 Route::post('/filterHomepage', [UserController::class, 'filterHomepage']);
+Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);

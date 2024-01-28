@@ -260,6 +260,28 @@ class BookingsController extends Controller
         ]);
     }
 
+    /**
+     * @lrd:start
+     * Gets all check-in and check-out dates from bookings.
+     * @lrd:end
+     */
+    public function getAllBookingDates()
+    {
+        // Get all check-in and check-out dates from bookings
+        $bookingDates = Booking::select('check_in', 'check_out')
+        ->where('paymentStatus', 'success')
+        ->get();
+
+        // Transform the dates if needed
+        $formattedDates = $bookingDates->map(function ($booking) {
+            return [
+                'check_in' => Carbon::parse($booking->check_in)->format('Y-m-d'),
+                'check_out' => Carbon::parse($booking->check_out)->format('Y-m-d'),
+            ];
+        });
+
+        return response(['booking_dates' => $formattedDates]);
+    }
 
     // public function callback($userid, $usertoken, $hosthomeid)
     // {

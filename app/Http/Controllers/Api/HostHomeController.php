@@ -375,7 +375,7 @@ class HostHomeController extends Controller
 
     /**
      * @lrd:start
-     * this is for a user to see his house but only the admin can see every house
+     * this is for a user (Host Only) to see his house but only the admin can see every house
      * @lrd:end
      */
     public function show($hostHomeId)
@@ -390,6 +390,22 @@ class HostHomeController extends Controller
         }else{
             abort(403,'Unauthorized Access');
         }
+    }
+    
+
+    /**
+     * @lrd:start
+     * this is for a user (guests) to see a home based on a provided homeId
+     * @lrd:end
+     */
+    public function showGuestHome($hostHomeId)
+    {
+        $hostHome = HostHome::whereId($hostHomeId)
+                    ->where('verified', 1)
+                    ->where('disapproved',null)
+                    ->whereNull('banned')
+                    ->whereNull('suspend')->first();
+        return new HostHomeResource($hostHome);
     }
     
     

@@ -28,6 +28,7 @@ use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -794,50 +795,64 @@ class UserController extends Controller
      * and if consumed will will return a 200 status code
      * @lrd:end
      */
+
     public function filterHomepage(FilterHomepageRequest $request)
     {
-        $data = $request->validated();
-        $propertyType = $data['property_type'];
-        $minBedrooms = $data['bedrooms'];
-        $minBeds = $data['beds'];
-        $minBathrooms = $data['bathrooms'];
-        $maxPrice = $data['price'];
-        $amenities = $data['amenities'];
+        try {
+            $data = $request->validated();
+            $propertyType = $data['property_type'];
+            $minBedrooms = $data['bedrooms'];
+            $minBeds = $data['beds'];
+            $minBathrooms = $data['bathrooms'];
+            $minPrice = $data['min_price'];
+            $maxPrice = $data['max_price'];
+            $amenities = $data['amenities'];
 
-        $query = HostHome::where('verified', 1)
-                        ->whereNull('disapproved')
-                        ->whereNull('banned')
-                        ->whereNull('suspend');
+            $query = HostHome::where('verified', 1)
+                            ->whereNull('disapproved')
+                            ->whereNull('banned')
+                            ->whereNull('suspend');
 
-        if (!empty($propertyType)) {
-            $query->whereIn('property_type', $propertyType);
+            if (!empty($propertyType) && is_array($propertyType)) {
+                $query->whereIn('property_type', $propertyType);
+            }
+
+            if (!empty($minBedrooms) && is_numeric($minBedrooms)) {
+                $query->where('bedroom', '>=', $minBedrooms);
+            }
+
+            if (!empty($minBeds) && is_numeric($minBeds)) {
+                $query->where('beds', '>=', $minBeds);
+            }
+
+            if (!empty($minBathrooms) && is_numeric($minBathrooms)) {
+                $query->where('bathrooms', '>=', $minBathrooms);
+            }
+            
+            if (!empty($minPrice) && is_numeric($minPrice)) {
+                $query->where('price', '>=', $minPrice);
+            }
+        
+            if (!empty($maxPrice) && is_numeric($maxPrice)) {
+                $query->where('price', '<=', $maxPrice);
+            }
+
+            if (!empty($amenities) && is_array($amenities)) {
+                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                    $q->whereIn('offer', $amenities);
+                });
+            }
+
+            $result = $query->with('hosthomephotos')->get();
+
+            return response()->json(['data' => HostHomeResource::collection($result)], 200);
+        } catch (QueryException $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
-
-        if (!empty($minBedrooms)) {
-            $query->where('bedroom', '>=', $minBedrooms);
-        }
-
-        if (!empty($minBeds)) {
-            $query->where('beds', '>=', $minBeds);
-        }
-
-        if (!empty($data['bedrooms'])) {
-            $query->where('bathrooms', '>=', $minBathrooms);
-        }
-
-        if (!empty($data['price'])) {
-            $query->where('price', '<=', $maxPrice);
-        }
-
-        if (!empty($data['amenities'])) {
-            $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
-                $q->whereIn('offer', $amenities);
-            });
-        }
-
-        $result = $query->with('hosthomephotos')->get();
-
-        return response()->json(['data' => HostHomeResource::collection($result)], 200);
     }
 
     

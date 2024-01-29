@@ -88,7 +88,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
-    
+    Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
+    Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
+
     
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);

@@ -45,6 +45,55 @@ class HostHomeController extends Controller
     
     /**
      * @lrd:start
+     * Delete a host home for the authenticated user.
+     *
+     * @param  int  $hostHomeId
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     */
+    public function deleteHostHome($hostHomeId)
+    {
+        // Find the host home by ID
+        $hostHome = HostHome::find($hostHomeId);
+
+        // Check if the authenticated user owns the host home
+        if ($hostHome && $hostHome->user_id == Auth::id()) {
+            $hostHome->hosthomedescriptions()->delete();
+            $hostHome->hosthomediscounts()->delete();
+            $hostHome->hosthomenotices()->delete();
+            $hostHome->hosthomeoffers()->delete();
+            $hostHome->hosthomephotos()->delete();
+            $hostHome->hosthomereservations()->delete();
+            $hostHome->hosthomerules()->delete();
+            $hostHome->forceDelete();
+
+            return response([
+                "message" => "Host home deleted successfully",
+            ], 200);
+        } else {
+            return response("Unauthorized to delete the host home", 403);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Get all host homes for the authenticated user.
+     *
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     */
+    public function getUserHostHomes()
+    {
+        // Retrieve all host homes for the authenticated user
+        $userHostHomes = Auth::user()->hostHomes;
+
+        return response([
+            "userHostHomes" => HostHomeResource::collection($userHostHomes),
+        ], 200);
+    }
+
+    /**
+     * @lrd:start
      * gets the details of every homes
      * @lrd:end
      */
@@ -510,6 +559,7 @@ class HostHomeController extends Controller
             'service_fee' => $service_fee,
             'tax' => $tax,
             'total' => $total,
+            'verified' => 0,
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ]);

@@ -322,32 +322,35 @@ class UserController extends Controller
      * }
      * ```
      * 
-     * Example Response (Not Found):
-     * ```
-     * {
-     *     "error": "HostHome not found"
-     * }
      * @lrd:end
      */
 
-     public function removeFromWishlist($hostHomeId)
-     {
-         $hostHome = HostHome::findOrFail($hostHomeId);
-     
-         // Check if the authenticated user owns the HostHome in their wishlist
-         $user = User::find(auth()->id());
-         $userWishlist = Wishlistcontainer::where();
-     
-         if ($user) {
-             // Remove all wishlist items associated with this HostHome
-             $hostHome->wishlistItems()->delete();
-     
-             return response("HostHome removed from the wishlist", 200);
-         } else {
-             return response("Unauthorized to remove the item", 403);
-         }
-     }
+     public function removeFromWishlist($wishlistcontaineritemid)
+    {
+        // Check if the authenticated user owns the HostHome in their wishlist
+        $user = User::find(auth()->id());
+        $userWishlist = Wishlistcontainer::where('user_id', $user->id)->first();
 
+        if ($userWishlist) {
+            $userWishlistitems = $userWishlist->items;
+
+            foreach ($userWishlistitems as $wishlistItem) {
+                // Compare the ID of each wishlist item with the provided $wishlistcontaineritemid
+                if ($wishlistItem->id == $wishlistcontaineritemid) {
+                    // Remove the specific wishlist item associated with this HostHome
+                    $wishlistItem->delete();
+
+                    return response("HostHome removed from the wishlist", 200);
+                }
+            }
+
+            return response("Item not found in the wishlist", 404);
+        } else {
+            return response("Unauthorized to remove the item", 403);
+        }
+}
+
+    
     /**
      * @lrd:start
      * This is a get request and it is used to get users wishlistContainers

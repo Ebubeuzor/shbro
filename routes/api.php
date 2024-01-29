@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('createUserBankinfo/{id}', [UserController::class, 'createUserBankinfo']);
 
     Route::delete('deleteUserCard/{userCardId}/{userid}', [UserController::class, 'deleteUserCard']);
-    Route::delete('removeFromWishlist/{hostHomeId}', [UserController::class, 'removeFromWishlist']);
+    Route::delete('removeFromWishlist/{wishlistcontaineritemid}', [UserController::class, 'removeFromWishlist']);
     Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
     Route::get('selectBankInfo/{userbankinfoId}/{userid}', [UserController::class, 'selectBankInfo']);
     Route::get('getUserCards/{userid}', [UserController::class, 'getUserCards']);

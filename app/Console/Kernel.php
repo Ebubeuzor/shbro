@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Jobs\CheckInNotificationJob;
+use App\Jobs\CheckOutNotificationJob;
 use App\Jobs\ClearRouteCacheJob;
 use App\Jobs\FewHoursReminderJob;
 use App\Jobs\ProcessEmailReminders;
@@ -36,6 +37,9 @@ class Kernel extends ConsoleKernel
     
             // Schedule the CheckInNotificationJob at the check-in time
             $schedule->job(new CheckInNotificationJob($booking))->everyMinute();
+            
+            // Schedule the CheckInNotificationJob at the check-in time
+            $schedule->job(new CheckOutNotificationJob($booking))->everyMinute();
             
         }       
     }

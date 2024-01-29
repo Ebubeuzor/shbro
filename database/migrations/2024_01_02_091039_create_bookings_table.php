@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('twoDayReminder')->nullable();
             $table->string('fewHoursReminder')->nullable();
             $table->string('checkInNotification')->nullable();
+            $table->integer('checkOutNotification')->nullable();
             $table->string('paidHostStatus')->nullable();
             $table->string('paidHostApproval')->nullable();
             $table->string('paidHostdate')->nullable();

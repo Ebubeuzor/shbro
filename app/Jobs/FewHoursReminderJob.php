@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\NotificationMail;
 use App\Models\Booking;
+use App\Models\HostHome;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -27,10 +28,20 @@ class FewHoursReminderJob implements ShouldQueue
     public function handle()
     {
         // Check if today is the check-in day
-        $checkInDate = Carbon::parse($this->booking->check_in);
-        $today = Carbon::today();
+        $hosthome = HostHome::find($this->booking->host_home_id);
 
-        if ($checkInDate->isSameDay($today) && is_null($this->booking->fewHoursReminder)) {
+        // Convert the check-in time to 24-hour format
+        $checkInTime = Carbon::parse($hosthome->check_in_time)->format('H:i');
+
+        // Check if today is the check-in day
+        $checkInDate = Carbon::parse($this->booking->check_in . ' ' . $checkInTime);
+        $now = Carbon::now();
+
+        // Calculate the time difference in hours between now and the check-in time
+        $hoursDifference = $now->diffInHours($checkInDate);
+
+        // Check if today is the check-in day and it's within the specified hours before check-in
+        if ($checkInDate->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 5 && is_null($this->booking->fewHoursReminder)) {
             // Perform actions for the few hours reminder
             Mail::to($this->booking->user->email)->send(new NotificationMail(
                 $this->booking->user,
@@ -38,12 +49,10 @@ class FewHoursReminderJob implements ShouldQueue
                 "Your check-in is approaching. Safe travels!"
             ));
 
-            $updateBookingData = Booking::find($this->booking->id);
-            $updateBookingData->update(
-                [
-                    'fewHoursReminder' => now(),
-                ]
-            );
+            // Update the booking with the few hours reminder timestamp
+            $this->booking->update([
+                'fewHoursReminder' => now(),
+            ]);
         }
     }
 }

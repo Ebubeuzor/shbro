@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
@@ -290,7 +291,7 @@ class UserController extends Controller
      * Remove a HostHome from the user's wishlist.
      *
      * This endpoint allows authenticated users to remove a HostHome from their wishlist. 
-     * The user must own the HostHome in the wishlist to perform the removal.
+     * 
      *
      * @param int $hostHomeId The ID of the HostHome to be removed from the wishlist.
      *
@@ -334,9 +335,10 @@ class UserController extends Controller
          $hostHome = HostHome::findOrFail($hostHomeId);
      
          // Check if the authenticated user owns the HostHome in their wishlist
-         $user = auth()->user();
+         $user = User::find(auth()->id());
+         $userWishlist = Wishlistcontainer::where();
      
-         if ($user && $hostHome->user_id === $user->id) {
+         if ($user) {
              // Remove all wishlist items associated with this HostHome
              $hostHome->wishlistItems()->delete();
      
@@ -780,7 +782,11 @@ class UserController extends Controller
         $user = User::where('email',$request->email)->first();
 
         if ($user) {
+            $user->update([
+                'remember_token' =>null
+            ]);
             Mail::to($user->email)->send(new ActivateAccount($user));
+            
             return response('Mail sent',204);
         }else {
             return response('User not found.',422);
@@ -797,6 +803,65 @@ class UserController extends Controller
      */
 
     public function filterHomepage(FilterHomepageRequest $request)
+    {
+        try {
+            $data = $request->validated();
+            $propertyType = $data['property_type'];
+            $minBedrooms = $data['bedrooms'];
+            $minBeds = $data['beds'];
+            $minBathrooms = $data['bathrooms'];
+            $minPrice = $data['min_price'];
+            $maxPrice = $data['max_price'];
+            $amenities = $data['amenities'];
+
+            $query = HostHome::where('verified', 1)
+                            ->whereNull('disapproved')
+                            ->whereNull('banned')
+                            ->whereNull('suspend');
+
+            if (!empty($propertyType) && is_array($propertyType)) {
+                $query->whereIn('property_type', $propertyType);
+            }
+
+            if (!empty($minBedrooms) && is_numeric($minBedrooms)) {
+                $query->where('bedroom', '>=', $minBedrooms);
+            }
+
+            if (!empty($minBeds) && is_numeric($minBeds)) {
+                $query->where('beds', '>=', $minBeds);
+            }
+
+            if (!empty($minBathrooms) && is_numeric($minBathrooms)) {
+                $query->where('bathrooms', '>=', $minBathrooms);
+            }
+            
+            if (!empty($minPrice) && is_numeric($minPrice)) {
+                $query->where('price', '>=', $minPrice);
+            }
+        
+            if (!empty($maxPrice) && is_numeric($maxPrice)) {
+                $query->where('price', '<=', $maxPrice);
+            }
+
+            if (!empty($amenities) && is_array($amenities)) {
+                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                    $q->whereIn('offer', $amenities);
+                });
+            }
+
+            $result = $query->with('hosthomephotos')->get();
+
+            return response()->json(['data' => HostHomeResource::collection($result)], 200);
+        } catch (QueryException $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            return response()->json(['error' => 'An unexpected error occurred.'], 500);
+        }
+    }
+    
+    public function filterHomepageLocation(FilterHomepageLocationRequest $request)
     {
         try {
             $data = $request->validated();

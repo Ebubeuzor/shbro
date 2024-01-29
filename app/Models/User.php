@@ -59,6 +59,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(HostHome::class);
     }
 
+    public function pendingReviews(){
+        return $this->hasMany(Pendingreview::class);
+    }
+
+    public function reviews(){
+        return $this->hasMany(Review::class);
+    }
+
     public function wishlists(){
         return $this->hasMany(Wishlistcontainer::class);
     }

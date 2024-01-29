@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->integer("ratings");
+            $table->integer("host_id");
             $table->foreignIdFor(\App\Models\User::class,"user_id");
             $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
             $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");

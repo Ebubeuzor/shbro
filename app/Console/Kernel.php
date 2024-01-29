@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Jobs\CheckInNotificationJob;
+use App\Jobs\ClearRouteCacheJob;
 use App\Jobs\FewHoursReminderJob;
 use App\Jobs\ProcessEmailReminders;
 use App\Jobs\TwoDayReminderJob;
@@ -21,6 +22,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new ProcessEmailReminders)->daily();
+        $schedule->job(new ClearRouteCacheJob)->everyMinute();
 
         $bookings = Booking::where('paymentStatus','success')->get(); 
 

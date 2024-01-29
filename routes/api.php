@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
+    Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
 });
 
 Route::get('homepage', [HomepageController::class, 'index']);
@@ -114,5 +115,5 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
 
-Route::post('/filterHomepage', [UserController::class, 'filterHomepage']);
 Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
+Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);

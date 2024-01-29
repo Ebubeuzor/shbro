@@ -107,7 +107,7 @@ export default function Home() {
         // Add more house details here
       });
       openRateHouseModal(); // Show the RateHouseModal after fetching details
-    }, 500000000);
+    }, 500);
 
     return () => clearTimeout(timer); // Cleanup the timer on unmount
   }, []);

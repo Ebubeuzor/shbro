@@ -325,7 +325,7 @@ class UserController extends Controller
      * @lrd:end
      */
 
-     public function removeFromWishlist($wishlistcontaineritemid)
+     public function removeFromWishlist($hostHomeId)
     {
         // Check if the authenticated user owns the HostHome in their wishlist
         $user = User::find(auth()->id());
@@ -336,7 +336,7 @@ class UserController extends Controller
 
             foreach ($userWishlistitems as $wishlistItem) {
                 // Compare the ID of each wishlist item with the provided $wishlistcontaineritemid
-                if ($wishlistItem->id == $wishlistcontaineritemid) {
+                if ($wishlistItem->host_home_id == $hostHomeId) {
                     // Remove the specific wishlist item associated with this HostHome
                     $wishlistItem->delete();
 

@@ -13,7 +13,7 @@ class VerificationController extends Controller
     public function verifyEmail($token)
     {
         $user = User::where('remember_token',$token)->first();
-        if (!empty($user)) {
+        if (!empty($user) || $user->is_active == 0) {
             if ($user->email_verified_at == null) {
                     
                 $user->email_verified_at = date('Y-m-d H:i:s');

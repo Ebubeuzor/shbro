@@ -765,7 +765,6 @@ class UserController extends Controller
             // Deactivate the user's account
             $user->update([
                 'is_active' => false,
-                'remember_token' =>null
             ]);
 
             return response('', 204);

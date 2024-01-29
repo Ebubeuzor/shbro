@@ -763,7 +763,10 @@ class UserController extends Controller
             }
 
             // Deactivate the user's account
-            $user->update(['is_active' => false]);
+            $user->update([
+                'is_active' => false,
+                'remember_token' =>null
+            ]);
 
             return response('', 204);
         }
@@ -782,9 +785,7 @@ class UserController extends Controller
         $user = User::where('email',$request->email)->first();
 
         if ($user) {
-            $user->update([
-                'remember_token' =>null
-            ]);
+            
             Mail::to($user->email)->send(new ActivateAccount($user));
             
             return response('Mail sent',204);

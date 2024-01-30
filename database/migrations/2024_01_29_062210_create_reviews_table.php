@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string("title");
             $table->text("comment");
             $table->foreignIdFor(\App\Models\User::class,"user_id");
+            $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
             $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
             $table->timestamps();
         });

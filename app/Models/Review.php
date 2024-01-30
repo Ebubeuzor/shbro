@@ -10,4 +10,8 @@ class Review extends Model
     use HasFactory;
     
     protected $guarded = [];
+
+    public function booking(){
+        return $this->belongsTo(Booking::class);
+    }
 }

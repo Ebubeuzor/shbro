@@ -51,6 +51,7 @@ class CheckOutNotificationJob implements ShouldQueue
 
                 // Create a pending review
                 $pendingReviews = new Pendingreview();
+                $pendingReviews->booking_id = $this->booking->id;
                 $pendingReviews->user_id = $this->booking->user_id;
                 $pendingReviews->host_id = $this->booking->hostId;
                 $pendingReviews->host_home_id = $this->booking->host_home_id;

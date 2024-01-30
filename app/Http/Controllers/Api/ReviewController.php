@@ -95,6 +95,7 @@ class ReviewController extends Controller
         $hostReviews = Pendingreview::where('host_id', $hostId)->get();
 
         return response([
+            'reservationId' => $hostReviews->booking->id,
             'hostReviews' => $hostReviews
         ]);
     }

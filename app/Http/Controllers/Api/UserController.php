@@ -326,28 +326,23 @@ class UserController extends Controller
      */
 
      public function removeFromWishlist($hostHomeId)
-    {
-        // Check if the authenticated user owns the HostHome in their wishlist
-        $user = User::find(auth()->id());
-        $userWishlist = Wishlistcontainer::where('user_id', $user->id)->first();
+{
+    // Check if the authenticated user owns the HostHome in their wishlist
+    $userId = auth()->id();
+    
+    // Retrieve the correct wishlist for the authenticated user and the specified host_home_id
+    $wishlistItem = WishlistContainerItem::whereHas('wishlistcontainer', function ($query) use ($userId) {
+        $query->where('user_id', $userId);
+    })->where('host_home_id', $hostHomeId)->first();
 
-        if ($userWishlist) {
-            $userWishlistitems = $userWishlist->items;
+    if ($wishlistItem) {
+        // Remove the specific wishlist item associated with this HostHome
+        $wishlistItem->delete();
 
-            foreach ($userWishlistitems as $wishlistItem) {
-                // Compare the ID of each wishlist item with the provided $wishlistcontaineritemid
-                if ($wishlistItem->host_home_id == $hostHomeId) {
-                    // Remove the specific wishlist item associated with this HostHome
-                    $wishlistItem->delete();
-
-                    return response("HostHome removed from the wishlist", 200);
-                }
-            }
-
-            return response("Item not found in the wishlist", 404);
-        } else {
-            return response("Unauthorized to remove the item", 403);
-        }
+        return response("HostHome removed from the wishlist", 200);
+    } else {
+        return response("Item not found in the wishlist", 404);
+    }
 }
 
     

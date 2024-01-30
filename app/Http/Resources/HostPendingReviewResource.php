@@ -2,7 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Booking;
+use App\Models\HostHome;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 
 class HostPendingReviewResource extends JsonResource
 {
@@ -14,6 +19,14 @@ class HostPendingReviewResource extends JsonResource
      */
     public function toArray($request)
     {
-        return parent::toArray($request);
+        $user = User::find($this->user_id);
+        $booking = Booking::find($this->booking_id);
+        return [
+            'id' => $this->id,
+            'username' => $user->name,
+            'userprofilepic' => $user->name,
+            'guestProfilePic' => URL::to($user->profilePicture),
+            'check_in' => Carbon::parse($booking->check_in)->format('M j, Y')
+        ];
     }
 }

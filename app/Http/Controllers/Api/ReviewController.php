@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReivewRequest;
+use App\Http\Resources\HostPendingReviewResource;
 use App\Http\Resources\PendingReviewResource;
 use App\Http\Resources\ReviewResource;
 use App\Models\Pendingreview;
@@ -93,11 +94,11 @@ class ReviewController extends Controller
         $hostId = Auth::id();
 
         // Fetch reviews where the host_id matches the authenticated user's ID
-        $hostReviews = Pendingreview::where('host_id', $hostId)->get();
+        $hostReviews = Pendingreview::where('host_id', $hostId)
+        ->where('status', 'pending')
+        ->get();
 
-        return response([
-            'hostReviews' => $hostReviews
-        ]);
+        return HostPendingReviewResource::collection($hostReviews);
     }
 
 

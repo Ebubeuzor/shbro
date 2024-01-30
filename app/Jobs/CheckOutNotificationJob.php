@@ -29,12 +29,12 @@ class CheckOutNotificationJob implements ShouldQueue
     public function handle()
     {
 
-        Log::info("ebubeStart");
+        info("ebubeStart");
         // Check if today is the check-out day
         $checkOutDate = Carbon::parse($this->booking->check_out);
         $today = Carbon::today();
 
-        Log::info($checkOutDate . " " . $today);
+        info($checkOutDate . " " . $today);
         if ($checkOutDate->isSameDay($today) && is_null($this->booking->checkOutNotification)) {
             // Convert the check-out time to 24-hour format
             $checkOutTime = Carbon::parse($this->booking->check_out_time)->format('H:i');
@@ -66,7 +66,7 @@ class CheckOutNotificationJob implements ShouldQueue
             }
             
         }
-        Log::info("end");
+        info("end");
 
     }
 

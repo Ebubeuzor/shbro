@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
     Route::get('selectBankInfo/{userbankinfoId}/{userid}', [UserController::class, 'selectBankInfo']);
     Route::get('getUserCards/{userid}', [UserController::class, 'getUserCards']);
-    Route::get('getWishlistContainerItems/{userid}', [UserController::class, 'getWishlistContainerItems']);
+    Route::get('getWishlistContainerItems/{wishlistContainerId}', [UserController::class, 'getWishlistContainerItems']);
     Route::get('getUserBankInfos/{userid}', [UserController::class, 'getUserBankInfos']);
     Route::get('getUserWishlistContainers', [UserController::class, 'getUserWishlistContainers']);
     Route::get('upcomingReservation', [UserController::class, 'upcomingReservation']);

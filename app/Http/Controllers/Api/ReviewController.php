@@ -47,6 +47,7 @@ class ReviewController extends Controller
             'title' => $data['title'],
             'ratings' => $data['ratings'],
             'host_id' => $data['host_id'],
+            'booking_id' => $data['bookingid'],
             'comment' => $data['comment'],
             'user_id' => $data['user_id'],
             'host_home_id' => $data['host_home_id'],
@@ -95,7 +96,6 @@ class ReviewController extends Controller
         $hostReviews = Pendingreview::where('host_id', $hostId)->get();
 
         return response([
-            'reservationId' => $hostReviews->booking->id,
             'hostReviews' => $hostReviews
         ]);
     }

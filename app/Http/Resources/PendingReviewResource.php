@@ -19,6 +19,7 @@ class PendingReviewResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'bookingid' => $this->booking_id,
             'userid' => $this->user_id,
             'hostid' => $this->host_id,
             'title' => $hosthome->title,

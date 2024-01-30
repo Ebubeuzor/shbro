@@ -26,6 +26,7 @@ class StoreReivewRequest extends FormRequest
         return [
             'pendingreviewid' => 'required',
             'ratings' => 'required',
+            'bookingid' => 'required',
             'title' => 'required',
             'host_id' => 'required',
             'comment' => 'required',

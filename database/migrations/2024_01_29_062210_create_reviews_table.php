@@ -17,9 +17,9 @@ return new class extends Migration
             $table->id();
             $table->integer("ratings");
             $table->integer("host_id");
+            $table->string("title");
             $table->text("comment");
             $table->foreignIdFor(\App\Models\User::class,"user_id");
-            $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
             $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
             $table->timestamps();
         });

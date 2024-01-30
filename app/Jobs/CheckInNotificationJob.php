@@ -30,26 +30,29 @@ class CheckInNotificationJob implements ShouldQueue
     {
         $hosthome = HostHome::find($this->booking->host_home_id);
         
-        // Convert the check-in time to 24-hour format
-        $checkInTime = Carbon::parse($hosthome->check_in_time)->format('H:i A');
-
-        // Check if today is the check-in day
-        $checkInDate = Carbon::parse($this->booking->check_in . ' ' . $checkInTime);
-        $now = Carbon::now();
-
-        if ($checkInDate->eq($now) && is_null($this->booking->checkInNotification)) {
+        
+        $checkInDate = Carbon::parse($this->booking->check_in);
+        $today = Carbon::today();
+        
+        if ($checkInDate->isSameDay($today) && is_null($this->booking->checkInNotification)) {
             // Perform actions for the check-in notification
-            Mail::to($this->booking->user->email)->send(new NotificationMail(
-                $this->booking->user,
-                "Check-in: You've been checked in",
-                "You've been checked in. Enjoy your stay!"
-            ));
-            Log::info($this->booking->id);
+            $checkInTime = Carbon::parse($hosthome->check_in_time)->format('H:i');
 
-            // Update the booking with the check-in notification timestamp
-            $this->booking->update([
-                'checkInNotification' => now(),
-            ]);
+            // Get the current time
+            $currentTime = Carbon::now()->format('H:i A');
+            if ($currentTime >= $checkInTime) {
+                
+                Mail::to($this->booking->user->email)->send(new NotificationMail(
+                    $this->booking->user,
+                    "Check-in: You've been checked in",
+                    "You've been checked in. Enjoy your stay!"
+                ));
+    
+                // Update the booking with the check-in notification timestamp
+                $this->booking->update([
+                    'checkInNotification' => now(),
+                ]);
+            }
         }
     }
 

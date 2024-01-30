@@ -33,15 +33,15 @@ class FewHoursReminderJob implements ShouldQueue
         // Convert the check-in time to 24-hour format
         $checkInTime = Carbon::parse($hosthome->check_in_time)->format('H:i');
 
-        // Check if today is the check-in day
-        $checkInDate = Carbon::parse($this->booking->check_in . ' ' . $checkInTime);
+        // Calculate the check-in date and time
+        $checkInDateTime = Carbon::parse($this->booking->check_in)->setTimeFromTimeString($checkInTime);
         $now = Carbon::now();
 
         // Calculate the time difference in hours between now and the check-in time
-        $hoursDifference = $now->diffInHours($checkInDate);
+        $hoursDifference = $now->diffInHours($checkInDateTime);
 
         // Check if today is the check-in day and it's within the specified hours before check-in
-        if ($checkInDate->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 5 && is_null($this->booking->fewHoursReminder)) {
+        if ($checkInDateTime->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 5 && is_null($this->booking->few_hours_reminder)) {
             // Perform actions for the few hours reminder
             Mail::to($this->booking->user->email)->send(new NotificationMail(
                 $this->booking->user,
@@ -51,7 +51,7 @@ class FewHoursReminderJob implements ShouldQueue
 
             // Update the booking with the few hours reminder timestamp
             $this->booking->update([
-                'fewHoursReminder' => now(),
+                'few_hours_reminder' => now(),
             ]);
         }
     }

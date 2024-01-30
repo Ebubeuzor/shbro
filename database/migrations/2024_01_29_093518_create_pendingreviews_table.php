@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\User::class,"user_id");
             $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
             $table->integer("host_id");
+            $table->string("status")->default("pending");
             $table->timestamps();
         });
     }

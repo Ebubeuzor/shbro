@@ -29,6 +29,10 @@ class HostHome extends Model
         return $this->hasMany(Hosthomedescription::class);
     }
 
+    public function hosthomereviews(){
+        return $this->hasMany(Review::class);
+    }
+
     public function hosthomediscounts(){
         return $this->hasMany(Hosthomediscount::class);
     }

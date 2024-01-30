@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ForgotPassword;
 use App\Http\Controllers\Api\HomepageController;
 use App\Http\Controllers\Api\HostHomeController;
 use App\Http\Controllers\Api\NotifyController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\User;
 use App\Models\Visitor;
@@ -95,11 +96,15 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
     Route::get('/getAllBookingDates', [BookingsController::class, 'getAllBookingDates']);
+    Route::get('/getPendingReviews', [ReviewController::class, 'getPendingReviews']);
+    Route::get('/getHostReviews', [ReviewController::class, 'getHostReviews']);
+    Route::get('/getHostPendingReviews', [ReviewController::class, 'getHostPendingReviews']);
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
+    Route::post('/createReviews', [ReviewController::class, 'createReviews']);
 });
 
 Route::get('homepage', [HomepageController::class, 'index']);

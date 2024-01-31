@@ -31,9 +31,9 @@ class BookingApartmentRequest extends FormRequest
             'check_in' => 'required',
             'check_out' => 'required',
             'option' => 'required',
-            'card_number' => 'nullable|integer',
-            'expiry_data' => 'nullable|integer|min:4|max:4',
-            'CVV' => 'nullable|integer|min:3|max:3',
+            'card_number' => 'nullable',
+            'expiry_data' => 'nullable|min:4|max:4',
+            'CVV' => 'nullable|min:3|max:3',
         ];
     }
 }

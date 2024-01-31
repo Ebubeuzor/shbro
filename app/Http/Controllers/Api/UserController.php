@@ -1062,11 +1062,11 @@ class UserController extends Controller
         // Get bookings where the check_in date is the present day using a join
         $bookings = Booking::select('bookings.*')
                     ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                    ->whereDate('check_in', '=', Carbon::today()->toDateString())
+                    ->whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
                     ->where(function ($query) {
-                            $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
+                            $query->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))
                                 ->orWhere(function ($q) {
                                     // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
                                     $q->where('host_homes.check_in_time', '12:00 PM')
@@ -1098,7 +1098,7 @@ class UserController extends Controller
         // Get upcoming reservations using a join
         $bookings = Booking::select('bookings.*')
                     ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                    ->whereDate('check_in', '>=', Carbon::today()->toDateString())
+                    ->whereDate('check_in', '<=', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
                     ->where(function ($query) {

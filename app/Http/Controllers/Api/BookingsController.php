@@ -151,7 +151,7 @@ class BookingsController extends Controller
         }else{
             return response("Invalid option",400);
         }
-        if (!is_array($selectedUserCard)) {
+        if (!is_object($selectedUserCard)) {
             $selectedUserCard = (object)$selectedUserCard;
         }
 

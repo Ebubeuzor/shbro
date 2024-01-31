@@ -28,6 +28,7 @@ class CheckInNotificationJob implements ShouldQueue
 
     public function handle()
     {
+        Log::info("ebubestart1");
         $hosthome = HostHome::find($this->booking->host_home_id);
         
         

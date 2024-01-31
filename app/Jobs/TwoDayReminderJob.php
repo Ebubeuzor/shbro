@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class TwoDayReminderJob implements ShouldQueue
@@ -27,6 +28,8 @@ class TwoDayReminderJob implements ShouldQueue
 
     public function handle()
     {
+        
+        Log::info("ebubestart7");
         // Check if today is two days before the check-in day
         $checkInDate = Carbon::parse($this->booking->check_in);
         $twoDaysBefore = Carbon::today()->addDays(2);

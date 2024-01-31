@@ -43,7 +43,8 @@ return new class extends Migration
             $table->string('paidHostPaymentId')->nullable();
             $table->integer('hostId')->nullable();
             $table->foreignIdFor(\App\Models\User::class,"user_id");
-            $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
+            
+            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
             $table->timestamps();
         });
     }

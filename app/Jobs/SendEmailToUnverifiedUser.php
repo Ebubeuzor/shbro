@@ -27,6 +27,8 @@ class SendEmailToUnverifiedUser implements ShouldQueue
     
     public function handle()
     {
+        
+        Log::info("ebubestart8");
         Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
 
         try {

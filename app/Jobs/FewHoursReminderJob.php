@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class FewHoursReminderJob implements ShouldQueue
@@ -27,6 +28,8 @@ class FewHoursReminderJob implements ShouldQueue
 
     public function handle()
     {
+        
+        Log::info("ebubestart3");
         // Check if today is the check-in day
         $hosthome = HostHome::find($this->booking->host_home_id);
 

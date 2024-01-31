@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('hosthomeoffers', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
+            
+            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
             $table->string("offer");
             $table->timestamps();
         });

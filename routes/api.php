@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
+    Route::delete('/deleteHostHostHomeImages/{hostHomephotoId}', [HostHomeController::class, 'deleteHostHostHomeImages']);
     Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
 
     

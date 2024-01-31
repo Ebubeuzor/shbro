@@ -675,13 +675,39 @@ class HostHomeController extends Controller
 
     private function updateImages(HostHome $hosthome, array $images)
     {
-        $hosthome->hosthomephotos()->delete();
 
         foreach ($images as $base64Image) {
             $imageData = ['image' => $base64Image, 'host_home_id' => $hosthome->id];
             $this->createImages($imageData);
         }
     }
+
+    /* 
+    *@lrd:start
+    *This method deletes the provided Hosthomephoto instance and returns a response indicating the operation's success.
+    *
+    * @param  \App\Models\Hosthomephoto  $id The Hosthomephoto instance to be deleted.
+    *
+    * @return \Illuminate\Http\Response A response indicating the success of the deletion operation.
+    * .
+    * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the Hosthomephoto with the given ID is not found.
+    * @lrd:end
+    */ 
+    public function deleteHostHostHomeImages(Hosthomephoto $id)
+    {
+        try {
+            $id->delete();
+            return response("done",200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Handle model not found exception (Hosthomephoto with the given ID not found)
+            return response("Hosthomephoto not found.", 404);
+        } catch (\Exception $e) {
+            // Handle other exceptions
+            return response("An error occurred while deleting Hosthomephoto.", 500);
+        }
+        
+    }
+
 
     
     /**

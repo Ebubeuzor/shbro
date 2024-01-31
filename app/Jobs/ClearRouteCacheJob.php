@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class ClearRouteCacheJob implements ShouldQueue
 {
@@ -16,6 +17,8 @@ class ClearRouteCacheJob implements ShouldQueue
 
     public function handle()
     {
+        
+        Log::info("Test");
         // Clear the route cache
         Artisan::call('route:clear');
 

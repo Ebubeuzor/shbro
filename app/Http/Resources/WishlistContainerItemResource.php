@@ -17,10 +17,16 @@ class WishlistContainerItemResource extends JsonResource
     {
         $hostHome = HostHome::find($this->host_home_id);
 
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'hosthomes' => new HostHomeResource($hostHome)
-        ];
+        // Check if $hostHome is not null before creating the resource
+        if ($hostHome) {
+            return [
+                'id' => $this->id,
+                'name' => $this->name,
+                'hosthomes' => new HostHomeResource($hostHome),
+            ];
+        }
+
+        // If $hostHome is null, return an empty array
+        return [];
     }
 }

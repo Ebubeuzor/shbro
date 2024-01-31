@@ -11,6 +11,7 @@ use App\Jobs\TwoDayReminderJob;
 use App\Models\Booking;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -22,7 +23,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->job(new ProcessEmailReminders)->everyMinute();
+        $schedule->call(function () {
+            Log::info('Testing scheduler. Current time: ' . now());
+        })->everyMinute();
+        
+        // $schedule->job(new ProcessEmailReminders)->everyMinute();
         // $schedule->job(new ClearRouteCacheJob)->everyMinute();
 
         // $bookings = Booking::where('paymentStatus','success')->get(); 

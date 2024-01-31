@@ -55,10 +55,11 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('changePassword', [AuthController::class, 'changePassword']);
         
     });
-    
-
-
-    Route::apiResource('hosthomes',HostHomeController::class);
+        
+    Route::post('hosthomes', [HostHomeController::class, 'store']);
+    Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
+    Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
+    Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
     
     Route::middleware('role:admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
@@ -81,7 +82,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::put('unsuspendGuest/{id}', [AdminController::class, 'unsuspendGuest']);
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
         Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
-
+        
     });
     
     
@@ -124,3 +125,4 @@ Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
 
 Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
+Route::get('hosthomes', [HostHomeController::class, 'index']);

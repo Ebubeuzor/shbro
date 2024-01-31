@@ -34,6 +34,7 @@ class Kernel extends ConsoleKernel
 
         foreach ($bookings as $booking) {
             
+            
             // // Schedule the TwoDayReminderJob two days before the check-in date
             // $schedule->job(new TwoDayReminderJob($booking))->everyMinute();
     

@@ -22,26 +22,30 @@ class Kernel extends ConsoleKernel
      * @return void
      */
     protected function schedule(Schedule $schedule)
-    {
-        $schedule->job(new ProcessEmailReminders)->everyMinute(); // Change to everyFiveMinutes
-        $schedule->job(new ClearRouteCacheJob)->everyTenMinutes();     // Change to everyTenMinutes
+{
+    $schedule->call(function () {
+        Log::info('Testing scheduler. Current time: ' . now());
+        new ProcessEmailReminders; // Change to everyFiveMinutes
+    })->everyMinute();
 
-        // $bookings = Booking::where('paymentStatus','success')->get(); 
+    // $schedule->job(new ClearRouteCacheJob)->everyTenMinutes();     // Change to everyTenMinutes
 
-        // foreach ($bookings as $booking) {
-        //     // Schedule the TwoDayReminderJob two days before the check-in date
-        //     $schedule->job(new TwoDayReminderJob($booking))->everyMinute();
+    // $bookings = Booking::where('paymentStatus','success')->get(); 
 
-        //     // Schedule the FewHoursReminderJob a few hours before the check-in time
-        //     $schedule->job(new FewHoursReminderJob($booking))->everyTwoMinutes(); // Change to everyTwoMinutes
+    // foreach ($bookings as $booking) {
+    //     // Schedule the TwoDayReminderJob two days before the check-in date
+    //     $schedule->job(new TwoDayReminderJob($booking))->everyMinute();
 
-        //     // Schedule the CheckInNotificationJob at the check-in time
-        //     $schedule->job(new CheckInNotificationJob($booking))->everyMinute();
+    //     // Schedule the FewHoursReminderJob a few hours before the check-in time
+    //     $schedule->job(new FewHoursReminderJob($booking))->everyTwoMinutes(); // Change to everyTwoMinutes
 
-        //     // Schedule the CheckInNotificationJob at the check-in time
-        //     $schedule->job(new CheckOutNotificationJob($booking))->everyMinute();
-        // }       
-    }
+    //     // Schedule the CheckInNotificationJob at the check-in time
+    //     $schedule->job(new CheckInNotificationJob($booking))->everyMinute();
+
+    //     // Schedule the CheckInNotificationJob at the check-in time
+    //     $schedule->job(new CheckOutNotificationJob($booking))->everyMinute();
+    // }       
+}
 
 
     /**

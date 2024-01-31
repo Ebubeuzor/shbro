@@ -106,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
+    Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
 });
 
@@ -126,4 +127,5 @@ Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
 
 Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
+Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
 Route::get('hosthomes', [HostHomeController::class, 'index']);

@@ -57,6 +57,12 @@ class HostHome extends Model
         return $this->hasMany(Hosthomerule::class);
     }
     
+    public function allowsPets()
+    {
+        // Check if there is a rule containing "No pets"
+        return !$this->hosthomerules()->where('rule', 'LIKE', '%No pets%')->exists();
+    }
+    
     public function bookings(){
         return $this->hasMany(Booking::class);
     }

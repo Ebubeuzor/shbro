@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
+use App\Http\Requests\FilterHostHomesDatesRequest;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
@@ -326,24 +327,24 @@ class UserController extends Controller
      */
 
      public function removeFromWishlist($hostHomeId)
-{
-    // Check if the authenticated user owns the HostHome in their wishlist
-    $userId = auth()->id();
-    
-    // Retrieve the correct wishlist for the authenticated user and the specified host_home_id
-    $wishlistItem = WishlistContainerItem::whereHas('wishlistcontainer', function ($query) use ($userId) {
-        $query->where('user_id', $userId);
-    })->where('host_home_id', $hostHomeId)->first();
+    {
+        // Check if the authenticated user owns the HostHome in their wishlist
+        $userId = auth()->id();
+        
+        // Retrieve the correct wishlist for the authenticated user and the specified host_home_id
+        $wishlistItem = WishlistContainerItem::whereHas('wishlistcontainer', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->where('host_home_id', $hostHomeId)->first();
 
-    if ($wishlistItem) {
-        // Remove the specific wishlist item associated with this HostHome
-        $wishlistItem->delete();
+        if ($wishlistItem) {
+            // Remove the specific wishlist item associated with this HostHome
+            $wishlistItem->delete();
 
-        return response("HostHome removed from the wishlist", 200);
-    } else {
-        return response("Item not found in the wishlist", 404);
+            return response("HostHome removed from the wishlist", 200);
+        } else {
+            return response("Item not found in the wishlist", 404);
+        }
     }
-}
 
     
     /**
@@ -421,6 +422,67 @@ class UserController extends Controller
 
         return response()->json(['wishlistContainerItems' => $formattedItems]);
     }
+
+
+    /**
+     * @lrd:start
+     * 
+     * Filter and retrieve host homes based on specified criteria.
+     *
+     * This method accepts a request containing filtering criteria such as address,
+     * start and end dates  It then queries
+     * the database to find host homes that match the criteria and returns the results.
+     * 
+     * @queryParam start_date string The start date of the desired booking period (Format: YYYY-MM-DD).
+     * @queryParam end_date string The end date of the desired booking period (Format: YYYY-MM-DD).
+     * `allow_pets` (string, optional): Specify whether pets are allowed or not. Accepted values: 'allow_pets' or 'no_pets'.
+     * @param \App\Http\Requests\FilterHostHomesDatesRequest $request The incoming request with filtering criteria.
+     *
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection A collection of filtered host homes.
+     * 
+     * @lrd:end
+    */
+    public function filterHostHomesDates(FilterHostHomesDatesRequest $request)
+    {
+        $data = $request->validated();
+
+        // Extract the validated data
+        $address = $data['address'];
+        $startDate = $data['start_date'];
+        $endDate = $data['end_date'];
+        $guests = $data['guests'];
+        $allowPets = $data['allow_pets'];
+
+        $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
+            ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('check_in', [$startDate, $endDate])
+                        ->orWhereBetween('check_out', [$startDate, $endDate])
+                        ->orWhere(function ($q) use ($startDate, $endDate) {
+                            $q->where('check_in', '<=', $startDate)
+                                ->where('check_out', '>=', $endDate);
+                        });
+                });
+            })
+            ->where('guests', '>=', $guests)
+            ->where('verified', 1)
+            ->where('disapproved',null)
+            ->whereNull('banned')
+            ->whereNull('suspend');
+
+        if ($allowPets === 'allow_pets') {
+            // If allow_pets is 'no_pets', filter by the rule
+            $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
+                $query->where('rule', 'No pets');
+            });
+        }
+
+        $result = $filteredHostHomes->get();
+
+        return HostHomeResource::collection($result);
+    }
+
+
     
     /**
      * @lrd:start

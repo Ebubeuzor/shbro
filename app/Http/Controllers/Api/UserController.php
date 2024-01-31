@@ -1098,7 +1098,7 @@ class UserController extends Controller
         // Get upcoming reservations using a join
         $bookings = Booking::select('bookings.*')
                     ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                    ->whereDate('check_in', '>=', Carbon::today()->toDateString())
+                    ->whereDate('check_in', '>=', Carbon::today()->addDays(2)->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())->get();
 

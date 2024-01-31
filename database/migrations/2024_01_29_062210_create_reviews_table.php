@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text("comment");
             $table->foreignIdFor(\App\Models\User::class,"user_id");
             $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
-            $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
+            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('pendingreviews', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(\App\Models\User::class,"user_id");
-            $table->foreignIdFor(\App\Models\HostHome::class,"host_home_id");
+            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
             $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
             $table->integer("host_id");
             $table->string("status")->default("pending");

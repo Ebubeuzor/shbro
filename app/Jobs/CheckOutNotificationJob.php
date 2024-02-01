@@ -42,8 +42,8 @@ class CheckOutNotificationJob implements ShouldQueue
             $currentTime = Carbon::now()->format('H:i A');
 
             // Check if it's time for the check-out notification
-            if ($checkOutTime >= $currentTime) {
-                Log::info($this->booking);
+            if ($currentTime >= $checkOutTime) {
+                info($this->booking);
                 // Perform actions for the check-out notification
                 Mail::to($this->booking->user->email)->send(new NotificationMail(
                     $this->booking->user,

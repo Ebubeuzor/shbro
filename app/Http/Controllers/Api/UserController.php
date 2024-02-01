@@ -1054,7 +1054,7 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      * 
-     * - 200: Successfully retrieved the list of bookings arriving soon. 1:30 1:00
+     * - 200: Successfully retrieved the list of bookings arriving soon. 
      * @lrd:end
      */
     public function arrivingSoon()

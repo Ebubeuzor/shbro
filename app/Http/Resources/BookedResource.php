@@ -16,8 +16,10 @@ class BookedResource extends JsonResource
      */
     public function toArray($request)
     {
+        $user = User::find($this->user_id);
         return [
-            'name' => User::find($this->user_id)->name,
+            'name' => $user->name,
+            'profilepic' => $user->profilePicture,
             'check_in_date' => $this->formattedCheckIn,
             'check_out_date' => $this->formattedCheckOut,
             'check_in_time' => HostHome::find($this->host_home_id)->check_in_time,

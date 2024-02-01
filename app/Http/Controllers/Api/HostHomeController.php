@@ -344,18 +344,10 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        $existingImageCount = Hosthomephoto::where('host_home_id', $data2['host_home_id'])->count();
-
-        // If the existing count is less than 5, add the new image
-        if ($existingImageCount < 5) {
-            $data2['image'] = $this->saveImage($data2['image']);
-            return Hosthomephoto::create($data2);
-        }
-
-        // Return an error response if the HostHome already has 5 images
-        return response([
-            "error" => "HostHome can have at most 5 images.",
-        ], 422);
+        $data2['image'] = $this->saveImage($data2['image']);
+        
+        return Hosthomephoto::create($data2);
+    
 
     }
     
@@ -624,7 +616,6 @@ class HostHomeController extends Controller
 
     private function updateNotices(HostHome $hosthome, array $notices)
     {
-        $hosthome->hosthomenotices()->delete();
 
         foreach ($notices as $notice) {
             $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome->id];
@@ -634,7 +625,6 @@ class HostHomeController extends Controller
 
     private function updateRules(HostHome $hosthome, array $rules)
     {
-        $hosthome->hosthomerules()->delete();
 
         foreach ($rules as $rule) {
             $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome->id];
@@ -644,7 +634,6 @@ class HostHomeController extends Controller
 
     private function updateDiscounts(HostHome $hosthome, array $discounts)
     {
-        $hosthome->hosthomediscounts()->delete();
 
         foreach ($discounts as $discount) {
             $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome->id];
@@ -654,7 +643,6 @@ class HostHomeController extends Controller
 
     private function updateReservations(HostHome $hosthome, array $reservations)
     {
-        $hosthome->hosthomereservations()->delete();
 
         foreach ($reservations as $reservation) {
             $hosthomedescriptionData = ['reservation' => $reservation, 'host_home_id' => $hosthome->id];
@@ -664,8 +652,6 @@ class HostHomeController extends Controller
 
     private function updateDescriptions(HostHome $hosthome, array $hosthomedescriptions)
     {
-        $hosthome->hosthomedescriptions()->delete();
-
         foreach ($hosthomedescriptions as $hosthomedescription) {
             $hosthomedescriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthome->id];
             $this->createDescriptions($hosthomedescriptionData);
@@ -674,8 +660,6 @@ class HostHomeController extends Controller
 
     private function updateOffers(HostHome $hosthome, array $amenities)
     {
-        $hosthome->hosthomeoffers()->delete();
-
         foreach ($amenities as $amenity) {
             $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome->id];
             $this->createOffers($amenityData);

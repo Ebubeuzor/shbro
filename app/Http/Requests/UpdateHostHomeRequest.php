@@ -23,11 +23,11 @@ class UpdateHostHomeRequest extends FormRequest
             'beds' => "required",
             'bathrooms' => "required",
             'amenities' => "array",
-            'hosthomephotos' => "array | min:5",
+            'hosthomephotos' => "array",
             'hosthomevideo' => [
                 'required'],
             'title' => "required",
-            'hosthomedescriptions' => "array| min:2",
+            'hosthomedescriptions' => "array",
             'description' => "required",
             'reservation' => "required",
             'reservations' => "array",
@@ -39,7 +39,7 @@ class UpdateHostHomeRequest extends FormRequest
             'notice' => "array",
             'checkin' => "required ",
             'cancelPolicy' => "required",
-            'securityDeposit' => "required|numeric",
+            'securityDeposit' => "required",
         ];
     }
 }

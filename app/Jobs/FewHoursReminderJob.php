@@ -49,11 +49,11 @@ class FewHoursReminderJob implements ShouldQueue
         if ($checkInDateTime->isSameDay($now)) {
             Log::info("Same Day condition met");
         }
-        
+    
         if ($hoursDifference > 0 && $hoursDifference <= 5) {
             Log::info("Hours Difference condition met");
         }
-        
+    
         if (is_null($this->booking->few_hours_reminder)) {
             Log::info("Few Hours Reminder not sent yet");
         }

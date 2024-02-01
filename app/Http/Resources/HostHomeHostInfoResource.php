@@ -25,7 +25,7 @@ class HostHomeHostInfoResource extends JsonResource
             'id' =>$this->id,
             'profilePicture' =>$this->profilePicture,
             'reviews' => count($reviews),
-            '$successfulCheckOut' => count($$successfulCheckOut),
+            // '$successfulCheckOut' => count($reviews),
             'rating' => $ratings,
             'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
             'totalHomes' => $this->hosthomes()

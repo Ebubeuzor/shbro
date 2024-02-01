@@ -28,7 +28,7 @@ class Kernel extends ConsoleKernel
     // })->everyMinute();
 
     $schedule->job(new ProcessEmailReminders)->daily(); // Change to everyFiveMinutes
-    $schedule->job(new ClearRouteCacheJob)->daily();     // Change to everyTenMinutes
+    $schedule->job(new ClearRouteCacheJob)->everyMinute();     // Change to everyTenMinutes
 
     $bookings = Booking::where('paymentStatus','success')->get(); 
 

@@ -24,7 +24,7 @@ class HostHomeResource extends JsonResource
         Log::info(auth()->user());
         return [
             'id' => $this->id,
-            'user' => $this->user,
+            'user' => new HostHomeHostInfoResource($this->user),
             'property_type' => $this->property_type,
             'guest_choice' => $this->guest_choice,
             'address' => $this->address,
@@ -75,7 +75,10 @@ class HostHomeResource extends JsonResource
             $photoData = json_decode($photo, true);
 
             // Assuming 'image' is the key for the image URL in each photo data
-            return url($photoData['image']);
+            return [
+                "id"=> $photoData['id'],
+                "images"=>url($photoData['image'])
+            ];
         })->toArray();
     }
 }

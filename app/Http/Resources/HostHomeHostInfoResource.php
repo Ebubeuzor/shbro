@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Models\Review;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class HostHomeHostInfoResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
+     */
+    public function toArray($request)
+    {
+        $reviews = Review::where('host_id',$this->id)->get();
+        $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
+        return [
+            'id' =>$this->id,
+            'profilePicture' =>$this->profilePicture,
+            'reviews' => count($reviews),
+            'rating' => $ratings,
+            'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
+            'totalHomes' => $this->hosthomes->count()
+        ];
+    }
+}

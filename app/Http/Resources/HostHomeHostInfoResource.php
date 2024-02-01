@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Booking;
 use App\Models\Review;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 
 class HostHomeHostInfoResource extends JsonResource
 {
@@ -24,7 +25,8 @@ class HostHomeHostInfoResource extends JsonResource
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
         return [
             'id' =>$this->id,
-            'profilePicture' =>$this->profilePicture,
+            'name' =>$this->name,
+            'profilePicture' => URL::to($this->profilePicture),
             'reviews' => count($reviews),
             'successfulCheckOut' => $successfulCheckOutNumber,
             'rating' => $ratings,

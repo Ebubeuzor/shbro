@@ -54,7 +54,7 @@ class FewHoursReminderJob implements ShouldQueue
 
             // Update the booking with the few hours reminder timestamp
             $this->booking->update([
-                'few_hours_reminder' => now(),
+                'fewHoursReminder' => now(),
             ]);
         }
     }

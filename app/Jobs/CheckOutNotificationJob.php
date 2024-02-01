@@ -45,11 +45,11 @@ class CheckOutNotificationJob implements ShouldQueue
             if ($currentTime >= $checkOutTime) {
                 info($this->booking);
                 // Perform actions for the check-out notification
-                // Mail::to($this->booking->user->email)->send(new NotificationMail(
-                //     $this->booking->user,
-                //     "Check-out: You've been checked out",
-                //     "You've been checked out"
-                // ));
+                Mail::to($this->booking->user->email)->send(new NotificationMail(
+                    $this->booking->user,
+                    "Check-out: You've been checked out",
+                    "You've been checked out"
+                ));
 
                 // Create a pending review
                 $pendingReviews = new Pendingreview();

@@ -693,10 +693,12 @@ class HostHomeController extends Controller
     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the Hosthomephoto with the given ID is not found.
     * @lrd:end
     */ 
-    public function deleteHostHostHomeImages(Hosthomephoto $id)
+    public function deleteHostHostHomeImages($id)
     {
+
         try {
-            $id->delete();
+            $hosthomephoto = Hosthomephoto::find($id);
+            $hosthomephoto->delete();
             return response("done",200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // Handle model not found exception (Hosthomephoto with the given ID not found)

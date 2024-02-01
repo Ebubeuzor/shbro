@@ -23,7 +23,12 @@ class HostHomeHostInfoResource extends JsonResource
             'reviews' => count($reviews),
             'rating' => $ratings,
             'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
-            'totalHomes' => $this->hosthomes->count()
+            'totalHomes' => $this->hosthomes()
+                ->where('verified', 1)
+                ->where('disapproved', null)
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->count()
         ];
     }
 }

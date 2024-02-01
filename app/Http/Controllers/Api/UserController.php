@@ -1054,7 +1054,7 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      * 
-     * - 200: Successfully retrieved the list of bookings arriving soon. 
+     * - 200: Successfully retrieved the list of bookings arriving soon. 1:30 1:00
      * @lrd:end
      */
     public function arrivingSoon()
@@ -1070,7 +1070,7 @@ class UserController extends Controller
                                 ->orWhere(function ($q) {
                                     // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
                                     $q->where('host_homes.check_in_time', '12:00 PM')
-                                        ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'));
+                                        ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
                                 });
                         })->get();
 

@@ -344,9 +344,18 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        $data2['image'] = $this->saveImage($data2['image']);
+        $existingImageCount = Hosthomephoto::where('host_home_id', $data2['host_home_id'])->count();
 
-        return Hosthomephoto::create($data2);
+        // If the existing count is less than 5, add the new image
+        if ($existingImageCount < 5) {
+            $data2['image'] = $this->saveImage($data2['image']);
+            return Hosthomephoto::create($data2);
+        }
+
+        // Return an error response if the HostHome already has 5 images
+        return response([
+            "error" => "HostHome can have at most 5 images.",
+        ], 422);
 
     }
     

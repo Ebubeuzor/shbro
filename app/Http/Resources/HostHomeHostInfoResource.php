@@ -18,14 +18,15 @@ class HostHomeHostInfoResource extends JsonResource
     {
         $reviews = Review::where('host_id',$this->id)->get();
         $successfulCheckOut = Booking::where('hostId',$this->id)
-        ->whereNotNull('checkOutNotification')
+        ->where('checkOutNotification','!=',null)
         ->get();
+        $successfulCheckOutNumber = $successfulCheckOut->isEmpty() ? 0 : count($successfulCheckOut);
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
         return [
             'id' =>$this->id,
             'profilePicture' =>$this->profilePicture,
             'reviews' => count($reviews),
-            // '$successfulCheckOut' => count($reviews),
+            'successfulCheckOut' => $successfulCheckOutNumber,
             'rating' => $ratings,
             'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
             'totalHomes' => $this->hosthomes()

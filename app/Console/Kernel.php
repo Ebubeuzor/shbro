@@ -23,9 +23,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
 {
-    // $schedule->call(function () {
-    //     Log::info('Testing scheduler. Current time: ' . now());
-    // })->everyMinute();
 
     $schedule->job(new ProcessEmailReminders)->daily(); // Change to everyFiveMinutes
 

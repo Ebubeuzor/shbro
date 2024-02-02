@@ -44,7 +44,7 @@ class FewHoursReminderJob implements ShouldQueue
         $hoursDifference = $now->diffInHours($checkInDateTime);
         
         // Check if today is the check-in day and it's within the specified hours before check-in
-        if ($checkInDateTime->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 5 && is_null($this->booking->few_hours_reminder)) {
+        if ($checkInDateTime->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 5 && is_null($this->booking->fewHoursReminder)) {
             // Perform actions for the few hours reminder
             Mail::to($this->booking->user->email)->send(new NotificationMail(
                 $this->booking->user,

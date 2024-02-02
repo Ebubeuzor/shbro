@@ -43,7 +43,7 @@ class HostHomeResource extends JsonResource
             'price' => $this->price,
             'discounts' => $this->hosthomediscounts,
             'rules' => $this->hosthomerules,
-            'reviews' => $this->hosthomereviews,
+            'reviews' => HostHomeReviewResource::collection($this->hosthomereviews),
             'host_type' => $this->host_type,
             'notices' => $this->hosthomenotices,
             'checkin' => $this->check_in_time,

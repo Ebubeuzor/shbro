@@ -21,11 +21,14 @@ class UserTripResource extends JsonResource
             'check_in' => $this->booking->check_in,
             'check_out' => $this->booking->check_out,
             'hosthomephotos' => $this->hosthomephotosUrls(),
+            'hosthomeamenities' => $this->hosthomeamenities(),
+            'hosthomedescription' => $this->hosthomedescription(),
             'hosthometitleandloacation' => $this->hosthometitleandloacation(),
             'hosthomebedroom' => $this->hosthomebedroom(),
             'hosthomebathroom' => $this->hosthomebathroom(),
             'status' => $this->status(),
             'amountPaid' => $this->booking->totalamount,
+            'hostid' => $this->booking->hostId,
         ];
     }
 
@@ -37,6 +40,14 @@ class UserTripResource extends JsonResource
 
             // Assuming 'image' is the key for the image URL in each photo data
             return url($photoData['image']);
+        })->toArray();
+    }
+
+    protected function hosthomeamenities()
+    {
+        $hosthome = HostHome::find($this->booking->host_home_id);
+        return collect($hosthome->hosthomeoffers)->map(function ($offer) {
+            return $offer->offer;
         })->toArray();
     }
 
@@ -60,6 +71,15 @@ class UserTripResource extends JsonResource
         $hosthome = HostHome::find($this->booking->host_home_id);
         return $hosthome->title . " " . $hosthome->address;
     }
+
+    protected function hosthomedescription()
+    {
+        
+        $hosthome = HostHome::find($this->booking->host_home_id);
+        return $hosthome->description;
+    }
+
+
 
     protected function status()
     {

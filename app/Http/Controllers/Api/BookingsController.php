@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
+use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
+use App\Models\Canceltrip;
 use App\Models\HostHome;
 use App\Models\User;
 use App\Models\UserTrip;
@@ -356,11 +358,52 @@ class BookingsController extends Controller
         return view('Failed');
     }
 
-    public function test(){
-        $bookings = Booking::where('paymentStatus','success')->get(); 
-        return response([
-            'bookings' =>$bookings
+    /**
+     * @lrd:start
+     * Create a new cancellation for a trip.
+     *
+     * This endpoint allows users to cancel a trip by providing the necessary details.
+     *
+     * @param  \App\Http\Requests\CancelTripRequest  $request
+     *         The validated request containing the necessary cancellation details.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *         A JSON response indicating the success or failure of the cancellation request.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     *         If the specified booking ID is not found or is not eligible for cancellation.
+     *
+     * @throws \Exception
+     *         If an unexpected error occurs during the cancellation process.
+     *
+     * @response 200
+     *     {"message": "Cancellation created successfully"}
+     * @response 404
+     *     {"error": "Invalid booking id"}
+     * @response 500
+     *     {"error": "An error occurred"}
+     * @lrd:end
+     */
+    public function createCancelTrips(CancelTripRequest $request){
+        $data = $request->validated();
+        $cancelTrip = new Canceltrip();
+
+        $booking = Booking::where('id', $data['booking_id'])
+        ->where('paymentStatus','success')
+        ->whereNotNull('checkInNotification') 
+        ->whereNotNull('checkOutNotification')
+        ->firstOrFail();
+        
+        $cancelTrip->user_id = auth()->id();
+        $cancelTrip->booking_id = $data['booking_id'];
+        $cancelTrip->host_id = $data['host_id'];
+        $cancelTrip->reasonforcancel = $data['reasonforcancel'];
+        $booking->update([
+            'paymentStatus' => 'successButCancelled'
         ]);
+
+        $cancelTrip->save();
+        return response()->json(['message' => 'Trip successfully cancelled'], 200);
     }
 
 

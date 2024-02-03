@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Booking;
 use App\Models\Wishlistcontainer;
+use Carbon\Carbon;
 use Illuminate\Console\View\Components\Info;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +24,18 @@ class HostHomeResource extends JsonResource
         $user = $request->user();
         
         Log::info(auth()->user());
+        $bookingDates = Booking::select('check_in', 'check_out')
+        ->where('paymentStatus', 'success')
+        ->where('host_home_id', $this->id)
+        ->get();
+
+        $formattedDates = $bookingDates->map(function ($booking) {
+            return [
+                'check_in' => Carbon::parse($booking->check_in)->format('Y-m-d'),
+                'check_out' => Carbon::parse($booking->check_out)->format('Y-m-d'),
+            ];
+        });
+
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
@@ -54,6 +68,7 @@ class HostHomeResource extends JsonResource
             'vat' => $this->tax,
             'guest_fee' => $this->service_fee,
             'adminStatus' => "Pending Approval",
+            'bookedDates' => $bookingDates != null ? $formattedDates : [],
             'status' => $this->verified == 0 ? "Not published" : "Published",
             'created_on' => $this->created_at->format('Y-m-d'),
             'addedToWishlist' => $user ? $this->isAddedToWishlist($user->id, $this->id) : false,

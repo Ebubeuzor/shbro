@@ -356,6 +356,13 @@ class BookingsController extends Controller
         return view('Failed');
     }
 
+    public function test(){
+        $bookings = Booking::where('paymentStatus','success')->get(); 
+        return response([
+            'bookings' =>$bookings
+        ]);
+    }
+
 
 
 }

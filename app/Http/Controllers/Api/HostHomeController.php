@@ -45,6 +45,23 @@ class HostHomeController extends Controller
     
     /**
      * @lrd:start
+     * gets the details of every verified homes
+     * @lrd:end
+     */
+    public function searchHomeByProperty_type($property_type)
+    {
+        return HostHomeResource::collection(
+            HostHome::where('verified', 1)
+                    ->where('disapproved',null)
+                    ->where('property_type',$property_type)
+                    ->whereNull('banned')
+                    ->whereNull('suspend')
+                    ->get()
+        );
+    }
+    
+    /**
+     * @lrd:start
      * Delete a host home for the authenticated user.
      *
      * @param  int  $hostHomeId

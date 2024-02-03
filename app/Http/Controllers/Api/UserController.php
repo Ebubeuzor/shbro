@@ -862,7 +862,7 @@ class UserController extends Controller
      * @lrd:end
      */
 
-    public function filterHomepage(FilterHomepageRequest $request)
+     public function filterHomepage(FilterHomepageRequest $request)
     {
         try {
             $data = $request->validated();
@@ -873,44 +873,53 @@ class UserController extends Controller
             $minPrice = $data['min_price'];
             $maxPrice = $data['max_price'];
             $amenities = $data['amenities'];
-
+    
+            // Start with a base query for filtering host homes
             $query = HostHome::where('verified', 1)
-                            ->whereNull('disapproved')
-                            ->whereNull('banned')
-                            ->whereNull('suspend');
-
+                ->whereNull('disapproved')
+                ->whereNull('banned')
+                ->whereNull('suspend');
+    
+            // Additional filtering based on parameters
+    
             if (!empty($propertyType) && is_array($propertyType)) {
                 $query->whereIn('property_type', $propertyType);
             }
-
+    
+            // Check if "Any" is selected for Bedrooms and handle accordingly
             if (!empty($minBedrooms) && is_numeric($minBedrooms)) {
                 $query->where('bedroom', '>=', $minBedrooms);
             }
-
-            if (!empty($minBeds) && is_numeric($minBeds)) {
+    
+            // Check if "Any" is selected for Beds and handle accordingly
+            if (!empty($minBeds) && strtolower($minBeds) !== 'any' && is_numeric($minBeds)) {
                 $query->where('beds', '>=', $minBeds);
             }
-
-            if (!empty($minBathrooms) && is_numeric($minBathrooms)) {
+    
+            // Check if "Any" is selected for Bathrooms and handle accordingly
+            if (!empty($minBathrooms) && strtolower($minBathrooms) !== 'any' && is_numeric($minBathrooms)) {
                 $query->where('bathrooms', '>=', $minBathrooms);
             }
-            
+    
             if (!empty($minPrice) && is_numeric($minPrice)) {
                 $query->where('price', '>=', $minPrice);
             }
-        
+    
             if (!empty($maxPrice) && is_numeric($maxPrice)) {
                 $query->where('price', '<=', $maxPrice);
             }
-
+    
             if (!empty($amenities) && is_array($amenities)) {
+                // Use whereHas to filter based on related offers
                 $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
                     $q->whereIn('offer', $amenities);
                 });
             }
-
+    
+            // Fetch the filtered results along with associated host home photos
             $result = $query->with('hosthomephotos')->get();
-
+    
+            // Return the filtered data as JSON response
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
         } catch (QueryException $e) {
             // Log the exception or handle it as needed
@@ -920,6 +929,7 @@ class UserController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
+     
     
     public function filterHomepageLocation(FilterHomepageLocationRequest $request)
     {

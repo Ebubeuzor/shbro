@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function(){
     
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
+    Route::get('/test', [BookingsController::class, 'test']);
     Route::get('/getAllBookingDates', [BookingsController::class, 'getAllBookingDates']);
     Route::get('/getPendingReviews', [ReviewController::class, 'getPendingReviews']);
     Route::get('/getHostReviews', [ReviewController::class, 'getHostReviews']);

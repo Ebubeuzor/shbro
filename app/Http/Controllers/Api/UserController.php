@@ -1028,15 +1028,15 @@ class UserController extends Controller
      */
     public function currentlyHosting()
     {
+
         // Get currently hosted bookings using a join
         $bookings = Booking::select('bookings.*')
                         ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                        ->where('check_out', '<=', Carbon::today()->toDateString())
-                        ->where('check_in', '>=', Carbon::today()->toDateString())
+                        ->where('check_out', '>=', Carbon::today()->toDateString())
+                        ->where('check_in', '<=', Carbon::today()->toDateString())
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
-                        ->where('host_homes.check_in_time', '>=', Carbon::now()->format('g:i A'))
-                        ->where('check_out_time', '<=', Carbon::now()->format('g:i A'))
+                        ->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
                         ->get();
 
         // Transform the bookings into the BookedResource

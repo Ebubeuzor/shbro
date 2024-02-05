@@ -13,9 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('host_homes', function (Blueprint $table) {
+        // Schema::table('host_homes', function (Blueprint $table) {
             
-        });
+        // });
     }
 
     /**
@@ -25,8 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('host_homes', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        // Schema::table('host_homes', function (Blueprint $table) {
+            
+        // });
     }
 };

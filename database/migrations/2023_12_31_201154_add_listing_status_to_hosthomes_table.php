@@ -11,22 +11,22 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
-    {
-        Schema::table('host_homes', function (Blueprint $table) {
+    // public function up()
+    // {
+    //     Schema::table('host_homes', function (Blueprint $table) {
             
-        });
-    }
+    //     });
+    // }
 
     /**
      * Reverse the migrations.
      *
      * @return void
      */
-    public function down()
-    {
-        Schema::table('host_homes', function (Blueprint $table) {
-            $table->dropColumn('listing_status');
-        });
-    }
+    // public function down()
+    // {
+    //     Schema::table('host_homes', function (Blueprint $table) {
+    //         $table->dropColumn('listing_status');
+    //     });
+    // }
 };

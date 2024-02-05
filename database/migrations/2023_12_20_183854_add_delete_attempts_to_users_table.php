@@ -10,18 +10,18 @@ return new class extends Migration
      * Run the migrations.
      *
      * @return void
-     */
-    public function up()
-    {
-        Schema::table('users', function (Blueprint $table) {
+      */
+    // public function up()
+    // {
+    //     Schema::table('users', function (Blueprint $table) {
             
-        });
-    }
+    //     });
+    // }
 
-    public function down()
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('delete_attempts');
-        });
-    }
+    // public function down()
+    // {
+    //     Schema::table('users', function (Blueprint $table) {
+            
+    //     });
+    // }
 };

@@ -30,22 +30,28 @@ class HostHomeController extends Controller
     /**
      * @lrd:start
      * gets the details of every verified homes
+     * /api/hosthomes?per_page=20
      * @lrd:end
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
         return HostHomeResource::collection(
             HostHome::where('verified', 1)
-                    ->where('disapproved',null)
-                    ->whereNull('banned')
-                    ->whereNull('suspend')
-                    ->get()
+                ->where('disapproved', null)
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->paginate($perPage)
         );
     }
+
     
     /**
      * @lrd:start
-     * gets the details of every verified homes
+     * gets the details of every verified homes based on a specific property_type
      * @lrd:end
      */
     public function searchHomeByProperty_type($property_type)
@@ -275,6 +281,7 @@ class HostHomeController extends Controller
         $hostHome->description = $data['description'];
         $hostHome->reservation = $data['reservation'];
         $hostHome->price = $data['price'];
+        $hostHome->check_out_time = $data['check_out_time'];
         $hostHome->host_type = $data['host_type'];
         $hostHome->check_in_time = $data['checkin'];
         $hostHome->cancellation_policy = $data['cancelPolicy'];
@@ -572,6 +579,7 @@ class HostHomeController extends Controller
             'description' => $data['description'],
             'reservation' => $data['reservation'],
             'price' => $data['price'],
+            'check_out_time' => $data['check_out_time'],
             'host_type' => $data['host_type'],
             'check_in_time' => $data['checkin'],
             'service_fee' => $service_fee,

@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('wishlist_container_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\Wishlistcontainer::class, 'wishlistcontainer_id');
-            $table->foreignIdFor(\App\Models\HostHome::class, 'host_home_id');
+            $table->foreignIdFor(\App\Models\Wishlistcontainer::class, 'wishlistcontainer_id')->onDelete('cascade');
+            $table->foreignIdFor(\App\Models\HostHome::class, 'host_home_id')->onDelete('cascade');
             $table->timestamps();
         });
     }

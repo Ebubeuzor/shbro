@@ -31,6 +31,8 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->integer('host')->default(0);
             $table->string('verified')->nullable();
+            $table->unsignedInteger('delete_attempts')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->string('adminStatus')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->boolean('email_verified_at')->default(0);

@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
             $table->foreignIdFor(\App\Models\Booking::class,"booking_id")->onDelete('cascade');
             $table->integer("host_id");
+            $table->integer("guest_refund");
+            $table->integer("host_refund");
             $table->string("status")->default("Cancel");
             $table->string("reasonforcancel");
             $table->timestamps();

@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('user_trips', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\User::class,"user_id");
-            $table->foreignIdFor(\App\Models\Booking::class,"booking_id");
+            $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
+            $table->foreignIdFor(\App\Models\Booking::class,"booking_id")->onDelete('cascade');
             $table->timestamps();
         });
     }

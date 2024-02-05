@@ -15,6 +15,7 @@ use App\Models\UserTrip;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
 use Unicodeveloper\Paystack\Facades\Paystack;
@@ -293,7 +294,8 @@ class BookingsController extends Controller
                     
                     $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
                     $durationOfStay = $booking->duration_of_stay;
-                    $checkoutDate = $checkInDateTime->addDays($durationOfStay);
+                    $checkoutDate = $checkInDateTime->addDays($durationOfStay); 
+                    $checkouttime = $hostHome->check_out_time; 
                     $amount = $data['data']['amount'];
                     // $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
                     // $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
@@ -315,7 +317,7 @@ class BookingsController extends Controller
                         'vat_charge' => $vat_charge,
                         'securityDeposit' => $hostHome->security_deposit,
                         'hostBalance' => $hostBalance,
-                        'check_out_time' => $checkoutDate->format('g:i A')
+                        'check_out_time' => $checkouttime
                     ]);
 
                     $userTrip = new UserTrip();
@@ -358,6 +360,10 @@ class BookingsController extends Controller
         return view('Failed');
     }
 
+    public function getAllBookingsForAdmin(){
+        
+    }
+
     /**
      * @lrd:start
      * Create a new cancellation for a trip.
@@ -384,27 +390,87 @@ class BookingsController extends Controller
      *     {"error": "An error occurred"}
      * @lrd:end
      */
-    public function createCancelTrips(CancelTripRequest $request){
+    public function createCancelTrips(CancelTripRequest $request)
+    {
         $data = $request->validated();
-        $cancelTrip = new Canceltrip();
 
-        $booking = Booking::where('id', $data['booking_id'])
-        ->where('paymentStatus','success')
-        ->whereNotNull('checkInNotification') 
-        ->whereNotNull('checkOutNotification')
-        ->firstOrFail();
-        
-        $cancelTrip->user_id = auth()->id();
-        $cancelTrip->booking_id = $data['booking_id'];
-        $cancelTrip->host_id = $data['host_id'];
-        $cancelTrip->reasonforcancel = $data['reasonforcancel'];
-        $booking->update([
-            'paymentStatus' => 'successButCancelled'
+        // Find the booking
+        $booking = Booking::select('bookings.*')
+        ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+        ->where('bookings.check_in', '>', Carbon::today()->toDateString())
+        ->where('bookings.id', $data['booking_id'])
+        ->where('bookings.paymentStatus', 'success')
+        ->first();
+
+        // Find the associated host home
+        $hostHome = HostHome::findOrFail($booking->host_home_id);
+
+        // Determine the cancellation policy
+        $cancellationPolicy = $hostHome->cancellation_policy;
+
+        // Calculate refund amounts based on the cancellation policy and hostBalance
+        list($guestRefund, $hostRefund) = $this->calculateRefunds($cancellationPolicy, $booking->hostBalance, $booking->created_at);
+
+        // Create a new Canceltrip record
+        $cancelTrip = new Canceltrip([
+            'user_id' => auth()->id(),
+            'booking_id' => $data['booking_id'],
+            'host_id' => $data['host_id'],
+            'reasonforcancel' => $data['reasonforcancel'],
+            'guest_refund' => $guestRefund,
+            'host_refund' => $hostRefund,
         ]);
 
+        $host = User::find($booking->hostId);
+        // Update the booking status
+        $booking->update([
+            'paymentStatus' => 'successButCancelled',
+        ]);
+
+        $hostMessage = "Your apartment boooking has been cancelled " ;
+        Mail::to($host->email)->send(new NotificationMail($host, $hostMessage, $hostMessage));
+
+        // Save the Canceltrip record
         $cancelTrip->save();
+
+        // Return a response
         return response()->json(['message' => 'Trip successfully cancelled'], 200);
     }
+
+    private function calculateRefunds($cancellationPolicy, $totalAmount, $bookingCreatedAt)
+    {
+        // Define refund percentages based on cancellation policies
+        $refundPercentages = [
+            'Moderate Cancellation Policy' => 0.7,
+            'Strict Cancellation Policy' => 0.5,
+            'Flexible Cancellation Policy' => 1, // Default percentage for within 48 hours
+        ];
+
+        // Get the refund percentage based on the cancellation policy
+        $refundPercentage = $refundPercentages[$cancellationPolicy];
+
+        // Check if the cancellation occurs within the first 48 hours for the "Flexible" policy
+        if ($cancellationPolicy === 'Flexible Cancellation Policy') {
+            $cancellationDeadline = Carbon::parse($bookingCreatedAt)->addHours(48);
+            $now = Carbon::now();
+    
+            if ($now->lt($cancellationDeadline)) {
+                // If within the first 48 hours, the guest gets a full refund
+                $refundPercentage = 1; // 100%
+            }else {
+                // If after the first 48 hours, apply the regular flexible refund percentage
+                $refundPercentage = 0.7; // 70%
+            }
+        }
+
+        // Calculate guest and host refunds
+        $guestRefund = $refundPercentage * $totalAmount;
+        $hostRefund = $totalAmount - $guestRefund;
+
+        return [$guestRefund, $hostRefund];
+    }
+
+
 
 
 

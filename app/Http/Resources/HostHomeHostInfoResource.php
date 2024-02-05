@@ -3,8 +3,10 @@
 namespace App\Http\Resources;
 
 use App\Models\Booking;
+use App\Models\HostHome;
 use App\Models\Review;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 class HostHomeHostInfoResource extends JsonResource
@@ -26,10 +28,14 @@ class HostHomeHostInfoResource extends JsonResource
         return [
             'id' =>$this->id,
             'name' =>$this->name,
+            'email' =>$this->email,
             'profilePicture' => URL::to($this->profilePicture),
             'reviews' => count($reviews),
+            'actualReviews' => $reviews,
             'successfulCheckOut' => $successfulCheckOutNumber,
             'rating' => $ratings,
+            'hosthomeDetails' => $this->hosthomeDetails(),
+            'bookedhosthomeDetails' => $this->bookedhosthomeDetails(),
             'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
             'totalHomes' => $this->hosthomes()
                 ->where('verified', 1)
@@ -38,5 +44,53 @@ class HostHomeHostInfoResource extends JsonResource
                 ->whereNull('suspend')
                 ->count()
         ];
+
     }
+
+    protected function hosthomeDetails()
+    {
+        $hosthomes = HostHome::where('user_id', $this->id)->get();
+        return $hosthomes->map(function ($hosthome) {
+            $firstPhoto = $hosthome->hosthomephotos->first();
+    
+            if ($firstPhoto) {
+                $photoData = json_decode($firstPhoto, true);
+    
+                return [
+                    "hosthome_id" => $hosthome->id,
+                    "hosthome_title" => $hosthome->title,
+                    "photo_image" => url($photoData['image'])
+                ];
+            }
+        
+            return null;
+        })->filter();
+    }
+    
+    protected function bookedhosthomeDetails()
+    {
+        $bookings = Booking::where('hostId', $this->id)
+            ->where('paymentStatus', 'success')
+            ->get();
+
+        $hosthomes = HostHome::whereIn('id', $bookings->pluck('host_home_id'))->get();
+
+        return $hosthomes->map(function ($hosthome) {
+            $firstPhoto = $hosthome->hosthomephotos->first();
+
+            if ($firstPhoto) {
+                $photoData = json_decode($firstPhoto, true);
+
+                return [
+                    "hosthome_id" => $hosthome->id,
+                    "hosthome_title" => $hosthome->title,
+                    "photo_image" => url($photoData['image'])
+                ];
+            }
+
+            return null;
+        })->filter();
+    }
+
+    
 }

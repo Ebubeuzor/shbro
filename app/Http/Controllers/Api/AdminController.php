@@ -3,8 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AllBookingsResource;
+use App\Http\Resources\AllReviewssResource;
+use App\Http\Resources\CancelTripsResource;
 use App\Http\Resources\GuestsResource;
 use App\Mail\NotificationMail;
+use App\Models\Booking;
+use App\Models\Canceltrip;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -22,6 +28,45 @@ class AdminController extends Controller
 
         return GuestsResource::collection(
             User::all()
+        );
+
+    }
+    
+    /**
+     * @lrd:start
+     * this gets all the cancelledTrips for the admin
+     * @lrd:end
+     */
+    public function cancelledTrips() {
+
+        return CancelTripsResource::collection(
+            Canceltrip::all()
+        );
+
+    }
+    
+    /**
+     * @lrd:start
+     * this gets all the reviews for the admin
+     * @lrd:end
+     */
+    public function getReviews() {
+
+        return AllReviewssResource::collection(
+            Review::all()
+        );
+
+    }
+    
+    /**
+     * @lrd:start
+     * this gets all the bookings for the admin
+     * @lrd:end
+     */
+    public function bookings() {
+
+        return AllBookingsResource::collection(
+            Booking::where('paymentStatus','success')->get()
         );
 
     }

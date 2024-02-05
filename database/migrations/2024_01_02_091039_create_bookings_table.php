@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('check_out_time')->nullable();
             $table->integer('duration_of_stay');
             $table->string('paymentStatus')->nullable();
+            $table->string("transactionID")->nullable();
             $table->string('paymentId')->nullable();
             $table->string('paymentType')->nullable();
             $table->string('host_service_charge')->nullable();
@@ -42,7 +43,7 @@ return new class extends Migration
             $table->string('paidHostdate')->nullable();
             $table->string('paidHostPaymentId')->nullable();
             $table->integer('hostId')->nullable();
-            $table->foreignIdFor(\App\Models\User::class,"user_id");
+            $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
             
             $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
             $table->timestamps();

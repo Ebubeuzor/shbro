@@ -49,6 +49,7 @@ class StoreHostHomeRequest extends FormRequest
             'host_type' => "required",
             'notice' => "required | array",
             'checkin' => "required ",
+            'check_out_time' => "required ",
             'cancelPolicy' => "required",
             'securityDeposit' => "required|numeric",
         ];

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\HostHome;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,8 +17,10 @@ class UserTripResource extends JsonResource
      */
     public function toArray($request)
     {
+        $host = User::find($this->booking->hostId);
         return [
             'id' => $this->id,
+            'bbokingid' => $this->booking_id,
             'check_in' => $this->booking->check_in,
             'check_out' => $this->booking->check_out,
             'hosthomephotos' => $this->hosthomephotosUrls(),
@@ -29,6 +32,7 @@ class UserTripResource extends JsonResource
             'status' => $this->status(),
             'amountPaid' => $this->booking->totalamount,
             'hostid' => $this->booking->hostId,
+            'hostName' => $host->name,
         ];
     }
 
@@ -89,7 +93,10 @@ class UserTripResource extends JsonResource
         $checkOutDateTime = Carbon::parse($this->booking->check_out . ' ' . $hosthome->check_out_time);
         $today = Carbon::now();
 
-        if ($today->isSameDay($checkInDateTime) && $today->isBetween($checkInDateTime, $checkOutDateTime)) {
+        if ($this->booking->paymentStatus === "successButCancelled") {
+            return "CANCELLED";
+        }
+        elseif ($today->isSameDay($checkInDateTime) && $today->isBetween($checkInDateTime, $checkOutDateTime)) {
             return "CHECKED IN";
         } elseif ($today->isAfter($checkOutDateTime)) {
             return "CHECKED OUT";

@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('host_homes', function (Blueprint $table) {
-            $table->boolean('listing_status')->default(0);
+            
         });
     }
 

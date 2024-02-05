@@ -11,6 +11,7 @@ use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Resources\BookedResource;
+use App\Http\Resources\HostHomeHostInfoResource;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
@@ -1091,6 +1092,7 @@ class UserController extends Controller
     }
 
     /**
+     * @lrd:start
      * Retrieve upcoming reservations.
      * This endpoint allows a host to retrieve a list of upcoming reservations.
      * Reservations are filtered based on the check_in date being before or on the present day,
@@ -1118,6 +1120,20 @@ class UserController extends Controller
         return response(['bookings' => $bookingsResource]);
     }
 
+
+    /**
+     * @lrd:start
+     *  Retrieve all host reviews for a user.
+     *
+     * This endpoint fetches information about host homes and their reviews for a specific user.
+     *
+     * @lrd:end
+     */
+    public function hostReview($id)
+    {
+        $user = User::find($id);
+        return new HostHomeHostInfoResource($user);
+    }
 
     public function destroy(User $user)
     {

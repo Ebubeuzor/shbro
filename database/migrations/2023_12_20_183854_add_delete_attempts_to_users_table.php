@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->unsignedInteger('delete_attempts')->default(0)->after('remember_token');
+            
         });
     }
 

@@ -73,7 +73,10 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('approveHome/{id}', [HostHomeController::class, 'approveHome']);
         Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
+        Route::get('getReviews', [AdminController::class, 'getReviews']);
+        Route::get('bookings', [AdminController::class, 'bookings']);
         Route::get('hosts', [AdminController::class, 'hosts']);
+        Route::get('cancelledTrips', [AdminController::class, 'cancelledTrips']);
         
         Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
         Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
@@ -88,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
+    Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);

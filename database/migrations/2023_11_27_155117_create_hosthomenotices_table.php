@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('hosthomenotices', function (Blueprint $table) {
             $table->id();
             
-            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
+            $table->foreignId('host_home_id')->constrained()->onDelete('cascade');
+
             $table->string("notice");
             $table->timestamps();
         });

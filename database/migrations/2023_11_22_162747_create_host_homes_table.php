@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('host_homes', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
             $table->string("property_type");
             $table->string("guest_choice");
             $table->string("address");

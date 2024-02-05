@@ -15,8 +15,9 @@ return new class extends Migration
     {
         Schema::create('canceltrips', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
-            $table->foreignIdFor(\App\Models\Booking::class,"booking_id")->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
             $table->integer("host_id");
             $table->integer("guest_refund");
             $table->integer("host_refund");

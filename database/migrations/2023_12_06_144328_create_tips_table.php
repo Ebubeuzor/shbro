@@ -15,8 +15,7 @@ return new class extends Migration
     {
         Schema::create('tips', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(\App\Models\User::class, 'user_id')->onDelete('cascade');
-            $table->string("message");
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');$table->string("message");
             $table->string("url");
             $table->timestamps();
         });

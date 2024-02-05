@@ -43,9 +43,8 @@ return new class extends Migration
             $table->string('paidHostdate')->nullable();
             $table->string('paidHostPaymentId')->nullable();
             $table->integer('hostId')->nullable();
-            $table->foreignIdFor(\App\Models\User::class,"user_id")->onDelete('cascade');
-            
-            $table->foreignIdFor(\App\Models\HostHome::class, "host_home_id")->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('host_home_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

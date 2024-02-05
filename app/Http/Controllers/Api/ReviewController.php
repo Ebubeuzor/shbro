@@ -102,4 +102,34 @@ class ReviewController extends Controller
     }
 
 
+    /**
+     * @lrd:start
+     * Deletes a review.
+     *
+     * @param  int  $id  The ID of the review to be deleted.
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function deleteReviews($id)
+    {
+        // Find the review by ID
+        $review = Review::find($id);
+
+        // Check if the review exists
+        if ($review) {
+            // Delete the review
+            $review->delete();
+
+            // Return a JSON response indicating success
+            return response()->json(['message' => 'Review deleted successfully'], 200);
+        } else {
+            // Return a JSON response indicating that the review was not found
+            return response()->json(['error' => 'Review not found'], 404);
+        }
+    }
+
+
+
+
+
 }

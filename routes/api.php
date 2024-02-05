@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ForgotPassword;
 use App\Http\Controllers\Api\HomepageController;
 use App\Http\Controllers\Api\HostHomeController;
 use App\Http\Controllers\Api\NotifyController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\User;
@@ -86,8 +87,13 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
         Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
         
+        Route::get('/reporthosthome', [ReportController::class, 'index']);
     });
     
+
+    Route::post('/reporthosthome', [ReportController::class, 'store']);
+
+    Route::delete('/reporthosthome/{id}', [ReportController::class, 'destroy']);
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
@@ -97,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
     Route::get('/searchHomeByProperty_type/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
     Route::delete('/deleteHostHostHomeImages/{hostHomephotoId}', [HostHomeController::class, 'deleteHostHostHomeImages']);
+    Route::delete('/deleteReviews/{reviewId}', [ReviewController::class, 'deleteReviews']);
     Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
 
     

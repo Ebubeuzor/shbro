@@ -13,15 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('canceltrips', function (Blueprint $table) {
+        Schema::create('host_pending_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('host_home_id')->constrained()->onDelete('cascade');
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
-            $table->integer("host_id");
-            $table->integer("guest_refund");
-            $table->integer("host_refund");
-            $table->string("status")->default("Cancel");
-            $table->string("reasonforcancel");
+            $table->integer("guest_id");
+            $table->string("status")->default("pending");
             $table->timestamps();
         });
     }
@@ -33,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('canceltrips');
+        Schema::dropIfExists('host_pending_reviews');
     }
 };

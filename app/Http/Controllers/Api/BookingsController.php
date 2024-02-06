@@ -15,6 +15,7 @@ use App\Models\UserTrip;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
@@ -470,8 +471,139 @@ class BookingsController extends Controller
         return [$guestRefund, $hostRefund];
     }
 
+    public function sendMoney()
+    {
+        $recipientName = 'Ebube Uzor'; // Replace with recipient's name
+        $recipientAccountNumber = '0000000000'; // Replace with recipient's account number
+        $recipientBankName = 'Zenith Bank'; // Replace with recipient's bank name
+        $recipientBankCode = $this->getBankCode($recipientBankName);
+
+        $recipientResponse = Http::withHeaders([
+            'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+            'Content-Type' => 'application/json',
+        ])->post('https://api.paystack.co/transferrecipient', [
+            'type' => 'nuban',
+            'name' => $recipientName,
+            'account_number' => $recipientAccountNumber,
+            'bank_code' => $recipientBankCode,
+            'currency' => 'NGN',
+            'metadata' => [
+                'email' => 'ebubeuzor17@gmail.com',
+            ],
+        ]);
+
+        $recipient = $recipientResponse->json();
+
+        // Check if 'data' key exists in the response
+        if (isset($recipient['data']['recipient_code'])) {
+            // Use the generated recipient code
+            $recipientCode = $recipient['data']['recipient_code'];
+
+            // Initiate a transfer using the generated recipient code
+            $transferResponse = Http::withHeaders([
+                'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+                'Content-Type' => 'application/json',
+            ])->post('https://api.paystack.co/transfer', [
+                'source' => 'balance',
+                'amount' => 5000, // Replace with the amount to send
+                'recipient' => $recipientCode,
+                'reason' => 'Payment for services', // Optional reason for the transfer
+            ]);
+
+            // Log the transfer response for debugging
+            logger()->info('Transfer Response:', $transferResponse->json());
+
+            // Check the status of the transfer
+            if ($transferResponse['status'] === 'success') {
+                // Log the success status
+                logger()->info('Transfer was successful.');
+
+                $user = User::where('email', 'ebubeuzor17@gmail.com')->first();
+                Mail::to($user->email)->send(new NotificationMail($user,'Money Sent','5000 sent'));
+
+                return response()->json(['message' => 'Money sent successfully']);
+            } else {
+                // Log the failure status
+                logger()->error('Transfer failed.');
+
+                return response()->json(['error' => 'Failed to initiate transfer.']);
+            }
+        } else {
+            // Handle the case where 'data' key is not present in the response
+            return response()->json(['error' => 'Failed to retrieve recipient code from Paystack']);
+        }
+    }
 
 
+    private function getBankCode($bankName)
+    {
+        // Fetch the bank list dynamically from the Paystack API
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+        ])->get('https://api.paystack.co/bank');
 
+        $banks = $response->json();
+
+        // Loop through the list and match the bank name to get the code
+        foreach ($banks['data'] as $bank) {
+            if ($bank['name'] == $bankName) {
+                return $bank['code'];
+            }
+        }
+
+        // Return a default code or handle the case where the bank name is not found
+        return 'DEFAULT_CODE';
+    }
+
+
+    /**
+     * @lrd:start
+     * Get the list of banks available on Paystack.
+     *
+     * @return \Illuminate\Http\JsonResponse The JSON response containing the names of available banks.
+     * @lrd:end
+    */
+    public function listBanks()
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+        ])->get('https://api.paystack.co/bank');
+
+        $banks = $response->json();
+        $bankNames = collect($banks['data'])->pluck('name')->toArray();
+
+        return response()->json($bankNames);
+    }
+
+    /**
+     * @lrd:start
+     * Get user information by account number and bank name using the Paystack API.
+     *
+     * @param string $accountNumber The user's account number.
+     * @param string $bankName The name of the user's bank.
+     * @return \Illuminate\Http\JsonResponse The JSON response containing user information.
+     * @lrd:end
+     */
+    public function getUserInfoByAccountNumber($accountNumber,$bankName)
+    {
+        $cleanBankName = trim($bankName, '"');
+        $cleanaccountNumber = trim($accountNumber, '"');
+        $recipientBankCode = $this->getBankCode($cleanBankName);
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+        ])->get('https://api.paystack.co/bank/resolve?account_number=' . $cleanaccountNumber . "&bank_code=" . $recipientBankCode);
+
+        $data = $response->json();
+
+        if ($response->successful() && $data['status']) {
+            $accountName = $data['data']['account_name'];
+
+            return response()->json(['account_name' => $accountName]);
+        } else {
+            return response()->json(['error' => 'Failed to retrieve user information from Paystack']);
+        }
+    }
 
 }
+
+

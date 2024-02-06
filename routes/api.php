@@ -111,6 +111,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
     Route::post('/createCancelTrips', [BookingsController::class, 'createCancelTrips']);
     Route::get('/getAllBookingDates', [BookingsController::class, 'getAllBookingDates']);
+    Route::get('/sendMoney', [BookingsController::class, 'sendMoney']);
+    Route::get('/listBanks', [BookingsController::class, 'listBanks']);
+    Route::get('/getUserInfoByAccountNumber/{accountnumber}/{bankName}', [BookingsController::class, 'getUserInfoByAccountNumber']);
     Route::get('/getPendingReviews', [ReviewController::class, 'getPendingReviews']);
     Route::get('/getHostReviews', [ReviewController::class, 'getHostReviews']);
     Route::get('/getHostPendingReviews', [ReviewController::class, 'getHostPendingReviews']);

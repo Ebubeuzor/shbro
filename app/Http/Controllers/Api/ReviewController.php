@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreGuestReivewRequest;
 use App\Http\Requests\StoreReivewRequest;
+use App\Http\Resources\HostPendingReviewForGuestResource;
 use App\Http\Resources\HostPendingReviewResource;
 use App\Http\Resources\PendingReviewResource;
 use App\Http\Resources\ReviewResource;
+use App\Models\Hostpendingreviewforguest;
+use App\Models\Hostreviewforguest;
 use App\Models\Pendingreview;
 use App\Models\Review;
 use Illuminate\Http\Request;
@@ -33,7 +37,7 @@ class ReviewController extends Controller
     /**
      * @lrd:start
      * 
-     * Create reviews based on the provided StoreReivewRequest.
+     * THis is for the guest to make a review about an apartment he/she has stayed in.
      * 
      * @lrd:end
     */
@@ -59,6 +63,41 @@ class ReviewController extends Controller
 
         // Find and update the related Pendingreview to 'reviewed'
         Pendingreview::where('id', $data['pendingreviewid'])->update(['status' => 'reviewed']);
+
+        // Return a success response
+        return response("OK", 200);
+    }
+    
+
+    /**
+     * @lrd:start
+     * 
+     * THis is for the host to make a review about aguest that has stayed in his apartment.
+     * 
+     * @lrd:end
+    */
+
+    public function createReviewsForguest(StoreGuestReivewRequest $request)
+    {
+        
+        // Validate the request data
+        $data = $request->validated();
+
+        // Create a new Review
+        $review = new Hostreviewforguest([
+            'title' => $data['title'],
+            'ratings' => $data['ratings'],
+            'guest_id' => $data['guest_id'],
+            'booking_id' => $data['bookingid'],
+            'comment' => $data['comment'],
+            'user_id' => $data['host_id'],
+        ]);
+
+        // Save the new Review
+        $review->save();
+
+        // Find and update the related Pendingreview to 'reviewed'
+        Hostpendingreviewforguest::where('id', $data['pendingreviewid'])->update(['status' => 'reviewed']);
 
         // Return a success response
         return response("OK", 200);
@@ -99,6 +138,25 @@ class ReviewController extends Controller
         ->get();
 
         return HostPendingReviewResource::collection($hostReviews);
+    }
+
+    /**
+     * @lrd:start
+     * Get pendind reviews for the authenticated host to make about his guest.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function getHostPendingReviewsForGuest()
+    {
+        $hostId = Auth::id();
+
+        // Fetch reviews where the host_id matches the authenticated user's ID
+        $hostReviews = Hostpendingreviewforguest::where('user_id', $hostId)
+        ->where('status', 'pending')
+        ->get();
+
+        return HostPendingReviewForGuestResource::collection($hostReviews);
     }
 
 

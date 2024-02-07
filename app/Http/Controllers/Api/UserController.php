@@ -11,6 +11,7 @@ use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Resources\BookedResource;
+use App\Http\Resources\GuestReviewsResource;
 use App\Http\Resources\HostHomeHostInfoResource;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
@@ -1123,7 +1124,7 @@ class UserController extends Controller
 
     /**
      * @lrd:start
-     *  Retrieve all host reviews for a user.
+     *  Retrieve all host info and reviews for a user(guests) to see.
      *
      * This endpoint fetches information about host homes and their reviews for a specific user.
      *
@@ -1133,6 +1134,20 @@ class UserController extends Controller
     {
         $user = User::find($id);
         return new HostHomeHostInfoResource($user);
+    }
+
+    /**
+     * @lrd:start
+     *  Retrieve all guest info and reviews for a user(host) to see.
+     *
+     * This endpoint fetches information about host homes and their reviews for a specific user.
+     *
+     * @lrd:end
+     */
+    public function guestReview($id)
+    {
+        $user = User::find($id);
+        return new GuestReviewsResource($user);
     }
 
     public function destroy(User $user)

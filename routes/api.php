@@ -98,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
+    Route::get('guestReview/{guestId}', [UserController::class, 'guestReview']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
@@ -116,6 +117,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/getUserInfoByAccountNumber/{accountnumber}/{bankName}', [BookingsController::class, 'getUserInfoByAccountNumber']);
     Route::get('/getPendingReviews', [ReviewController::class, 'getPendingReviews']);
     Route::get('/getHostReviews', [ReviewController::class, 'getHostReviews']);
+    Route::get('/getHostPendingReviewsForGuest', [ReviewController::class, 'getHostPendingReviewsForGuest']);
     Route::get('/getHostPendingReviews', [ReviewController::class, 'getHostPendingReviews']);
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
@@ -124,6 +126,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
+    Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
 });
 

@@ -30,6 +30,7 @@ class UserTripResource extends JsonResource
             'hosthomebedroom' => $this->hosthomebedroom(),
             'hosthomebathroom' => $this->hosthomebathroom(),
             'status' => $this->status(),
+            'hosthomecancelationpolicy' => $this->hosthomecancelationpolicy(),
             'amountPaid' => $this->booking->totalamount,
             'hostid' => $this->booking->hostId,
             'hostName' => $host->name,
@@ -60,6 +61,13 @@ class UserTripResource extends JsonResource
 
         $hosthome = HostHome::find($this->booking->host_home_id);
         return $hosthome->bedroom;
+    }
+
+    protected function hosthomecancelationpolicy()
+    {
+
+        $hosthome = HostHome::find($this->booking->host_home_id);
+        return $hosthome->cancellation_policy;
     }
 
     protected function hosthomebathroom()

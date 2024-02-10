@@ -27,6 +27,7 @@ class GuestReviewsResource extends JsonResource
         return [
             'id' =>$this->id,
             'name' =>$this->name,
+            'Status' =>$this->host == 0 ? "Guest" : "Host And Guest",
             'email' =>$this->email,
             'profilePicture' => URL::to($this->profilePicture),
             'reviews' => count($reviews),

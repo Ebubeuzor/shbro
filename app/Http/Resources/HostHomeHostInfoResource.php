@@ -29,6 +29,7 @@ class HostHomeHostInfoResource extends JsonResource
             'id' =>$this->id,
             'name' =>$this->name,
             'email' =>$this->email,
+            'Status' =>$this->host == 0 ? "Guest" : "Host And Guest",
             'profilePicture' => URL::to($this->profilePicture),
             'reviews' => count($reviews),
             'actualReviews' => $reviews,

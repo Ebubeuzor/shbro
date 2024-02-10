@@ -88,11 +88,14 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
         
         Route::get('/reporthosthome', [ReportController::class, 'index']);
+        Route::get('/getUsersReports', [ReportController::class, 'getUsersReports']);
         Route::delete('/reporthosthome/{id}', [ReportController::class, 'destroy']);
+        Route::delete('/destroyReportUser/{id}', [ReportController::class, 'destroyReportUser']);
     });
     
 
     Route::post('/reporthosthome', [ReportController::class, 'store']);
+    Route::post('/reportUser', [ReportController::class, 'reportUser']);
 
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);

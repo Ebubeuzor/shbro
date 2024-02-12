@@ -626,32 +626,32 @@ class HostHomeController extends Controller
         }
 
         if (isset($images) && !empty($images)) {
-            $this->updateImages($hostHome, $images);
+            $this->updateImages($hostHome->id, $images);
         } 
         
 
         if(isset($amenities) && !empty($amenities)) {
-            $this->updateOffers($hostHome, $amenities);
+            $this->updateOffers($hostHome->id, $amenities);
         }
         
         if(isset($hosthomedescriptions) && !empty($hosthomedescription)) {
-            $this->updateDescriptions($hostHome, $hosthomedescriptions);
+            $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
         }
         
         if(isset($reservations) && !empty($reservations)) {
-            $this->updateReservations($hostHome, $reservations);
+            $this->updateReservations($hostHome->id, $reservations);
         }
         
         if(isset($discounts) && !empty($discounts)) {
-            $this->updateDiscounts($hostHome, $discounts);
+            $this->updateDiscounts($hostHome->id, $discounts);
         }
         
         if(isset($rules) && !empty($rules)) {
-            $this->updateRules($hostHome, $rules);
+            $this->updateRules($hostHome->id, $rules);
         }
         
         if(isset($notices) && !empty($notices)) {
-            $this->updateNotices($hostHome, $notices);
+            $this->updateNotices($hostHome->id, $notices);
         }
 
         return response([
@@ -659,63 +659,63 @@ class HostHomeController extends Controller
         ]);
     }
 
-    private function updateNotices(HostHome $hosthome, array $notices)
+    private function updateNotices($hosthome, array $notices)
     {
 
         foreach ($notices as $notice) {
-            $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome->id];
+            $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome];
             $this->createNotices($hosthomenoticeData);
         }
     }
 
-    private function updateRules(HostHome $hosthome, array $rules)
+    private function updateRules($hosthome, array $rules)
     {
 
         foreach ($rules as $rule) {
-            $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome->id];
+            $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome];
             $this->createRules($hosthomeruleData);
         }
     }
 
-    private function updateDiscounts(HostHome $hosthome, array $discounts)
+    private function updateDiscounts($hosthome, array $discounts)
     {
 
         foreach ($discounts as $discount) {
-            $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome->id];
+            $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome];
             $this->createDiscounts($hosthomediscountData);
         }
     }
 
-    private function updateReservations(HostHome $hosthome, array $reservations)
+    private function updateReservations($hosthome, array $reservations)
     {
 
         foreach ($reservations as $reservation) {
-            $hosthomedescriptionData = ['reservation' => $reservation, 'host_home_id' => $hosthome->id];
+            $hosthomedescriptionData = ['reservation' => $reservation, 'host_home_id' => $hosthome];
             $this->createReservations($hosthomedescriptionData);
         }
     }
 
-    private function updateDescriptions(HostHome $hosthome, array $hosthomedescriptions)
+    private function updateDescriptions($hosthome, array $hosthomedescriptions)
     {
         foreach ($hosthomedescriptions as $hosthomedescription) {
-            $hosthomedescriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthome->id];
+            $hosthomedescriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthome];
             $this->createDescriptions($hosthomedescriptionData);
         }
     }
 
-    private function updateOffers(HostHome $hosthome, array $amenities)
+    private function updateOffers($hosthome, array $amenities)
     {
         foreach ($amenities as $amenity) {
-            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome->id];
+            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
             $this->createOffers($amenityData);
         }
     }
 
-    private function updateImages(HostHome $hosthome, array $images)
+    private function updateImages($hosthome, array $images)
     {
 
         foreach ($images as $base64Image) {
-            $imageData = ['image' => $base64Image, 'host_home_id' => $hosthome->id];
+            $imageData = ['image' => $base64Image, 'host_home_id' => $hosthome];
             $this->createImages($imageData);
         }
     }

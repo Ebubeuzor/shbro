@@ -1042,11 +1042,13 @@ class UserController extends Controller
     {
 
         // Get currently hosted bookings using a join
-        $bookings = Booking::where('check_out', '>=', Carbon::today()->toDateString())
-                        ->where('check_in', '<=', Carbon::today()->toDateString())
+        $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
-                        ->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
+                        ->where(function ($query){
+                            $query->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
+                            ->orWhere('check_out', '>=', Carbon::today()->toDateString());
+                        })
                         ->get();
 
         // Transform the bookings into the BookedResource

@@ -165,22 +165,7 @@ class BookingsController extends Controller
             $booking->check_in = $checkIn->format('Y-m-d');
             $booking->check_out = $checkOut->format('Y-m-d');
         }
-        $booking->adults = $data['adults'];
-        $booking->children = $data['children'];
-        $booking->pets = $data['pets'];
-        $booking->infants = $data['infants'];
-        $booking->duration_of_stay = $dateDifference;
-        $booking->check_in = $checkIn->format('Y-m-d');
-        $booking->check_out = $checkOut->format('Y-m-d');
-        $booking->user_id = $user->id;
-        $booking->host_home_id = $hostHome->id;
-        $booking->hostId = $hostHome->user_id;
-        $booking->save();
 
-        // Generate a payment reference
-        $reference = Paystack::genTranxRef();
-
-        $recentToken = $user->tokens->last();
         $discounts = Hosthomediscount::where('host_home_id', $hostHomeId)->get();
 
         // Calculate the discounted price
@@ -189,9 +174,26 @@ class BookingsController extends Controller
         // Use the discounted price if not null, otherwise use the actual price
         $bookingPrice = !is_null($discountedPrice) ? $discountedPrice : $hostHome->price;
 
+        $booking->adults = $data['adults'];
+        $booking->children = $data['children'];
+        $booking->pets = $data['pets'];
+        $booking->infants = $data['infants'];
+        $booking->duration_of_stay = $dateDifference;
+        $booking->check_in = $checkIn->format('Y-m-d');
+        $booking->check_out = $checkOut->format('Y-m-d');
+        $booking->user_id = $user->id;
+        $booking->hostBalance = $bookingPrice * $dateDifference;
+        $booking->host_home_id = $hostHome->id;
+        $booking->hostId = $hostHome->user_id;
+        $booking->save();
+
+        // Generate a payment reference
+        $reference = Paystack::genTranxRef();
+
+        $recentToken = $user->tokens->last();
+
         $total = (($bookingPrice * $dateDifference) + intval($hostHome->security_deposit)) * 100;
-        info((intval($hostHome->total) * $dateDifference));
-        info(intval($hostHome->security_deposit));
+    
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
             'email' => $user->email,
@@ -234,11 +236,11 @@ class BookingsController extends Controller
         // Check the discount type and apply accordingly
         switch ($discount->discount) {
             case '20% New listing promotion':
-                return $price; // 20% off for first 3 bookings
+                return $price;
             case '5% Weekly discount':
-                return $durationOfStay >= 7 ? $price * (1 - 0.05) : $price; // 5% off for stays of 7 nights or more
+                return $durationOfStay >= 7 ? $price - ($price * 0.05) : $price; // 5% off for stays of 7 nights or more
             case '10% Monthly discount':
-                return $durationOfStay >= 28 ? $price * (1 - 0.1) : $price; // 10% off for stays of 28 nights or more
+                return $durationOfStay >= 28 ? $price - ($price * 0.1) : $price; // 10% off for stays of 28 nights or more
             default:
                 return $price;
         }
@@ -336,7 +338,7 @@ class BookingsController extends Controller
                     $amount = $data['data']['amount'];
                     // $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
                     // $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
-                    $hostBalance = (intval($hostHome->price) * $durationOfStay);
+                    $hostBalance = $booking->hostBalance;
                     $host_service_charge = 0.00;
                     $guest_service_charge = (intval($hostHome->service_fee) * $durationOfStay);
                     $vat_charge = (intval($hostHome->tax) * $durationOfStay);
@@ -353,7 +355,6 @@ class BookingsController extends Controller
                         'profit' => $profit,
                         'vat_charge' => $vat_charge,
                         'securityDeposit' => $hostHome->security_deposit,
-                        'hostBalance' => $hostBalance,
                         'check_out_time' => $checkouttime
                     ]);
 

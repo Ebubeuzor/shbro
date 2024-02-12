@@ -284,7 +284,8 @@ class HostHomeController extends Controller
         $hostHome->title = $data['title'];
         $hostHome->description = $data['description'];
         $hostHome->reservation = $data['reservation'];
-        $hostHome->price = $data['price'];
+        $hostHome->actualPrice = $data['price'];
+        $hostHome->price = 0;
         $hostHome->check_out_time = $data['check_out_time'];
         $hostHome->host_type = $data['host_type'];
         $hostHome->check_in_time = $data['checkin'];
@@ -292,7 +293,6 @@ class HostHomeController extends Controller
         $hostHome->security_deposit = $data['securityDeposit'];
 
         $price = $data['price'];
-
         // $service_fee_percentage = 0.10;
         // $tax_percentage = 0.05;
 
@@ -305,9 +305,9 @@ class HostHomeController extends Controller
 
         $total = $price + $service_fee + $tax;
 
-        $hostHome->service_fee = $service_fee;
-        $hostHome->tax = $tax;
-        $hostHome->total = $total;
+        $hostHome->service_fee = 0;
+        $hostHome->tax = 0;
+        $hostHome->total = 0;
 
         $hostHome->save();
 
@@ -426,17 +426,53 @@ class HostHomeController extends Controller
     
     public function createDiscounts($data)
     {
-        info("test4");
-        $validator = Validator::make($data,[
-            'discount' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'discount' => 'required|string',
+            'host_home_id' => 'required|exists:host_homes,id'
         ]);
 
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+
+        // Get the validated data
         $data2 = $validator->validated();
 
-        return Hosthomediscount::create($data2);
+        // Find the HostHome
+        $hostHome = HostHome::find($data2['host_home_id']);
 
+        // Check the discount type
+        if ($data2['discount'] == "20% New listing promotion") {
+            $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+            $price = intval($hostHome->actualPrice) - $priceDiscount;
+            $hostHome->price = $price;
+        } else {
+            // Reset to the actual price if not a special discount
+            $hostHome->price = $hostHome->actualPrice;
+        }
+
+        // Calculate service fee and tax (you can adjust these calculations based on your business logic)
+        $service_fee_percentage = 0.10;
+        $tax_percentage = 0.05;
+
+        $service_fee = $hostHome->price * $service_fee_percentage;
+        $tax = $hostHome->price * $tax_percentage;
+
+        // Update the HostHome attributes
+        $hostHome->service_fee = $service_fee;
+        $hostHome->tax = $tax;
+        $hostHome->total = $hostHome->price + $service_fee + $tax;
+
+        // Save the updated HostHome
+        $hostHome->save();
+
+        // Create the HostHomeDiscount record
+        return HostHomeDiscount::create($data2);
     }
-    
+
     public function createRules($data)
     {
         info("test5");
@@ -598,7 +634,7 @@ class HostHomeController extends Controller
             'title' => $data['title'],
             'description' => $data['description'],
             'reservation' => $data['reservation'],
-            'price' => $data['price'],
+            'actualPrice' => $data['price'],
             'check_out_time' => $data['check_out_time'],
             'host_type' => $data['host_type'],
             'check_in_time' => $data['checkin'],
@@ -606,6 +642,7 @@ class HostHomeController extends Controller
             'tax' => $tax,
             'total' => $total,
             'verified' => 0,
+            'price' => 0,
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ]);

@@ -559,10 +559,11 @@ class HostHomeController extends Controller
      * this is used to update the host home details the {hosthome} is the hosthome id the values are the same with the post except you dont have to include the arrays but if you want to update it overide all the other data
      * @lrd:end
      */
-    public function update(UpdateHostHomeRequest $request, HostHome $hostHome)
+    public function update(UpdateHostHomeRequest $request, $hostHomeId)
     {
         $data = $request->validated();
 
+        $hostHome = HostHome::find($hostHomeId);
         $price = $data['price'];
         // $securityDeposit = $data['securityDeposit'];
 

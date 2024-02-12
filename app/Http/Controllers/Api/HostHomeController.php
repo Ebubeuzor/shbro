@@ -370,6 +370,8 @@ class HostHomeController extends Controller
     
     public function createImages($data)
     {
+        
+        info("test0");
         $validator = Validator::make($data,[
             'image' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -385,6 +387,7 @@ class HostHomeController extends Controller
     
     public function createOffers($data)
     {
+        info("test1");
         $validator = Validator::make($data,[
             'offer' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -397,6 +400,7 @@ class HostHomeController extends Controller
     
     public function createDescriptions($data)
     {
+        info("test2");
         $validator = Validator::make($data,[
             'description' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -409,6 +413,7 @@ class HostHomeController extends Controller
     
     public function createReservations($data)
     {
+        info("test3");
         $validator = Validator::make($data,[
             'reservation' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -421,6 +426,7 @@ class HostHomeController extends Controller
     
     public function createDiscounts($data)
     {
+        info("test4");
         $validator = Validator::make($data,[
             'discount' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -433,6 +439,7 @@ class HostHomeController extends Controller
     
     public function createRules($data)
     {
+        info("test5");
         $validator = Validator::make($data,[
             'rule' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
@@ -445,6 +452,7 @@ class HostHomeController extends Controller
     
     public function createNotices($data)
     {
+        info("test6");
         $validator = Validator::make($data,[
             'notice' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);

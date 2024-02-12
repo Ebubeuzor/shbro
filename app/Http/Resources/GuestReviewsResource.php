@@ -48,7 +48,13 @@ class GuestReviewsResource extends JsonResource
 
     protected function hosthomeDetails()
     {
-        $hosthomes = HostHome::where('user_id', $this->id)->get();
+        $hosthomes = HostHome::where('user_id', $this->id)
+        ->where('verified', 1)
+        ->where('disapproved', null)
+        ->whereNull('banned')
+        ->whereNull('suspend')
+        ->get();
+        
         return $hosthomes->map(function ($hosthome) {
             $firstPhoto = $hosthome->hosthomephotos->first();
     

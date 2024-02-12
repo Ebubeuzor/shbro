@@ -15,6 +15,7 @@ class UpdateHostHomeRequest extends FormRequest
     public function rules()
     {
         return [
+            'host_home_id' => 'required|exists:host_homes,id',
             'property_type' => "required",
             'guest_choice' => "required",
             'address' => "required",

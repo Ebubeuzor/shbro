@@ -29,6 +29,8 @@ return new class extends Migration
             $table->text("description");
             $table->string("reservation");
             $table->string("price");
+            $table->string("actualPrice");
+            $table->string("bookingCount");
             $table->string("host_type");
             $table->string("check_in_time");
             $table->string("check_out_time");

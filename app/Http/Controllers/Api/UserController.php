@@ -119,7 +119,7 @@ class UserController extends Controller
             $imageType = strtolower($matches[1]);
 
             // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png'])) {
+            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
                 throw new \Exception('Invalid image type');
             }
 
@@ -574,7 +574,7 @@ class UserController extends Controller
         // Delete all wishlist containers and their items for the user
         if ($user) {
             return UserTripResource::collection(
-                UserTrip::where('user_id',$user->id)->get()
+                UserTrip::where('user_id',$user->id)->latest()->get()
             );
         }
 
@@ -1042,9 +1042,7 @@ class UserController extends Controller
     {
 
         // Get currently hosted bookings using a join
-        $bookings = Booking::select('bookings.*')
-                        ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                        ->where('check_out', '>=', Carbon::today()->toDateString())
+        $bookings = Booking::where('check_out', '>=', Carbon::today()->toDateString())
                         ->where('check_in', '<=', Carbon::today()->toDateString())
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
@@ -1110,16 +1108,19 @@ class UserController extends Controller
     {
         // Get upcoming reservations using a join
         $bookings = Booking::select('bookings.*')
-                    ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                    ->whereDate('check_in', '>', Carbon::today()->addDays(2)->toDateString())
-                    ->where('paymentStatus', 'success')
-                    ->where('hostId', auth()->id())->get();
+            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->whereDate('check_in', '>', Carbon::today())
+            ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
+            ->where('paymentStatus', 'success')
+            ->where('hostId', auth()->id())
+            ->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
 
         return response(['bookings' => $bookingsResource]);
     }
+
 
 
     /**

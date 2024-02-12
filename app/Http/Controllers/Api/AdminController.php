@@ -14,6 +14,7 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class AdminController extends Controller
 {
@@ -82,6 +83,7 @@ class AdminController extends Controller
     
         $responseData = [];
         foreach ($users as $user) {
+            $user->profilePicture = URL::to($user->profilePicture);
             $verifiedHomesCount = $user->hosthomes()->where('verified', 1)->count();
             $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
         }

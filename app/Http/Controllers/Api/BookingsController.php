@@ -10,6 +10,7 @@ use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
+use App\Models\Hosthomediscount;
 use App\Models\User;
 use App\Models\UserTrip;
 use Carbon\Carbon;
@@ -180,8 +181,15 @@ class BookingsController extends Controller
         $reference = Paystack::genTranxRef();
 
         $recentToken = $user->tokens->last();
+        $discounts = Hosthomediscount::where('host_home_id', $hostHomeId)->get();
 
-        $total = ((intval($hostHome->total) * $dateDifference) + intval($hostHome->security_deposit)) * 100;
+        // Calculate the discounted price
+        $discountedPrice = $this->calculateDiscountedPrice($hostHome->price, $discounts, $dateDifference);
+
+        // Use the discounted price if not null, otherwise use the actual price
+        $bookingPrice = !is_null($discountedPrice) ? $discountedPrice : $hostHome->price;
+
+        $total = (($bookingPrice * $dateDifference) + intval($hostHome->security_deposit)) * 100;
         info((intval($hostHome->total) * $dateDifference));
         info(intval($hostHome->security_deposit));
         $data2 = [
@@ -209,6 +217,34 @@ class BookingsController extends Controller
             'payment_link' => Paystack::getAuthorizationUrl($data2)
         ]);
     }
+
+    private function calculateDiscountedPrice($actualPrice, $discounts, $durationOfStay = 0)
+    {
+        $discountedPrice = $actualPrice;
+    
+        foreach ($discounts as $discount) {
+            $discountedPrice = $this->applyDiscount($discountedPrice, $discount, $durationOfStay);
+        }
+    
+        return $discountedPrice;
+    }
+    
+    private function applyDiscount($price, $discount, $durationOfStay = 0)
+    {
+        // Check the discount type and apply accordingly
+        switch ($discount->discount) {
+            case '20% New listing promotion':
+                return $price; // 20% off for first 3 bookings
+            case '5% Weekly discount':
+                return $durationOfStay >= 7 ? $price * (1 - 0.05) : $price; // 5% off for stays of 7 nights or more
+            case '10% Monthly discount':
+                return $durationOfStay >= 28 ? $price * (1 - 0.1) : $price; // 10% off for stays of 28 nights or more
+            default:
+                return $price;
+        }
+    }
+    
+
 
     /**
      * @lrd:start

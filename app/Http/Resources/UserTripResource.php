@@ -95,16 +95,16 @@ class UserTripResource extends JsonResource
 
     protected function status()
     {
-        
         $hosthome = HostHome::find($this->booking->host_home_id);
         $checkInDateTime = Carbon::parse($this->booking->check_in . ' ' . $hosthome->check_in_time);
-        $checkOutDateTime = Carbon::parse($this->booking->check_out . ' ' . $hosthome->check_out_time);
+        $checkOutDateTime = Carbon::parse($this->booking->check_out . ' ' . $this->booking->check_out_time);
         $today = Carbon::now();
 
         if ($this->booking->paymentStatus === "successButCancelled") {
             return "CANCELLED";
-        }
-        elseif ($today->isSameDay($checkInDateTime) && $today->isBetween($checkInDateTime, $checkOutDateTime)) {
+        } elseif ($today->isBefore($checkInDateTime)) {
+            return "RESERVED";
+        } elseif ($today->isSameDay($checkInDateTime) || $today->isBetween($checkInDateTime->startOfDay(), $checkOutDateTime->endOfDay())) {
             return "CHECKED IN";
         } elseif ($today->isAfter($checkOutDateTime)) {
             return "CHECKED OUT";

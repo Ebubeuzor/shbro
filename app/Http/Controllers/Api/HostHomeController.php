@@ -185,7 +185,7 @@ class HostHomeController extends Controller
         return $relativePath;
     }
 
-    private function saveImage($image)
+    private function saveImage($image,$hosthomeid)
     {
         // Check if image is base64 string
         if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
@@ -193,7 +193,7 @@ class HostHomeController extends Controller
             $imageType = strtolower($matches[1]);
 
             // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png'])) {
+            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png','webp'])) {
                 throw new \Exception('Invalid image type');
             }
 
@@ -201,9 +201,13 @@ class HostHomeController extends Controller
             $decodedImage = base64_decode($imageData);
 
             if ($decodedImage === false) {
+                $hosthome = HostHome::find($hosthomeid);
+                $hosthome->delete();
                 throw new \Exception('Failed to decode image');
             }
         } else {
+            $hosthome = HostHome::find($hosthomeid);
+            $hosthome->delete();
             throw new \Exception('Invalid image format');
         }
 
@@ -372,7 +376,7 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        $data2['image'] = $this->saveImage($data2['image']);
+        $data2['image'] = $this->saveImage($data2['image'], $data2['host_home_id']);
         
         return Hosthomephoto::create($data2);
     

@@ -123,7 +123,7 @@ class ReviewController extends Controller
 
     /**
      * @lrd:start
-     * Get pendind reviews for the authenticated host.
+     * Get pending reviews for the authenticated host.
      *
      * @return \Illuminate\Http\JsonResponse
      * @lrd:end
@@ -142,7 +142,7 @@ class ReviewController extends Controller
 
     /**
      * @lrd:start
-     * Get pendind reviews for the authenticated host to make about his guest.
+     * Get pending reviews for the authenticated host to make about his guest.
      *
      * @return \Illuminate\Http\JsonResponse
      * @lrd:end
@@ -157,6 +157,42 @@ class ReviewController extends Controller
         ->get();
 
         return HostPendingReviewForGuestResource::collection($hostReviews);
+    }
+
+    /**
+     * @lrd:start
+     * deletes pending reviews for the authenticated host.
+     * $id is the pending review id
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function deleteHostPendingReviews($id)
+    {
+
+        // Fetch reviews where the host_id matches the authenticated user's ID
+        $hostReview = Pendingreview::find($id);
+
+        $hostReview->delete();
+
+        return response("Succesfully Deleted",200);
+
+    }
+
+    /**
+     * @lrd:start
+     * deletes pending reviews for the authenticated host to make about his guest.
+     * $id is the pending review id 
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function deletesHostPendingReviewsForGuest($id)
+    {
+        // Fetch reviews where the host_id matches the authenticated user's ID
+        $hostReview = Hostpendingreviewforguest::find($id);
+
+        $hostReview->delete();
+
+        return response("Succesfully Deleted",200);
     }
 
 

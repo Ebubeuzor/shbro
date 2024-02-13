@@ -605,10 +605,6 @@ class HostHomeController extends Controller
      */
     public function update(UpdateHostHomeRequest $request, $hostHomeId)
     {
-        $data = $request->validated();
-
-        $hostHome = HostHome::find($hostHomeId);
-        $price = $data['price'];
         // $securityDeposit = $data['securityDeposit'];
 
         // $service_fee_percentage = 0.10;
@@ -616,13 +612,21 @@ class HostHomeController extends Controller
 
         // $service_fee = $price * $service_fee_percentage;
         // $tax = $price * $tax_percentage;
+        $data = $request->validated();
 
-        $service_fee = 0;
-        $tax = 0;
+        $hostHome = HostHome::find($hostHomeId);
+        $price = $data['price'];
+
+        // Assuming $service_fee_percentage and $tax_percentage are set to 0
+        $service_fee_percentage = 0;
+        $tax_percentage = 0;
+
+        $service_fee = $price * $service_fee_percentage;
+        $tax = $price * $tax_percentage;
 
         $total = $price + $service_fee + $tax;
-        
-        $hostHome->update([
+
+        $hostHomeData = [
             'property_type' => $data['property_type'],
             'guest_choice' => $data['guest_choice'],
             'address' => $data['address'],
@@ -642,18 +646,30 @@ class HostHomeController extends Controller
             'tax' => $tax,
             'total' => $total,
             'verified' => 0,
-            'price' => 0,
+            'actualPrice' => $price,
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
-        ]);
+        ];
 
-        $amenities = $data['amenities'];
-        $images = $data['hosthomephotos'];
-        $hosthomedescriptions = $data['hosthomedescriptions'];
-        $reservations = $data['reservations'];
-        $discounts = $data['discounts'];
-        $rules = $data['rules'];
-        $notices = $data['notice'];
+        // Update only if new discounts are selected
+        if (isset($data['discounts']) && !empty($data['discounts'])) {
+            $hostHomeData['price'] = 0; // Reset the price to zero initially
+
+            // Handle the updates, creations, and deletions of discounts
+            $this->updateDiscounts($hostHome, $data['discounts']);
+        } 
+        
+        
+        $hostHome->update($hostHomeData);
+        if(isset($data['price'])){
+            if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
+                $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+                $newPrice = intval($hostHome->actualPrice) - $priceDiscount;
+                $hostHome->update(['price' => $newPrice]);
+            }else{
+                $hostHome->update(['price' => $price]);
+            }
+        }
         
         if(trim(isset($data['additionalRules']))){
             $hosthomerule = Hosthomerule::where('host_home_id',$hostHome->id);
@@ -696,6 +712,20 @@ class HostHomeController extends Controller
         ]);
     }
 
+    
+    private function hasNewListingPromotionDiscount($hostHome)
+    {
+        $discounts = Hosthomediscount::where('host_home_id', $hostHome->id)->get();
+
+        foreach ($discounts as $discount) {
+            if ($discount->discount === '20% New listing promotion') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function updateNotices($hosthome, array $notices)
     {
 
@@ -716,12 +746,42 @@ class HostHomeController extends Controller
 
     private function updateDiscounts($hosthome, array $discounts)
     {
-
         foreach ($discounts as $discount) {
             $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome];
+            
+            // Handle "20% New listing promotion" discount
+            if ($discount === "20% New listing promotion") {
+                $bookingCount = $hosthome->bookingCount ?? 0;
+
+                // Apply the discount only if the bookingCount is less than 3
+                if ($bookingCount < 3) {
+                    $this->applyNewListingPromotion($hosthome);
+                }
+            }
+
             $this->createDiscounts($hosthomediscountData);
         }
     }
+
+    private function applyNewListingPromotion($hostHome)
+    {
+        // Apply 20% off for the "20% New listing promotion"
+        $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+        $price = intval($hostHome->actualPrice) - $priceDiscount;
+
+        // Update the HostHome price and other attributes accordingly
+        $hostHome->price = $price;
+
+        // Update the bookingCount
+        $hostHome->increment('bookingCount');
+
+        // You might want to update other attributes here if needed
+        // ...
+
+        // Save the changes
+        $hostHome->save();
+    }
+
 
     private function updateReservations($hosthome, array $reservations)
     {

@@ -71,6 +71,8 @@ Route::middleware('auth:sanctum')->group(function(){
         
         Route::get('allHomes', [HostHomeController::class, 'allHomes']);
         
+        Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
+        Route::post('/otp/resend', );
         Route::get('approveHome/{id}', [HostHomeController::class, 'approveHome']);
         Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
@@ -80,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('cancelledTrips', [AdminController::class, 'cancelledTrips']);
         
         Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
+        Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
         Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
         Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
         Route::put('unbanGuest/{id}', [AdminController::class, 'unbanGuest']);
@@ -108,6 +111,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/searchHomeByProperty_type/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
     Route::delete('/deleteHostHostHomeImages/{hostHomephotoId}', [HostHomeController::class, 'deleteHostHostHomeImages']);
     Route::delete('/deleteReviews/{reviewId}', [ReviewController::class, 'deleteReviews']);
+    Route::delete('/deleteHostPendingReviews/{id}', [ReviewController::class, 'deleteHostPendingReviews']);
+    Route::delete('/deletesHostPendingReviewsForGuest/{id}', [ReviewController::class, 'deletesHostPendingReviewsForGuest']);
     Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
 
     

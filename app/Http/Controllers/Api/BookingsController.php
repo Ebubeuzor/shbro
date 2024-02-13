@@ -328,8 +328,15 @@ class BookingsController extends Controller
                     
                     // Update host home listing status
                     $hostHome->update([
-                        'listing_status' => 1
+                        'listing_status' => 1,
+                        'bookingCount' => $hostHome->bookingCount + 1
                     ]);
+
+                    if ($hostHome->bookingCount == 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
+                        $hostHome->update([
+                            'price' => $hostHome->actualPrice
+                        ]);
+                    }
                     
                     $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
                     $durationOfStay = $booking->duration_of_stay;
@@ -384,6 +391,19 @@ class BookingsController extends Controller
         }else {
             abort(404,"No record found");
         }
+    }
+
+    private function hasNewListingPromotionDiscount($hostHome)
+    {
+        $discounts = Hosthomediscount::where('host_home_id', $hostHome->id)->get();
+
+        foreach ($discounts as $discount) {
+            if ($discount->discount === '20% New listing promotion') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function successful(){

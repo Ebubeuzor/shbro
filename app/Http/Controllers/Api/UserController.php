@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use SadiqSalau\LaravelOtp\Facades\Otp;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\FilterHostHomesDatesRequest;
+
+use Illuminate\Support\Facades\Notification as UserNotification;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
+use App\Http\Requests\UpdateUserNumberRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
+use App\Http\Requests\VerifyOtpRequest;
 use App\Http\Resources\BookedResource;
 use App\Http\Resources\GuestReviewsResource;
 use App\Http\Resources\HostHomeHostInfoResource;
@@ -31,6 +36,7 @@ use App\Models\UserTrip;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
+use App\Otp\UserUpdateNumberOtp;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -179,13 +185,7 @@ class UserController extends Controller
                 'city' => $data['city'],
                 'zipcode' => $data['zipCode']
             ]);
-        }
-        elseif(trim(! empty($data['phone']))){
-            $user->update([
-                'phone' => $data['phone']
-            ]);
-        }
-        elseif(trim(! empty($data['profilePicture']))){
+        }elseif(trim(! empty($data['profilePicture']))){
             $user->update([
                 'profilePicture' => $this->saveImage($data['profilePicture'])
             ]);
@@ -231,7 +231,70 @@ class UserController extends Controller
 
     }
 
+    /**
+     * @lrd:start
+     * Send OTP for changing the user's phone number.
+     * This method is responsible for sending an OTP to the user's email for verifying a change in their phone number.
+     * @lrd:end
+     */
+    public function sendOtpForPhoneNumberChange(UpdateUserNumberRequest $request)
+    {
+        $data = $request->validated();
+        $userid = auth()->id();
+        $user = User::find($userid);
+
+        $otp = Otp::identifier($user->email)->send(
+            new UserUpdateNumberOtp(
+                id: $userid,
+                phone_number: $data['new_number']
+            ),
+            UserNotification::route('mail', $user->email)
+        );
     
+        return __($otp['status']);
+    }
+
+    /**
+     * @lrd:start
+     * Verify the OTP provided by the user for changing their phone number.
+     * This method verifies the OTP provided by the user for changing their phone number.
+     * @lrd:end
+     */
+    public function verifyOtp(VerifyOtpRequest $request) {
+
+        $data = $request->validated();
+        $userid = auth()->id();
+        $user = User::find($userid);
+    
+        $otp = Otp::identifier($user->email)->attempt($data['otp_code']);
+    
+        if($otp['status'] != Otp::OTP_PROCESSED)
+        {
+            abort(403, __($otp['status']));
+        }
+    
+        return response("Phone number sucessfully Changed");
+    }
+
+    /**
+     * @lrd:start
+     * Resend the OTP for changing the user's phone number.
+     * This method resends the OTP for changing the user's phone number.
+     * @lrd:end
+     */
+    public function resendOtp() {
+
+        $userid = auth()->id();
+        $user = User::find($userid);
+        
+        $otp = Otp::identifier($user->email)->update();
+    
+        if($otp['status'] != Otp::OTP_SENT)
+        {
+            abort(403, __($otp['status']));
+        }
+        return __($otp['status']);
+    }
     /**
      * @lrd:start
      * This is used to create a wishlistcontainer and wishlistitem

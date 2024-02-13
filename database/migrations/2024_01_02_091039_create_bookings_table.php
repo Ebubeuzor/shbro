@@ -32,6 +32,8 @@ return new class extends Migration
             $table->string('vat_charge')->nullable();
             $table->string('totalamount')->nullable();
             $table->string('profit')->nullable();
+            $table->string('actualPrice')->nullable();
+            $table->integer('bookingCount')->default(0);
             $table->string('securityDeposit')->nullable();
             $table->string('hostBalance')->nullable();
             $table->string('twoDayReminder')->nullable();

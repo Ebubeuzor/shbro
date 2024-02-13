@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '9a38175201c6eb8e6e1ea861fe41086518bdeb7b',
+        'reference' => '417f90ce5745b6c1e25909b0aa222502296542bc',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -219,6 +219,15 @@
             'install_path' => __DIR__ . '/../hamcrest/hamcrest-php',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'hi-folks/rando-php' => array(
+            'pretty_version' => 'v0.2.0',
+            'version' => '0.2.0.0',
+            'reference' => 'fd1e1421effa441c652f1df25e4a55c934bb6709',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../hi-folks/rando-php',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'illuminate/auth' => array(
             'dev_requirement' => false,
@@ -466,7 +475,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '9a38175201c6eb8e6e1ea861fe41086518bdeb7b',
+            'reference' => '417f90ce5745b6c1e25909b0aa222502296542bc',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1018,6 +1027,15 @@
             'replaced' => array(
                 0 => '4.7.5',
             ),
+        ),
+        'sadiqsalau/laravel-otp' => array(
+            'pretty_version' => 'v1.0.4',
+            'version' => '1.0.4.0',
+            'reference' => 'cc3173f7695fca3f9d096290e6e70c98a64078ef',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../sadiqsalau/laravel-otp',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'sebastian/cli-parser' => array(
             'pretty_version' => '1.0.1',

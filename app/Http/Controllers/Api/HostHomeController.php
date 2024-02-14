@@ -777,7 +777,7 @@ class HostHomeController extends Controller
         
         
         $hostHome->update($hostHomeData);
-        if(isset($data['price'])){
+        if(isset($data['price']) && isset($data['price']) != intval($hostHome->actualPrice)){
             if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
                 $priceDiscount = intval($hostHome->actualPrice) * 0.2;
                 $newPrice = intval($hostHome->actualPrice) - $priceDiscount;

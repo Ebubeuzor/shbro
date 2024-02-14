@@ -370,60 +370,37 @@ class HostHomeController extends Controller
     
     public function createImages($data)
     {
-        
-        info("test0");
-        $validator = Validator::make($data,[
-            'image' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'image' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
 
-        $data2 = $validator->validated();
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
 
+        $data2 = $validator->validated();
         $data2['image'] = $this->saveImage($data2['image'], $data2['host_home_id']);
-        
-        return Hosthomephoto::create($data2);
-    
 
+        // Check if an image with the same host_home_id already exists
+        $existingImage = Hosthomephoto::where('host_home_id', $data2['host_home_id'])->first();
+
+        // Create or update the Hosthomephoto record
+        if ($existingImage) {
+            // Update existing image
+            $existingImage->update($data2);
+            return $existingImage;
+        } else {
+            // Create new image
+            return Hosthomephoto::create($data2);
+        }
     }
-    
-    public function createOffers($data)
-    {
-        info("test1");
-        $validator = Validator::make($data,[
-            'offer' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
-        ]);
 
-        $data2 = $validator->validated();
+    // Similar approach for createOffers, createDescriptions, and createReservations methods
 
-        return Hosthomeoffer::create($data2);
-
-    }
-    
-    public function createDescriptions($data)
-    {
-        info("test2");
-        $validator = Validator::make($data,[
-            'description' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
-        ]);
-
-        $data2 = $validator->validated();
-
-        return Hosthomedescription::create($data2);
-
-    }
-    
-    public function createReservations($data)
-    {
-        info("test3");
-        $validator = Validator::make($data,[
-            'reservation' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
-        ]);
-
-        $data2 = $validator->validated();
-
-        return Hosthomereservation::create($data2);
-
-    }
-    
     public function createDiscounts($data)
     {
         // Validate the input data
@@ -469,35 +446,174 @@ class HostHomeController extends Controller
         // Save the updated HostHome
         $hostHome->save();
 
-        // Create the HostHomeDiscount record
-        return HostHomeDiscount::create($data2);
+        // Check if a discount with the same host_home_id already exists
+        $existingDiscount = HostHomeDiscount::where('host_home_id', $data2['host_home_id'])
+            ->where('discount', $data2['discount'])
+            ->first();
+
+        // Create or update the HostHomeDiscount record
+        if ($existingDiscount) {
+            // Update existing discount
+            $existingDiscount->update($data2);
+            return $existingDiscount;
+        } else {
+            // Create new discount
+            return HostHomeDiscount::create($data2);
+        }
     }
 
-    public function createRules($data)
+    
+    public function createOffers($data)
     {
-        info("test5");
-        $validator = Validator::make($data,[
-            'rule' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'offer' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
+
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
 
         $data2 = $validator->validated();
 
-        return Hosthomerule::create($data2);
+        // Check if an offer with the same host_home_id already exists
+        $existingOffer = Hosthomeoffer::where('host_home_id', $data2['host_home_id'])->first();
 
+        // Create or update the Hosthomeoffer record
+        if ($existingOffer) {
+            // Update existing offer
+            $existingOffer->update($data2);
+            return $existingOffer;
+        } else {
+            // Create new offer
+            return Hosthomeoffer::create($data2);
+        }
+    }
+
+    public function createDescriptions($data)
+    {
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'description' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
+        ]);
+
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+
+        $data2 = $validator->validated();
+
+        // Check if a description with the same host_home_id already exists
+        $existingDescription = Hosthomedescription::where('host_home_id', $data2['host_home_id'])->first();
+
+        // Create or update the Hosthomedescription record
+        if ($existingDescription) {
+            // Update existing description
+            $existingDescription->update($data2);
+            return $existingDescription;
+        } else {
+            // Create new description
+            return Hosthomedescription::create($data2);
+        }
+    }
+
+    public function createReservations($data)
+    {
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'reservation' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
+        ]);
+
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+
+        $data2 = $validator->validated();
+
+        // Check if a reservation with the same host_home_id already exists
+        $existingReservation = Hosthomereservation::where('host_home_id', $data2['host_home_id'])->first();
+
+        // Create or update the Hosthomereservation record
+        if ($existingReservation) {
+            // Update existing reservation
+            $existingReservation->update($data2);
+            return $existingReservation;
+        } else {
+            // Create new reservation
+            return Hosthomereservation::create($data2);
+        }
+    }
+
+    
+    public function createRules($data)
+    {
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'rule' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
+        ]);
+    
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+    
+        $data2 = $validator->validated();
+    
+        // Check if a rule with the same host_home_id already exists
+        $existingRule = Hosthomerule::where('host_home_id', $data2['host_home_id'])->first();
+    
+        // Create or update the Hosthomerule record
+        if ($existingRule) {
+            // Update existing rule
+            $existingRule->update($data2);
+            return $existingRule;
+        } else {
+            // Create new rule
+            return Hosthomerule::create($data2);
+        }
     }
     
     public function createNotices($data)
     {
-        info("test6");
-        $validator = Validator::make($data,[
-            'notice' => 'string', 'host_home_id' => 'exists:App\Models\HostHome,id'
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'notice' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
-
+    
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+    
         $data2 = $validator->validated();
-
-        return Hosthomenotice::create($data2);
-
+    
+        // Check if a notice with the same host_home_id already exists
+        $existingNotice = Hosthomenotice::where('host_home_id', $data2['host_home_id'])->first();
+    
+        // Create or update the Hosthomenotice record
+        if ($existingNotice) {
+            // Update existing notice
+            $existingNotice->update($data2);
+            return $existingNotice;
+        } else {
+            // Create new notice
+            return Hosthomenotice::create($data2);
+        }
     }
+    
 
     /**
      * @lrd:start

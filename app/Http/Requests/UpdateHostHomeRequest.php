@@ -32,7 +32,7 @@ class UpdateHostHomeRequest extends FormRequest
             'description' => "required",
             'reservation' => "required",
             'reservations' => "array",
-            'price' => "required|numeric",
+            'price' => "nullable |numeric",
             'discounts' => "array",
             'rules' => "array",
             'additionalRules' => "string",

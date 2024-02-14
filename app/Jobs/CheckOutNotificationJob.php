@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Mail\NotificationMail;
 use App\Models\HostHome;
 use App\Models\HostPendingReview;
+use App\Models\Hostpendingreviewforguest;
 use App\Models\Pendingreview;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -60,7 +61,7 @@ class CheckOutNotificationJob implements ShouldQueue
                 $pendingReviews->host_home_id = $this->booking->host_home_id;
                 $pendingReviews->save();
                 
-                $hostPendingReviews = new HostPendingReview();
+                $hostPendingReviews = new Hostpendingreviewforguest();
                 $hostPendingReviews->booking_id = $this->booking->id;
                 $hostPendingReviews->user_id = $this->booking->hostId;
                 $hostPendingReviews->guest_id = $this->booking->user_id;

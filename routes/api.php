@@ -56,7 +56,31 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('changePassword', [AuthController::class, 'changePassword']);
         
     });
-        
+
+    // Delete discount by id
+    Route::delete('/deleteDiscountById/{id}', [HostHomeController::class, 'deleteDiscountById'])
+        ->name('deleteDiscountById');
+
+    // Delete offer by id
+    Route::delete('/deleteOfferById/{id}', [HostHomeController::class, 'deleteOfferById'])
+        ->name('deleteOfferById');
+
+    // Delete description by id
+    Route::delete('/deleteDescriptionById/{id}', [HostHomeController::class, 'deleteDescriptionById'])
+        ->name('deleteDescriptionById');
+
+    // Delete reservation by id
+    Route::delete('/deleteReservationById/{id}', [HostHomeController::class, 'deleteReservationById'])
+        ->name('deleteReservationById');
+
+    // Delete rule by id
+    Route::delete('/deleteRuleById/{id}', [HostHomeController::class, 'deleteRuleById'])
+        ->name('deleteRuleById');
+
+    // Delete notice by id
+    Route::delete('/deleteNoticeById/{id}', [HostHomeController::class, 'deleteNoticeById'])
+        ->name('deleteNoticeById');
+
     Route::post('hosthomes', [HostHomeController::class, 'store']);
     Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);

@@ -613,7 +613,174 @@ class HostHomeController extends Controller
             return Hosthomenotice::create($data2);
         }
     }
-    
+
+
+    /**
+     * @lrd:start
+     * Delete a discount record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteDiscountById($id)
+    {
+        // Find the HostHomeDiscount record by id
+        $discount = HostHomeDiscount::find($id);
+
+        // Check if the record exists
+        if ($discount) {
+            // Find the corresponding HostHome
+            $hostHome = HostHome::find($discount->host_home_id);
+
+            // Reset the price to the actual price
+            $hostHome->price = $hostHome->actualPrice;
+
+            // Calculate service fee and tax (you can adjust these calculations based on your business logic)
+            $service_fee_percentage = 0.10;
+            $tax_percentage = 0.05;
+
+            $service_fee = $hostHome->price * $service_fee_percentage;
+            $tax = $hostHome->price * $tax_percentage;
+
+            // Update the HostHome attributes
+            $hostHome->service_fee = $service_fee;
+            $hostHome->tax = $tax;
+            $hostHome->total = $hostHome->price + $service_fee + $tax;
+
+            // Save the updated HostHome
+            $hostHome->save();
+
+            // Delete the HostHomeDiscount record
+            $discount->delete();
+
+            return response(['message' => 'Discount deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Discount not found'], 404);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Delete an offer record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteOfferById($id)
+    {
+        // Find the Hosthomeoffer record by id
+        $offer = Hosthomeoffer::find($id);
+
+        // Check if the record exists
+        if ($offer) {
+            // Delete the record
+            $offer->delete();
+            return response(['message' => 'Offer deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Offer not found'], 404);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Delete a description record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteDescriptionById($id)
+    {
+        // Find the Hosthomedescription record by id
+        $description = Hosthomedescription::find($id);
+
+        // Check if the record exists
+        if ($description) {
+            // Delete the record
+            $description->delete();
+            return response(['message' => 'Description deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Description not found'], 404);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Delete a reservation record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteReservationById($id)
+    {
+        // Find the Hosthomereservation record by id
+        $reservation = Hosthomereservation::find($id);
+
+        // Check if the record exists
+        if ($reservation) {
+            // Delete the record
+            $reservation->delete();
+            return response(['message' => 'Reservation deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Reservation not found'], 404);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Delete a rule record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteRuleById($id)
+    {
+        // Find the Hosthomerule record by id
+        $rule = Hosthomerule::find($id);
+
+        // Check if the record exists
+        if ($rule) {
+            // Delete the record
+            $rule->delete();
+            return response(['message' => 'Rule deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Rule not found'], 404);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Delete a notice record based on the given id.
+     *
+     * @param int $id
+     * @return JsonResponse
+     * @lrd:end
+     */
+    public function deleteNoticeById($id)
+    {
+        // Find the Hosthomenotice record by id
+        $notice = Hosthomenotice::find($id);
+
+        // Check if the record exists
+        if ($notice) {
+            // Delete the record
+            $notice->delete();
+            return response(['message' => 'Notice deleted successfully']);
+        } else {
+            // Handle the case where the record is not found
+            return response(['error' => 'Notice not found'], 404);
+        }
+    }
+
 
     /**
      * @lrd:start
@@ -881,20 +1048,11 @@ class HostHomeController extends Controller
 
     private function applyNewListingPromotion($hostHome)
     {
-        // Apply 20% off for the "20% New listing promotion"
         $priceDiscount = intval($hostHome->actualPrice) * 0.2;
         $price = intval($hostHome->actualPrice) - $priceDiscount;
 
-        // Update the HostHome price and other attributes accordingly
         $hostHome->price = $price;
 
-        // Update the bookingCount
-        $hostHome->increment('bookingCount');
-
-        // You might want to update other attributes here if needed
-        // ...
-
-        // Save the changes
         $hostHome->save();
     }
 

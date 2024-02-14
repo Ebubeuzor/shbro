@@ -936,8 +936,6 @@ class HostHomeController extends Controller
 
         // Update only if new discounts are selected
         if (isset($data['discounts']) && !empty($data['discounts'])) {
-            $hostHomeData['price'] = 0; // Reset the price to zero initially
-
             // Handle the updates, creations, and deletions of discounts
             $this->updateDiscounts($hostHome, $data['discounts']);
         } 

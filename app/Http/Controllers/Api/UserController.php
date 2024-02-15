@@ -21,6 +21,7 @@ use App\Http\Resources\HostHomeHostInfoResource;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\UserTransactionResource;
 use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
@@ -274,6 +275,19 @@ class UserController extends Controller
         }
     
         return response("Phone number sucessfully Changed");
+    }
+
+    /**
+     * @lrd:start
+     * This retrieve all a guest Transaction (Booking)
+     * @lrd:end
+     */
+    public function transactionHistory() {
+
+        $bookings = Booking::where('user_id',auth()->id())
+        ->where('paymentStatus', 'success')->get();
+
+        return UserTransactionResource::collection($bookings);
     }
 
     /**

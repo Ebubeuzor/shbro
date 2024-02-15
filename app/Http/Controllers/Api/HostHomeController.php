@@ -1105,10 +1105,22 @@ class HostHomeController extends Controller
     private function updateOffers($hosthome, array $amenities)
     {
         foreach ($amenities as $amenity) {
-            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
-            $this->createOffers($amenityData);
+            // Check if an offer with the same host_home_id and amenity already exists
+            $existingOffer = Hosthomeoffer::where('host_home_id', $hosthome)
+                ->where('offer', $amenity)
+                ->first();
+
+            if ($existingOffer) {
+                // Update existing offer
+                $existingOffer->update(['offer' => $amenity]);
+            } else {
+                // Create new offer
+                $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
+                $this->createOffers($amenityData);
+            }
         }
     }
+
 
     private function updateImages($hosthome, array $images)
     {

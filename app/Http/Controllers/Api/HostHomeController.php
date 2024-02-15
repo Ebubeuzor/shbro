@@ -498,18 +498,8 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        // Check if a description with the same host_home_id already exists
-        $existingDescription = Hosthomedescription::where('host_home_id', $data2['host_home_id'])->first();
-
-        // Create or update the Hosthomedescription record
-        if ($existingDescription) {
-            // Update existing description
-            $existingDescription->update($data2);
-            return $existingDescription;
-        } else {
-            // Create new description
-            return Hosthomedescription::create($data2);
-        }
+        return Hosthomedescription::create($data2);
+        
     }
 
     public function createReservations($data)
@@ -528,18 +518,8 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        // Check if a reservation with the same host_home_id already exists
-        $existingReservation = Hosthomereservation::where('host_home_id', $data2['host_home_id'])->first();
-
-        // Create or update the Hosthomereservation record
-        if ($existingReservation) {
-            // Update existing reservation
-            $existingReservation->update($data2);
-            return $existingReservation;
-        } else {
-            // Create new reservation
-            return Hosthomereservation::create($data2);
-        }
+        return Hosthomereservation::create($data2);
+        
     }
 
     
@@ -559,18 +539,8 @@ class HostHomeController extends Controller
     
         $data2 = $validator->validated();
     
-        // Check if a rule with the same host_home_id already exists
-        $existingRule = Hosthomerule::where('host_home_id', $data2['host_home_id'])->first();
-    
-        // Create or update the Hosthomerule record
-        if ($existingRule) {
-            // Update existing rule
-            $existingRule->update($data2);
-            return $existingRule;
-        } else {
-            // Create new rule
-            return Hosthomerule::create($data2);
-        }
+        return Hosthomerule::create($data2);
+        
     }
     
     public function createNotices($data)
@@ -589,18 +559,8 @@ class HostHomeController extends Controller
     
         $data2 = $validator->validated();
     
-        // Check if a notice with the same host_home_id already exists
-        $existingNotice = Hosthomenotice::where('host_home_id', $data2['host_home_id'])->first();
-    
-        // Create or update the Hosthomenotice record
-        if ($existingNotice) {
-            // Update existing notice
-            $existingNotice->update($data2);
-            return $existingNotice;
-        } else {
-            // Create new notice
-            return Hosthomenotice::create($data2);
-        }
+        return Hosthomenotice::create($data2);
+        
     }
 
 

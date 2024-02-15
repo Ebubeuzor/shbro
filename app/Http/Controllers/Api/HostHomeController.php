@@ -1074,6 +1074,10 @@ class HostHomeController extends Controller
     private function updateReservations($hosthome, array $reservations)
     {
 
+        $getHostHome = HostHome::find($hosthome);
+        
+        $getHostHome->hosthomereservations()->delete();
+
         foreach ($reservations as $reservation) {
             $hosthomedescriptionData = ['reservation' => $reservation, 'host_home_id' => $hosthome];
             $this->createReservations($hosthomedescriptionData);

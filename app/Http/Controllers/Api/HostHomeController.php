@@ -1057,19 +1057,25 @@ class HostHomeController extends Controller
 
 
 
-    private function applyNewListingPromotion($hostHomeid)
+    private function applyNewListingPromotion($hostHomeId)
     {
-        
-        $hostHome = HostHome::find($hostHomeid);
-        $priceDiscount = intval($hostHome->actualPrice) * 0.2;
-        $price = intval($hostHome->actualPrice) - $priceDiscount;
+        $hostHome = HostHome::find($hostHomeId);
 
-        // Make sure the discounted price is not less than 0
-        $hostHome->price = $price;
+        // Ensure $hostHome is an instance of HostHome
+        if ($hostHome instanceof HostHome) {
+            $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+            $price = intval($hostHome->actualPrice) - $priceDiscount;
 
-        // Save the updated price immediately
-        $hostHome->save();
+            // Make sure the discounted price is not less than 0
+            $hostHome->price = max(0, $price);
+
+            // Save the updated price immediately
+            $hostHome->save();
+        }else {
+            return response("Not good",422);
+        }
     }
+
 
 
 

@@ -1041,7 +1041,7 @@ class HostHomeController extends Controller
             $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome];
 
             // Handle "20% New listing promotion" discount
-            if ($discount == "20% New listing promotion") {
+            if ($discount === "20% New listing promotion") {
                 $bookingCount = $hosthome->bookingCount ?? 0;
 
                 // Apply the discount only if the bookingCount is less than 3
@@ -1055,16 +1055,19 @@ class HostHomeController extends Controller
     }
 
 
+
     private function applyNewListingPromotion($hostHome)
     {
         $priceDiscount = intval($hostHome->actualPrice) * 0.2;
         $price = intval($hostHome->actualPrice) - $priceDiscount;
 
-        $hostHome->price = $price;
+        // Make sure the discounted price is not less than 0
+        $hostHome->price = max(0, $price);
 
         // Save the updated price immediately
         $hostHome->save();
     }
+
 
 
 

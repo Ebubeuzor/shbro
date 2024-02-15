@@ -1046,7 +1046,9 @@ class HostHomeController extends Controller
 
                 // Apply the discount only if the bookingCount is less than 3
                 if ($bookingCount < 3) {
-                    $this->applyNewListingPromotion($hosthome);
+                    
+                    $hostHome = HostHome::find($hosthome);
+                    $this->applyNewListingPromotion($hostHome);
                 }
             }
 
@@ -1058,17 +1060,11 @@ class HostHomeController extends Controller
 
     private function applyNewListingPromotion($hostHome)
     {
-        // Ensure actualPrice is set and greater than 0
-        $actualPrice = max(0, $hostHome->actualPrice);
-
-        // Calculate the price discount
-        $priceDiscount = $actualPrice * 0.2;
-
-        // Calculate the discounted price
-        $price = $actualPrice - $priceDiscount;
+        $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+        $price = intval($hostHome->actualPrice) - $priceDiscount;
 
         // Make sure the discounted price is not less than 0
-        $hostHome->price = max(0, $price);
+        $hostHome->price = $price;
 
         // Save the updated price immediately
         $hostHome->save();

@@ -942,6 +942,16 @@ class HostHomeController extends Controller
         
         
         $hostHome->update($hostHomeData);
+        
+
+        $amenities = $data['amenities'];
+        $images = $data['hosthomephotos'];
+        $hosthomedescriptions = $data['hosthomedescriptions'];
+        $reservations = $data['reservations'];
+        $discounts = $data['discounts'];
+        $rules = $data['rules'];
+        $notices = $data['notice'];
+
         if(isset($data['price']) && isset($data['price']) != intval($hostHome->actualPrice)){
             if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
                 $priceDiscount = intval($hostHome->actualPrice) * 0.2;
@@ -1029,9 +1039,9 @@ class HostHomeController extends Controller
     {
         foreach ($discounts as $discount) {
             $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome];
-            
+
             // Handle "20% New listing promotion" discount
-            if ($discount === "20% New listing promotion") {
+            if ($discount == "20% New listing promotion") {
                 $bookingCount = $hosthome->bookingCount ?? 0;
 
                 // Apply the discount only if the bookingCount is less than 3
@@ -1044,6 +1054,7 @@ class HostHomeController extends Controller
         }
     }
 
+
     private function applyNewListingPromotion($hostHome)
     {
         $priceDiscount = intval($hostHome->actualPrice) * 0.2;
@@ -1051,8 +1062,10 @@ class HostHomeController extends Controller
 
         $hostHome->price = $price;
 
+        // Save the updated price immediately
         $hostHome->save();
     }
+
 
 
     private function updateReservations($hosthome, array $reservations)

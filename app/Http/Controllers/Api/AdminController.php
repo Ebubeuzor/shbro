@@ -10,9 +10,13 @@ use App\Http\Resources\GuestsResource;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\Canceltrip;
+use App\Models\HostHome;
 use App\Models\Review;
 use App\Models\User;
+use App\Models\Visitor;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
@@ -61,14 +65,61 @@ class AdminController extends Controller
     
     /**
      * @lrd:start
-     * this gets all the bookings for the admin
+     * this gets all the bookings that has not been checked out for the admin
      * @lrd:end
      */
     public function bookings() {
 
+        // Get the current date and time
+        $now = Carbon::now();
+        $activeReservations = Booking::where(function ($query) use ($now) {
+            $query->where('check_in', '<=', $now->toDateString()) // Check if check_in is on or before the current date
+                ->orWhere(function ($subquery) use ($now) {
+                    $subquery->where('check_in', '=', $now->toDateString()) // Check if check_in is on the current date
+                        ->where('check_out_time', '>', $now->toTimeString()); // Check if check_out_time is after the current time
+                });
+        })
+        ->where('check_out', '>', $now->toDateString()) // Check if check_out is after the current date
+        ->where('paymentStatus', 'success')
+        ->get();
+
         return AllBookingsResource::collection(
-            Booking::where('paymentStatus','success')->get()
+            $activeReservations
         );
+
+    }
+    
+    
+    /**
+     * @lrd:start
+     * this gets all the bookings that has been checked out for the admin
+     * @lrd:end
+     */
+    public function checkedOutBookings() {
+
+        // Get the current date and time
+        $now = Carbon::now();
+
+        $checkedOutBookings = Booking::where('check_out', '>=', $now->toDateString())
+            ->where('paymentStatus', 'success')
+            ->get();
+
+        return AllBookingsResource::collection($checkedOutBookings);
+
+
+    }
+    
+    
+    /**
+     * @lrd:start
+     * this gets all the bookings that has been checked out for the admin
+     * @lrd:end
+     */
+    public function receivablePayable() {
+
+        $bookings = Booking::where('paymentStatus', 'success')
+        
+        ->get();
 
     }
     
@@ -88,6 +139,128 @@ class AdminController extends Controller
             $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
         }
     
+        return response()->json(['data' => $responseData]);
+    }
+    
+    
+    /**
+     * @lrd:start
+     * Admin Analytical Dashboard.
+     * This method provides analytical data for the admin dashboard.
+     * @lrd:end
+     */
+    public function adminAnalytical() {
+        // Count the total number of hosts
+        $hosts = User::where('host', 1)->count();
+
+        // Count the total number of guests
+        $guests = User::count();
+
+        // Count the total number of unique hosts with successful bookings
+        $hostsCount = Booking::select([
+            'hostId',
+            DB::raw('COUNT(DISTINCT hostId) as total_hosts_count'),
+        ])
+            ->where('paymentStatus', '=', 'success')
+            ->groupBy('hostId')
+            ->count();
+
+        // Count the total number of unique guests with successful bookings
+        $guestsCount = Booking::select([
+            'user_id',
+            DB::raw('COUNT(DISTINCT user_id) as total_guests_count'),
+        ])
+            ->where('paymentStatus', '=', 'success')
+            ->groupBy('user_id')
+            ->count();
+
+        // Sum of total amounts from successful bookings
+        $totalAmount = Booking::where('paymentStatus', '=', 'success')->sum('totalamount');
+
+        // Count the total number of confirmed bookings
+        $confirmBookings = Booking::where('paymentStatus', '=', 'success')->count();
+
+        // Count the total number of verified homes
+        $verifiedHomesCount = HostHome::where('verified', 1)->count();
+
+        // Count the total number of visitors
+        $visitors = Visitor::find(1);
+
+        // Get the current date
+        $today = Carbon::now()->toDateString();
+
+        // Count the total number of unapproved homes created today
+        $unApprovedHomesCount = HostHome::whereDate('created_at', $today)
+            ->where('verified', '!=', 1)
+            ->count();
+
+        // Count the total number of users created today
+        $userCountForPresentDay = User::whereDate('created_at', $today)->count();
+
+        // Count the total number of unverified users created today
+        $unVerifiedUserForPresentDay = User::whereDate('created_at', $today)
+            ->where('verified', '!=', 'Verified')
+            ->count();
+
+        // Get the current date and time
+        $now = Carbon::now();
+
+        // Count the total number of active reservations
+        $activeReservationsCount = Booking::where(function ($query) use ($now) {
+            $query->where('check_in', '<=', $now->toDateString()) // Check if check_in is on or before the current date
+                ->orWhere(function ($subquery) use ($now) {
+                    $subquery->where('check_in', '=', $now->toDateString()) // Check if check_in is on the current date
+                        ->where('check_out_time', '>', $now->toTimeString()); // Check if check_out_time is after the current time
+                });
+        })
+        ->where('check_out', '>', $now->toDateString()) // Check if check_out is after the current date
+        ->where('paymentStatus', 'success') // Optional: If you want to consider only successful bookings
+        ->count();
+
+        $activeReservations = Booking::where(function ($query) use ($now) {
+            $query->where('check_in', '<=', $now->toDateString()) // Check if check_in is on or before the current date
+                ->orWhere(function ($subquery) use ($now) {
+                    $subquery->where('check_in', '=', $now->toDateString()) // Check if check_in is on the current date
+                        ->where('check_out_time', '>', $now->toTimeString()); // Check if check_out_time is after the current time
+                });
+        })
+        ->where('check_out', '>', $now->toDateString()) // Check if check_out is after the current date
+        ->where('paymentStatus', 'success')
+        ->get();
+
+        $reservationData = [];
+
+        foreach ($activeReservations as $activeReservation) {
+            $hosthome = HostHome::find(intval($activeReservation['host_home_id']));
+            $user = User::find(intval($activeReservation['user_id']));
+            $reservationData[] = [
+                "bookingId" => $activeReservation["id"],
+                "guestName" => $user["name"],
+                "homeTitle" => $hosthome->title,
+                "status" => "Booked",
+                'check_in' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_in)->format('F j, Y'),
+                'check_out' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_out)->format('F j, Y'),
+            ];
+        }
+
+        // Response data array
+        $responseData = [
+            'no_of_guests' => $guests ?? 0,
+            'no_of_hosts' => $hosts ?? 0,
+            'active_hosts' => $hostsCount ?? 0,
+            'active_guests' => $guestsCount ?? 0,
+            'propertyListings' => $verifiedHomesCount ?? 0,
+            'revenue' => $totalAmount ?? 0,
+            'visitors' => $visitors->views ?? 0,
+            'userCountForPresentDay' => $userCountForPresentDay ?? 0,
+            'unVerifiedUserForPresentDay' => $unVerifiedUserForPresentDay ?? 0,
+            'unApprovedHomesCount' => $unApprovedHomesCount ?? 0,
+            'confirmBookings' => $confirmBookings ?? 0,
+            'activeReservationsCount' => $activeReservationsCount ?? 0,
+            'reservationData' => $reservationData ?? [],
+        ];
+
+        // Return JSON response
         return response()->json(['data' => $responseData]);
     }
     

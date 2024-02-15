@@ -95,18 +95,17 @@ Route::middleware('auth:sanctum')->group(function(){
         
         Route::get('allHomes', [HostHomeController::class, 'allHomes']);
         
-        Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
-        Route::post('/otp/resend', );
         Route::get('approveHome/{id}', [HostHomeController::class, 'approveHome']);
         Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
+        Route::get('checkedOutBookings', [AdminController::class, 'checkedOutBookings']);
+        Route::get('adminAnalytical', [AdminController::class, 'adminAnalytical']);
         Route::get('getReviews', [AdminController::class, 'getReviews']);
         Route::get('bookings', [AdminController::class, 'bookings']);
         Route::get('hosts', [AdminController::class, 'hosts']);
         Route::get('cancelledTrips', [AdminController::class, 'cancelledTrips']);
         
         Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
-        Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
         Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
         Route::put('banGuest/{id}', [AdminController::class, 'banGuest']);
         Route::put('unbanGuest/{id}', [AdminController::class, 'unbanGuest']);
@@ -120,13 +119,16 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::delete('/destroyReportUser/{id}', [ReportController::class, 'destroyReportUser']);
     });
     
-
+    
     Route::post('/reporthosthome', [ReportController::class, 'store']);
     Route::post('/reportUser', [ReportController::class, 'reportUser']);
-
+    
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
+    Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
+    Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
+    Route::post('/otp/resend', [UserController::class, 'resendOtp']);
     Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
     Route::get('guestReview/{guestId}', [UserController::class, 'guestReview']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);

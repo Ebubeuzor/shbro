@@ -1062,7 +1062,7 @@ class HostHomeController extends Controller
         $price = intval($hostHome->actualPrice) - $priceDiscount;
 
         // Make sure the discounted price is not less than 0
-        $hostHome->price = max(0, $price);
+        $hostHome->price = $price;
 
         // Save the updated price immediately
         $hostHome->save();

@@ -13,11 +13,12 @@ class UserTransactionResource extends JsonResource
      * @param  \Illuminate\Http\Request  $request
      * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
      */
+    
     public function toArray($request)
     {
         return [
             "id" => $this->id,
-            "transactionID" => $this->transactionID,
+            "transactionID" => $this->paymentId,
             "propertyID" => $this->host_home_id,
             "paymentAmount" => $this->totalamount,
             'check_in' => Carbon::parse($this->check_in)->format('Y-m-d'),

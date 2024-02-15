@@ -479,18 +479,7 @@ class HostHomeController extends Controller
 
         $data2 = $validator->validated();
 
-        // Check if an offer with the same host_home_id already exists
-        $existingOffer = Hosthomeoffer::where('host_home_id', $data2['host_home_id'])->first();
-
-        // Create or update the Hosthomeoffer record
-        if ($existingOffer) {
-            // Update existing offer
-            $existingOffer->update($data2);
-            return $existingOffer;
-        } else {
-            // Create new offer
-            return Hosthomeoffer::create($data2);
-        }
+        return Hosthomeoffer::create($data2);
     }
 
     public function createDescriptions($data)
@@ -1105,22 +1094,10 @@ class HostHomeController extends Controller
     private function updateOffers($hosthome, array $amenities)
     {
         foreach ($amenities as $amenity) {
-            // Check if an offer with the same host_home_id and amenity already exists
-            $existingOffer = Hosthomeoffer::where('host_home_id', $hosthome)
-                ->where('offer', $amenity)
-                ->first();
-
-            if ($existingOffer) {
-                // Update existing offer
-                $existingOffer->update(['offer' => $amenity]);
-            } else {
-                // Create new offer
-                $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
-                $this->createOffers($amenityData);
-            }
+            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
+            $this->createOffers($amenityData);
         }
     }
-
 
     private function updateImages($hosthome, array $images)
     {

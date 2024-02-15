@@ -1058,7 +1058,7 @@ class HostHomeController extends Controller
 
     private function applyNewListingPromotion($hostHome)
     {
-        $priceDiscount = intval($hostHome->actualPrice) * 0.2;
+        $priceDiscount = $hostHome->actualPrice * 0.2;
         $price = intval($hostHome->actualPrice) - $priceDiscount;
 
         // Make sure the discounted price is not less than 0

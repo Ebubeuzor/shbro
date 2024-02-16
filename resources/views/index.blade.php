@@ -9,7 +9,7 @@
     <h1>WebSocket Test</h1>
 
     <script>
-        const socket = new WebSocket('ws://localhost.com:6001');
+        const socket = new WebSocket('wss://shortletbooking.com:8443/ws');
 
         socket.addEventListener('open', (event) => {
             console.log('WebSocket connection opened:', event);

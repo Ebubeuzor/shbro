@@ -21,7 +21,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -1043,32 +1042,39 @@ class HostHomeController extends Controller
             $this->createReservations($hosthomedescriptionData);
         }
     }
-
     private function updateDescriptions($hosthomeid, array $hosthomedescriptions)
     {
+        $responses = [];
+    
         foreach ($hosthomedescriptions as $hosthomedescription) {
             // Check if a description with the same host_home_id and description content already exists
             $existingDescription = Hosthomedescription::where('host_home_id', $hosthomeid)
                 ->where('description', $hosthomedescription)
                 ->first();
-
+    
             if ($existingDescription) {
                 // Update existing description
                 $existingDescription->update(['description' => $hosthomedescription]);
-                Log::info("Updated existing description: $hosthomedescription");
+                $responses[] = "Updated existing description: $hosthomedescription";
             } else {
                 // Create new description
                 $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
                 $newDescription = $this->createDescriptions($descriptionData);
-
+    
                 if ($newDescription) {
-                    Log::info("Created new description: $hosthomedescription");
+                    $responses[] = "Created new description: $hosthomedescription";
                 } else {
-                    Log::info("Failed to create new description: $hosthomedescription");
+                    $responses[] = "Failed to create new description: $hosthomedescription";
                 }
             }
         }
+    
+        return response([
+            "data" => $responses
+        ]);
     }
+    
+    
     
 
     private function updateOffers($hosthome, array $amenities)

@@ -21,6 +21,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -1042,7 +1043,7 @@ class HostHomeController extends Controller
             $this->createReservations($hosthomedescriptionData);
         }
     }
-    
+
     private function updateDescriptions($hosthomeid, array $hosthomedescriptions)
     {
         $responses = [];
@@ -1070,7 +1071,7 @@ class HostHomeController extends Controller
             }
         }
     
-        info($responses);
+        Log::info($responses);
     }
     
     

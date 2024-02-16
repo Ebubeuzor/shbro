@@ -35,3 +35,6 @@ Route::post('/resetPassword', [ForgotPassword::class, 'resetPassword'])->name('c
 Route::get('/successful', [BookingsController::class, 'successful'])->name('successPage');
 Route::get('/cancelled', [BookingsController::class, 'cancelled'])->name('cancelledPage');
 Route::get('/failed', [BookingsController::class, 'failed'])->name('failedPage');
+Route::get('/testwebsocket', function() {
+  return view("index");
+});

@@ -28,7 +28,7 @@ class UpdateHostHomeRequest extends FormRequest
             'hosthomevideo' => [
                 'required'],
             'title' => "required",
-            'hosthomedescriptions' => "array",
+            'hosthomedescriptions' => "required | array",
             'description' => "required",
             'reservation' => "required",
             'reservations' => "array",

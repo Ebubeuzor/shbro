@@ -1046,19 +1046,10 @@ class HostHomeController extends Controller
     private function updateDescriptions($hosthomeid, array $hosthomedescriptions)
     {
         foreach ($hosthomedescriptions as $hosthomedescription) {
-            // Check if a description with the same host_home_id already exists
-            $existingDescription = Hosthomedescription::where('host_home_id', $hosthomeid)
-            ->where('description', $hosthomedescription)
-            ->first();
-    
-            if ($existingDescription) {
-                // Update existing description
-                $existingDescription->update(['description' => $hosthomedescription]);
-            } else {
-                // Create new description
-                $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
-                $this->createDescriptions($descriptionData);
-            }
+            
+            $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
+            $this->createDescriptions($descriptionData);
+            
         }
     }
     

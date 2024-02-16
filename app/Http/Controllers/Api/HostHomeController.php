@@ -911,6 +911,7 @@ class HostHomeController extends Controller
             }
         }
         
+        $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
         if(trim(isset($data['additionalRules']))){
             $hosthomerule = Hosthomerule::where('host_home_id',$hostHome->id);
             $hosthomerule->update([
@@ -927,9 +928,6 @@ class HostHomeController extends Controller
             $this->updateOffers($hostHome->id, $amenities);
         }
         
-        if(isset($hosthomedescriptions) && !empty($hosthomedescription)) {
-            $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
-        }
         
         if(isset($reservations) && !empty($reservations)) {
             $this->updateReservations($hostHome->id, $reservations);

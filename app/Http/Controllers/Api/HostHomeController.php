@@ -1060,12 +1060,17 @@ class HostHomeController extends Controller
             } else {
                 // Create new description
                 $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
-                $this->createDescriptions($descriptionData);
-                $responses[] = "Created new description: $hosthomedescription";
+                $newDescription = $this->createDescriptions($descriptionData);
+    
+                if ($newDescription) {
+                    $responses[] = "Created new description: $hosthomedescription";
+                } else {
+                    $responses[] = "Failed to create new description: $hosthomedescription";
+                }
             }
         }
     
-        return response()->json(['responses' => $responses]);
+        info($responses);
     }
     
     

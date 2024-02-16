@@ -1043,12 +1043,12 @@ class HostHomeController extends Controller
         }
     }
 
-    
+
     private function updateDescriptions($hosthome, array $hosthomedescriptions)
     {
         foreach ($hosthomedescriptions as $hosthomedescription) {
             // Check if a description with the same host_home_id already exists
-            $existingDescription = Hosthomedescription::where('host_home_id', $hosthome->id)
+            $existingDescription = Hosthomedescription::where('host_home_id', $hosthome)
                 ->first();
     
             if ($existingDescription) {
@@ -1056,7 +1056,7 @@ class HostHomeController extends Controller
                 $existingDescription->update(['description' => $hosthomedescription]);
             } else {
                 // Create new description
-                $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthome->id];
+                $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthome];
                 $this->createDescriptions($descriptionData);
             }
         }

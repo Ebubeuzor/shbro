@@ -1047,7 +1047,9 @@ class HostHomeController extends Controller
     {
         foreach ($hosthomedescriptions as $hosthomedescription) {
             // Check if a description with the same host_home_id already exists
-            $existingDescription = Hosthomedescription::where('host_home_id', $hosthomeid)->first();
+            $existingDescription = Hosthomedescription::where('host_home_id', $hosthomeid)
+            ->where('description', $hosthomedescription)
+            ->first();
     
             if ($existingDescription) {
                 // Update existing description

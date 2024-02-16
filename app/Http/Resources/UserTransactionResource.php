@@ -21,8 +21,8 @@ class UserTransactionResource extends JsonResource
             "transactionID" => $this->paymentId,
             "propertyID" => $this->host_home_id,
             "paymentAmount" => $this->totalamount,
-            'check_in' => Carbon::parse($this->check_in)->format('Y-m-d'),
-            'check_out' => Carbon::parse($this->check_out)->format('Y-m-d'),
+            'check_in' => Carbon::parse($this->check_in)->format('M j, Y'),
+            'check_out' => Carbon::parse($this->check_out)->format('M j, Y'),
         ];
     }
 }

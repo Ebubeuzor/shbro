@@ -158,7 +158,9 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
+    
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
+    Route::get('/allReservation', [UserController::class, 'allReservation']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);

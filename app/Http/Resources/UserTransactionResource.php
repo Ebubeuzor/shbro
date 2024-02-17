@@ -29,6 +29,7 @@ class UserTransactionResource extends JsonResource
             "transactionID" => $this->paymentId,
             "hostname" => $host->name,
             "amountForOneNight" => $hostHome->price,
+            "serviceFee" => $hostHome->service_fee,
             "propertyID" => $this->host_home_id,
             "paymentAmount" => $this->totalamount,
             'check_in' => Carbon::parse($this->check_in)->format('M j, Y'),

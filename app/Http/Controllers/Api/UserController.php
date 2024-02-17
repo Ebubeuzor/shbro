@@ -1200,6 +1200,30 @@ class UserController extends Controller
         return response(['bookings' => $bookingsResource]);
     }
 
+    /**
+     * @lrd:start
+     * Retrieve all reservations.
+     * This endpoint allows a host to retrieve a list of all reservations.
+     *
+     * @return \Illuminate\Http\Response
+     * 
+     * - 200: Successfully retrieved the list of all reservations.
+     * 
+     * @lrd:end
+     */
+    public function allReservation()
+    {
+        // Get upcoming reservations using a join
+        $bookings = Booking::whereNotNull('paymentStatus')
+            ->where('hostId', auth()->id())
+            ->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
 
 
     /**

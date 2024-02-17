@@ -135,7 +135,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('transactionHistory', [UserController::class, 'transactionHistory']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
-    Route::get('/searchHomeByProperty_type/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
+    Route::get('/searchHomeByProperty_typeForAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
     Route::delete('/deleteHostHostHomeImages/{hostHomephotoId}', [HostHomeController::class, 'deleteHostHostHomeImages']);
     Route::delete('/deleteReviews/{reviewId}', [ReviewController::class, 'deleteReviews']);
     Route::delete('/deleteHostPendingReviews/{id}', [ReviewController::class, 'deleteHostPendingReviews']);
@@ -186,3 +186,5 @@ Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
 Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
 Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
+
+Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);

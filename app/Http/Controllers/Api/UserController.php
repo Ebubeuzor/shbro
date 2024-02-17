@@ -282,10 +282,11 @@ class UserController extends Controller
      * This retrieve all a guest Transaction (Booking)
      * @lrd:end
      */
-    public function transactionHistory() {
+    public function transactionHistory(Request $request) {
 
+        $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('user_id',auth()->id())
-        ->where('paymentStatus', 'success')->get();
+        ->where('paymentStatus', 'success')->paginate($perPage);
 
         return UserTransactionResource::collection($bookings);
     }

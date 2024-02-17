@@ -52,17 +52,20 @@ class HostHomeController extends Controller
     /**
      * @lrd:start
      * gets the details of every verified homes based on a specific property_type
+     * /api/hosthomes/{property_type}?per_page=20
      * @lrd:end
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
      */
-    public function searchHomeByProperty_type($property_type)
+    public function searchHomeByProperty_type(Request $request,$property_type)
     {
+        $perPage = $request->input('per_page', 10);
         return HostHomeResource::collection(
             HostHome::where('verified', 1)
                     ->where('disapproved',null)
                     ->where('property_type',$property_type)
                     ->whereNull('banned')
                     ->whereNull('suspend')
-                    ->get()
+                    ->paginate($perPage)
         );
     }
     

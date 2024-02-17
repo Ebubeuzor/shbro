@@ -30,6 +30,7 @@ class UserTransactionResource extends JsonResource
             "hostname" => $host->name,
             "amountForOneNight" => $hostHome->price,
             "serviceFee" => $hostHome->service_fee,
+            "hosthomebeds" => $hostHome->beds,
             "propertyName" => $hostHome->title,
             "securityFee" => $hostHome->security_deposit,
             "propertyID" => $this->host_home_id,

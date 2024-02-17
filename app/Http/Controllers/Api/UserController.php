@@ -28,6 +28,7 @@ use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
 use App\Models\Booking;
 use App\Models\HostHome;
+use App\Models\HostView;
 use App\Models\Notification;
 use App\Models\Tip;
 use App\Models\User;
@@ -289,6 +290,81 @@ class UserController extends Controller
         ->where('paymentStatus', 'success')->paginate($perPage);
 
         return UserTransactionResource::collection($bookings);
+    }
+
+    /**
+     * @lrd:start
+     * 
+     * This method is responsible for recording views on a specific host home by a host user.
+     *
+     * @param int $hosthomeid The ID of the host home for which the view is being registered.
+     * @param int $hostid The ID of the host user registering the view.
+     *
+     * @return \Illuminate\Http\Response A response indicating the successful update of the host view.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If either the host home or host user is not found.
+     * @lrd:end
+     */
+    public function hostHomeView($hosthomeid,$hostid) {
+        
+        $user = User::findOrFail($hostid);
+        $hosthome = HostHome::findOrFail($hosthomeid);
+        
+        $hostView = new HostView();
+        $hostView->host_home_id = $hosthome->id;
+        $hostView->host_id = $user->id;
+        $hostView->views = 1;
+        $hostView->save();
+        
+        return response("Host view updated",200);
+        
+    }
+    
+    
+
+    /**
+     * @lrd:start
+     * 
+     * Get host analytics data for the past 30 days, including HostView count, new bookings count, and booking rate.
+     *
+     * @lrd:end
+     */
+    public function hostAnalytics()
+    {   
+        $hostId = auth()->id();
+
+        // Get the current date
+        $now = Carbon::now();
+
+        // Calculate the date 30 days ago
+        $thirtyDaysAgo = $now->subDays(30);
+
+        // Find the host user
+        $host = User::findOrFail($hostId);
+
+        // Get the HostView count for the past 30 days
+        $hostViewCount = HostView::where('host_id', $host->id)
+            ->whereDate('created_at', '>=', $thirtyDaysAgo)
+            ->count();
+
+        // Get the new bookings count for the past 30 days
+        $newBookingsCount = Booking::where('hostId', $host->id)
+            ->where('paymentStatus', 'success')
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->count();
+
+        // Calculate the booking rate (percentage)
+        $bookingRate = $newBookingsCount > 0 ? min(($newBookingsCount / 30) * 100, 100) : 0;
+
+        // Prepare the response data
+        $responseData = [
+            'host_view_count_30_days' => $hostViewCount ?? 0,
+            'new_bookings_count_30_days' => $newBookingsCount ?? 0,
+            'booking_rate' => $bookingRate ?? 0,
+        ];
+
+        // Return the response
+        return response()->json(['data' => $responseData]);
     }
 
     /**

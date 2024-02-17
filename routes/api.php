@@ -161,6 +161,8 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
     Route::get('/allReservation', [UserController::class, 'allReservation']);
+    Route::get('/hostAnalytics', [UserController::class, 'hostAnalytics']);
+    Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);

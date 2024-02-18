@@ -388,18 +388,7 @@ class HostHomeController extends Controller
         $data2 = $validator->validated();
         $data2['image'] = $this->saveImage($data2['image'], $data2['host_home_id']);
 
-        // Check if an image with the same host_home_id already exists
-        $existingImage = Hosthomephoto::where('host_home_id', $data2['host_home_id'])->first();
-
-        // Create or update the Hosthomephoto record
-        if ($existingImage) {
-            // Update existing image
-            $existingImage->update($data2);
-            return $existingImage;
-        } else {
-            // Create new image
-            return Hosthomephoto::create($data2);
-        }
+        return Hosthomephoto::create($data2);
     }
 
     // Similar approach for createOffers, createDescriptions, and createReservations methods
@@ -903,6 +892,8 @@ class HostHomeController extends Controller
         $discounts = $data['discounts'];
         $rules = $data['rules'];
         $notices = $data['notice'];
+        
+        $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
 
         if(isset($data['price'])){
             if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
@@ -914,7 +905,6 @@ class HostHomeController extends Controller
             }
         }
         
-        $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
         if(trim(isset($data['additionalRules']))){
             $hosthomerule = Hosthomerule::where('host_home_id',$hostHome->id);
             $hosthomerule->update([

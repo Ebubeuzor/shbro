@@ -33,10 +33,12 @@ class AllBookingsResource extends JsonResource
             'hostName' => $host->name,
             'hostEmail' => $host->email,
             'hostId' => $host->id,
-            'homeName' => $hostHome->title,
+            "number_of_guest" => intval($this->adults) + intval($this->children) + intval($this->pets) + intval($this->infants) ,
+            'property_name' => $hostHome->title,
             'homeType' => $hostHome->property_type,
             'bedroom' => $hostHome->bedroom,
             'beds' => $hostHome->beds,
+            'status' => "ongoing",
             'amanities' => $hostHome->hosthomeoffers,
             'paymentId' => $this->paymentId,
         ];

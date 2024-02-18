@@ -221,21 +221,16 @@ class AuthController extends Controller
      * @lrd:end
      */
     public function registerVisitor () {
-        $viewCountCookie = Cookie::get('view_count');
-    
-        if (!$viewCountCookie) {
-            $viewCount = Visitor::firstOrNew(['id' => 1]);
-            $viewCount->increment('views');
-            $viewCount->save();
-    
-            $response = response()->json(['views' => $viewCount->views]);
-            $response->cookie('view_count', 1);
-    
-            return $response;
-        } else {
-            $viewCount = Visitor::find(1);
-            return response()->json(['views' => $viewCount->views]);
-        }
+        
+        $viewCount = new Visitor();
+        $viewCount->views = 1;
+        $viewCount->save();
+
+        $response = response()->json(['views' => $viewCount->views]);
+        $response->cookie('view_count', 1);
+
+        return $response;
+
     }
 
     /**

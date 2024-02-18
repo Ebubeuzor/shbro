@@ -24,6 +24,7 @@ class HostHomeReportsResource extends JsonResource
             'title' => $this->title,
             'reasonforreporting' => $this->reasonforreporting,
             'extrareasonforreporting' => $this->extrareasonforreporting != null ? $this->extrareasonforreporting : "",
+            'guestStatus' => $guest->host == 1 ? "Host" : "Guest",
             'guestName' => $guest->name,
             'guestEmail' => $guest->email,
             'hostName' => $host->name,

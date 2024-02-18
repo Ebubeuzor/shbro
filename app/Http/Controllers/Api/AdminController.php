@@ -184,7 +184,9 @@ class AdminController extends Controller
         $verifiedHomesCount = HostHome::where('verified', 1)->count();
 
         // Count the total number of visitors
-        $visitors = Visitor::find(1);
+        $visitors = Visitor::all()
+        ->sum('views')
+        ;
 
         // Get the current date
         $today = Carbon::now()->toDateString();
@@ -261,6 +263,166 @@ class AdminController extends Controller
             'reservationData' => $reservationData ?? [],
         ];
 
+        // Return JSON response
+        return response()->json(['data' => $responseData]);
+    }
+    
+
+    /**
+     * @lrd:start
+     * Admin Analytical Dashboard.
+     * This method provides analytical data for the admin dashboard.
+     * @param string $range Filter range ('today', 'this_week', 'this_month', 'this_year', 'all_time')
+     * @lrd:end
+     */
+    public function filterAnalyticalData($range = 'all_time') {
+        $now = Carbon::now();
+        $startDate = null;
+        $endDate = null;
+    
+        switch ($range) {
+            case 'today':
+                $startDate = $now->startOfDay()->toDateTimeString();
+                $endDate = $now->endOfDay()->toDateTimeString();
+                break;
+            case 'this_week':
+                $startDate = $now->startOfWeek()->toDateTimeString();
+                $endDate = $now->endOfWeek()->toDateTimeString();
+                break;
+            case 'this_month':
+                $startDate = $now->startOfMonth()->toDateTimeString();
+                $endDate = $now->endOfMonth()->toDateTimeString();
+                break;
+            case 'this_year':
+                $startDate = $now->startOfYear()->toDateTimeString();
+                $endDate = $now->endOfYear()->toDateTimeString();
+                break;
+            case 'all_time':
+                // Set a distant past date as the start date for 'all_time'
+                $startDate = '1900-01-01 00:00:00';
+                $endDate = $now->endOfDay()->toDateTimeString();
+                break;
+        }
+    
+        // Count the total number of unapproved homes created based on date range
+        $unApprovedHomesCount = HostHome::whereBetween('created_at', [$startDate, $endDate])
+            ->orWhereBetween('updated_at', [$startDate, $endDate])
+            ->where('verified', '!=', 1)
+            ->count();
+    
+        // Count the total number of users created based on date range
+        $userCountForPresentDay = User::whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    
+        // Count the total number of unverified users created based on date range
+        $unVerifiedUserForPresentDay = User::whereBetween('created_at', [$startDate, $endDate])
+            ->where('verified', '!=', 'Verified')
+            ->count();
+    
+        // Count the total number of active reservations based on date range
+        $activeReservationsCount = Booking::where(function ($query) use ($now, $startDate, $endDate) {
+            $query->whereBetween('check_in', [$startDate, $now->toDateTimeString()])
+                ->orWhere(function ($subquery) use ($now, $startDate, $endDate) {
+                    $subquery->where('check_in', '=', $now->toDateString())
+                        ->where('check_out_time', '>', $now->toTimeString());
+                });
+        })
+        ->where('check_out', '>', $now->toDateString())
+        ->where('paymentStatus', 'success')
+        ->count();
+    
+        // Fetch active reservations based on date range
+        $activeReservations = Booking::where(function ($query) use ($now, $startDate, $endDate) {
+            $query->whereBetween('check_in', [$startDate, $now->toDateTimeString()])
+                ->orWhere(function ($subquery) use ($now, $startDate, $endDate) {
+                    $subquery->where('check_in', '=', $now->toDateString())
+                        ->where('check_out_time', '>', $now->toTimeString());
+                });
+        })
+        ->where('check_out', '>', $now->toDateString())
+        ->where('paymentStatus', 'success')
+        ->get();
+    
+        $reservationData = [];
+    
+        foreach ($activeReservations as $activeReservation) {
+            $hosthome = HostHome::find(intval($activeReservation['host_home_id']));
+            $user = User::find(intval($activeReservation['user_id']));
+            $reservationData[] = [
+                "bookingId" => $activeReservation["id"],
+                "guestName" => $user["name"],
+                "homeTitle" => $hosthome->title,
+                "status" => "Booked",
+                'check_in' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_in)->format('F j, Y'),
+                'check_out' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_out)->format('F j, Y'),
+            ];
+        }
+    
+        // Count the total number of hosts based on date range
+        $hosts = User::where('host', 1)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    
+        // Count the total number of guests based on date range
+        $guests = User::whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    
+        // Count the total number of unique hosts with successful bookings based on date range
+        $hostsCount = Booking::select([
+            'hostId',
+            DB::raw('COUNT(DISTINCT hostId) as total_hosts_count'),
+        ])
+            ->where('paymentStatus', '=', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('hostId')
+            ->count();
+    
+        // Count the total number of unique guests with successful bookings based on date range
+        $guestsCount = Booking::select([
+            'user_id',
+            DB::raw('COUNT(DISTINCT user_id) as total_guests_count'),
+        ])
+            ->where('paymentStatus', '=', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('user_id')
+            ->count();
+    
+        // Sum of total amounts from successful bookings based on date range
+        $totalAmount = Booking::where('paymentStatus', '=', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('totalamount');
+    
+        // Count the total number of confirmed bookings based on date range
+        $confirmBookings = Booking::where('paymentStatus', '=', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    
+        // Count the total number of verified homes based on date range
+        $verifiedHomesCount = HostHome::where('verified', 1)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    
+        // Count the total number of visitors based on date range
+        $visitors = Visitor::whereBetween('created_at', [$startDate, $endDate])
+        ->sum('views');
+    
+        // Response data array
+        $responseData = [
+            'no_of_guests' => $guests ?? 0,
+            'no_of_hosts' => $hosts ?? 0,
+            'active_hosts' => $hostsCount ?? 0,
+            'active_guests' => $guestsCount ?? 0,
+            'propertyListings' => $verifiedHomesCount ?? 0,
+            'revenue' => $totalAmount ?? 0,
+            'visitors' => $visitors ?? 0,
+            'userCountForPresentDay' => $userCountForPresentDay ?? 0,
+            'unVerifiedUserForPresentDay' => $unVerifiedUserForPresentDay ?? 0,
+            'unApprovedHomesCount' => $unApprovedHomesCount ?? 0,
+            'confirmBookings' => $confirmBookings ?? 0,
+            'activeReservationsCount' => $activeReservationsCount ?? 0,
+            'reservationData' => $reservationData ?? [],
+        ];
+    
         // Return JSON response
         return response()->json(['data' => $responseData]);
     }

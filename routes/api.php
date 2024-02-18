@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
         
+        Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);
         
         Route::get('notVerified', [HostHomeController::class, 'notVerified']);
         

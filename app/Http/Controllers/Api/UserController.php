@@ -1299,9 +1299,7 @@ class UserController extends Controller
                     ->where(function ($query) {
                             $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
                                 ->orWhere(function ($q) {
-                                    // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
-                                    $q->where('host_homes.check_in_time', '12:00 PM')
-                                        ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
+                                    $q->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
                                 });
                         })->get();
 

@@ -1296,12 +1296,7 @@ class UserController extends Controller
                     ->whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
-                    ->where(function ($query) {
-                            $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
-                                ->orWhere(function ($q) {
-                                    $q->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
-                                });
-                        })->get();
+                    ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);

@@ -369,6 +369,71 @@ class UserController extends Controller
 
     /**
      * @lrd:start
+     * Get host analytics data for a specific month and year, including HostView count,
+     * new bookings count, and booking rate.
+     *
+     * @param string $month The full month name in lowercase (e.g., "february").
+     * @param int $year The year.
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function hostAnalyticsByMonthYear($month, $year)
+    {   
+        $hostId = auth()->id();
+
+        // Validate the month input
+        $validMonths = [
+            'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+
+        if (!in_array($month, $validMonths)) {
+            return response()->json(['error' => 'Invalid month provided'], 400);
+        }
+
+        // Convert month name to numeric representation
+        $numericMonth = date_parse($month)['month'];
+
+        // Get the current date
+        $now = Carbon::now();
+
+        // Set the date to the first day of the specified month and year
+        $startDate = Carbon::createFromDate($year, $numericMonth, 1)->startOfDay();
+
+        // Set the date to the last day of the specified month and year
+        $endDate = $startDate->copy()->endOfMonth();
+
+        // Find the host user
+        $host = User::findOrFail($hostId);
+
+        // Get the HostView count for the specified month and year
+        $hostViewCount = HostView::where('host_id', $host->id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        // Get the new bookings count for the specified month and year
+        $newBookingsCount = Booking::where('hostId', $host->id)
+            ->where('paymentStatus', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        // Calculate the booking rate (percentage)
+        $daysInMonth = $startDate->diffInDays($endDate) + 1;
+        $bookingRate = $newBookingsCount > 0 ? min(($newBookingsCount / $daysInMonth) * 100, 100) : 0;
+
+        // Prepare the response data
+        $responseData = [
+            'host_view_count' => $hostViewCount ?? 0,
+            'new_bookings_count' => $newBookingsCount ?? 0,
+            'booking_rate' => $bookingRate ?? 0,
+        ];
+
+        // Return the response
+        return response()->json(['data' => $responseData]);
+    }
+
+
+    /**
+     * @lrd:start
      * Resend the OTP for changing the user's phone number.
      * This method resends the OTP for changing the user's phone number.
      * @lrd:end

@@ -304,6 +304,9 @@ class AdminController extends Controller
                 break;
         }
     
+        info($startDate . " " . $endDate);
+
+        $realnow = Carbon::now();
         // Count the total number of unapproved homes created based on date range
         $unApprovedHomesCount = HostHome::whereBetween('created_at', [$startDate, $endDate])
             ->orWhereBetween('updated_at', [$startDate, $endDate])
@@ -320,43 +323,46 @@ class AdminController extends Controller
             ->count();
     
         // Count the total number of active reservations based on date range
-        $activeReservationsCount = Booking::where(function ($query) use ($now, $startDate, $endDate) {
-            $query->whereBetween('check_in', [$startDate, $now->toDateTimeString()])
-                ->orWhere(function ($subquery) use ($now, $startDate, $endDate) {
-                    $subquery->where('check_in', '=', $now->toDateString())
-                        ->where('check_out_time', '>', $now->toTimeString());
+        $activeReservationsCount = Booking::where(function ($query) use ($realnow) {
+            $query->where('check_in', '<=', $realnow->toDateString()) // Check if check_in is on or before the current date
+                ->orWhere(function ($subquery) use ($realnow) {
+                    $subquery->where('check_in', '=', $realnow->toDateString()) // Check if check_in is on the current date
+                        ->where('check_out_time', '>', $realnow->toTimeString()); // Check if check_out_time is after the current time
                 });
         })
-        ->where('check_out', '>', $now->toDateString())
+        ->where('check_out', '>', $realnow->toDateString()) // Check if check_out is after the current date
         ->where('paymentStatus', 'success')
+        ->whereBetween('created_at', [$startDate, $endDate])
         ->count();
-    
+
         // Fetch active reservations based on date range
-        $activeReservations = Booking::where(function ($query) use ($now, $startDate, $endDate) {
-            $query->whereBetween('check_in', [$startDate, $now->toDateTimeString()])
-                ->orWhere(function ($subquery) use ($now, $startDate, $endDate) {
-                    $subquery->where('check_in', '=', $now->toDateString())
-                        ->where('check_out_time', '>', $now->toTimeString());
+        $activeReservations = Booking::where(function ($query) use ($realnow) {
+            $query->where('check_in', '<=', $realnow->toDateString()) // Check if check_in is on or before the current date
+                ->orWhere(function ($subquery) use ($realnow) {
+                    $subquery->where('check_in', '=', $realnow->toDateString()) // Check if check_in is on the current date
+                        ->where('check_out_time', '>', $realnow->toTimeString()); // Check if check_out_time is after the current time
                 });
         })
-        ->where('check_out', '>', $now->toDateString())
+        ->where('check_out', '>', $realnow->toDateString()) // Check if check_out is after the current date
         ->where('paymentStatus', 'success')
+        ->whereBetween('created_at', [$startDate, $endDate])
         ->get();
-    
+
         $reservationData = [];
-    
+
         foreach ($activeReservations as $activeReservation) {
-            $hosthome = HostHome::find(intval($activeReservation['host_home_id']));
-            $user = User::find(intval($activeReservation['user_id']));
-            $reservationData[] = [
-                "bookingId" => $activeReservation["id"],
-                "guestName" => $user["name"],
-                "homeTitle" => $hosthome->title,
-                "status" => "Booked",
-                'check_in' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_in)->format('F j, Y'),
-                'check_out' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_out)->format('F j, Y'),
-            ];
+        $hosthome = HostHome::find(intval($activeReservation['host_home_id']));
+        $user = User::find(intval($activeReservation['user_id']));
+        $reservationData[] = [
+            "bookingId" => $activeReservation["id"],
+            "guestName" => $user["name"],
+            "homeTitle" => $hosthome->title,
+            "status" => "Booked",
+            'check_in' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_in)->format('F j, Y'),
+            'check_out' => Carbon::createFromFormat('Y-m-d', $activeReservation->check_out)->format('F j, Y'),
+        ];
         }
+
     
         // Count the total number of hosts based on date range
         $hosts = User::where('host', 1)

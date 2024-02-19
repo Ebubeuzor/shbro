@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\HostHome;
 use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
+use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Mail\NotificationMail;
+use App\Models\HostHomeBlockedDate;
 use App\Models\Hosthomedescription;
 use App\Models\Hosthomediscount;
 use App\Models\Hosthomenotice;
@@ -454,6 +456,7 @@ class HostHomeController extends Controller
         }
     }
 
+
     
     public function createOffers($data)
     {
@@ -722,6 +725,136 @@ class HostHomeController extends Controller
         }
     }
 
+    /**
+     * @lrd:start
+     * Get host homes and their IDs for the authenticated host user.
+     *
+     * This method retrieves a list of host homes associated with the currently authenticated host user.
+     * It returns a collection of host homes along with their corresponding IDs.
+     *
+     * @lrd:end
+    */
+    public function schdulerGetHostHomeAndId()
+    {
+        $hostId = auth()->id();
+
+        $hostHome = HostHome::where("user_id",$hostId)
+        ->whereNull('banned')
+        ->whereNull('suspend')
+        ->get();
+
+        return GetHostHomeAndIdResource::collection($hostHome);
+    }
+    
+    /**
+     * 
+     * @lrd:start
+     * Edit the price of a host home for the scheduler.
+     *
+     * This method allows the scheduler to edit the regular price of a host home.
+     * If the host home qualifies for the "20% New listing promotion" discount (less than 3 bookings),
+     * it applies the discount and updates both the regular and actual prices.
+     *
+     * @param  \Illuminate\Http\Request  $request  The request containing the new price.
+     * @param  int  $id  The ID of the host home.
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam price use|required
+    */
+    public function schdulerEditHostHomePrice(Request $request, $id)
+    {
+
+        $data = $request-> validate([
+            'price'=>['required','numeric']
+        ]);
+
+        $price = $data['price'];
+
+        $hostHome = HostHome::find($id);
+
+        if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
+            $priceDiscount = intval($price) * 0.2;
+            $newPrice = intval($price) - $priceDiscount;
+            $hostHome->update([
+                'price' => $newPrice,
+                'actualPrice' => $price,
+            ]);
+        }else{
+            $hostHome->update([
+                'price' => $price,
+                'actualPrice' => $price,
+            ]);
+        }
+        return response("Done", 200);
+    }
+    
+
+    /**
+     * @lrd:start
+     * Edit the weekend price of a host home for the scheduler.
+     *
+     * This method allows the scheduler to edit the weekend price of a host home.
+     *
+     * @param  \Illuminate\Http\Request  $request  The request containing the new weekend price.
+     * @param  int  $id  The ID of the host home.
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam price use|required
+    */
+    public function schdulerEditHostHomeWeekendPrice(Request $request, $id)
+    {
+
+        $data = $request-> validate([
+            'price'=>['required','numeric']
+        ]);
+
+        $price = $data['price'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'weekendPrice' => $price,
+        ]);
+
+        return response("Done", 200);
+        
+    }
+
+    
+    /**
+     * @lrd:start
+     * Block a date for a host home for the scheduler.
+     *
+     * This method allows the scheduler to block a specific date for a host home.
+     *
+     * The request containing the date to be blocked date_format is  required and must be in "Y-m-d.
+     * @param  int  $id  The ID of the host home.
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * 
+     * @LRDparam date use|required
+    */
+    public function schdulerEditHostHomeBlockedDate(Request $request, $id)
+    {
+
+        $data = $request-> validate([
+            'date'=>['required','date_format:Y-m-d']
+        ]);
+
+        $date = $data['date'];
+
+        $hostHome = HostHome::findOrFail($id);
+
+        $hostHomeBlockDate = new HostHomeBlockedDate();
+        $hostHomeBlockDate->date = $date;
+        $hostHomeBlockDate->host_home_id= $id;
+        $hostHomeBlockDate->save();
+
+        return response("Date blocked successfully", 200);
+        
+    }
+
+
 
     /**
      * @lrd:start
@@ -899,9 +1032,13 @@ class HostHomeController extends Controller
             if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
                 $priceDiscount = intval($hostHome->actualPrice) * 0.2;
                 $newPrice = intval($hostHome->actualPrice) - $priceDiscount;
-                $hostHome->update(['price' => $newPrice]);
+                $hostHome->update([
+                    'price' => $newPrice
+                ]);
             }else{
-                $hostHome->update(['price' => $price]);
+                $hostHome->update([
+                    'price' => $price
+                ]);
             }
         }
         

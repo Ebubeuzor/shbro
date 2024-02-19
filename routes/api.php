@@ -142,8 +142,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::delete('/deleteHostPendingReviews/{id}', [ReviewController::class, 'deleteHostPendingReviews']);
     Route::delete('/deletesHostPendingReviewsForGuest/{id}', [ReviewController::class, 'deletesHostPendingReviewsForGuest']);
     Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
+    Route::get('/schdulerGetHostHomeAndId', [HostHomeController::class, 'schdulerGetHostHomeAndId']);
 
-    
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
     Route::post('/createCancelTrips', [BookingsController::class, 'createCancelTrips']);
@@ -163,6 +163,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
     Route::get('/allReservation', [UserController::class, 'allReservation']);
     Route::get('/hostAnalytics', [UserController::class, 'hostAnalytics']);
+    Route::get('/hostAnalyticsByMonthYear/{month}/{year}', [UserController::class, 'hostAnalyticsByMonthYear']);
     Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
@@ -185,6 +186,11 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
 
+Route::put('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
+
+Route::put('schduler/host-homes/{id}/edit-weekend-price', [HostHomeController::class, 'schdulerEditHostHomeWeekendPrice']);
+
+Route::post('schduler/host-homes/{id}/edit-blocked-date', [HostHomeController::class, 'schdulerEditHostHomeBlockedDate']);
 Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
 Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);

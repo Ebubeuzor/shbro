@@ -104,9 +104,9 @@ class UserTripResource extends JsonResource
             return "CANCELLED";
         } elseif ($today->isBefore($checkInDateTime)) {
             return "RESERVED";
-        } elseif ($today->isSameDay($checkInDateTime) || $today->isBetween($checkInDateTime->startOfDay(), $checkOutDateTime->endOfDay())) {
+        } elseif ($today->isSameDay($checkInDateTime) || $today->isBetween($checkInDateTime, $checkOutDateTime)) {
             return "CHECKED IN";
-        } elseif ($today->isAfter($checkOutDateTime)) {
+        } elseif ($today->isSameDay($checkOutDateTime) || $today->isAfter($checkOutDateTime)) {
             return "CHECKED OUT";
         } else {
             return "RESERVED";

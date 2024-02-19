@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string("reservation");
             $table->string("price");
             $table->string("actualPrice");
+            $table->string("weekendPrice")->nullable();
             $table->string("bookingCount");
             $table->string("host_type");
             $table->string("check_in_time");

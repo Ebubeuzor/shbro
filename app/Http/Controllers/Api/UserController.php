@@ -1297,21 +1297,19 @@ class UserController extends Controller
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
                     ->where(function ($query) {
-                        $now = Carbon::now();
-                        $checkInTime = Carbon::createFromFormat('g:i A', '12:00 PM'); // Replace with the actual check-in time format
-
-                        $query->where('host_homes.check_in_time', '<', $now)
-                            ->orWhere('host_homes.check_in_time', '>', $now->addMinutes($checkInTime->diffInMinutes($now)));
-                    })
-                    ->get();
+                            $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
+                                ->orWhere(function ($q) {
+                                    // If the check_in_time is '12:00 PM', treat it as '12:00 AM'
+                                    $q->where('host_homes.check_in_time', '12:00 PM')
+                                        ->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'));
+                                });
+                        })->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
 
         return response(['bookings' => $bookingsResource]);
     }
-
-
 
     /**
      * @lrd:start

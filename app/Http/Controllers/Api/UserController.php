@@ -1297,8 +1297,11 @@ class UserController extends Controller
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
                     ->where(function ($query) {
-                        $query->where('host_homes.check_in_time', '<', Carbon::now()->format('g:i A'))
-                            ->orWhere('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'));
+                        $now = Carbon::now();
+                        $checkInTime = Carbon::createFromFormat('g:i A', '12:00 PM'); // Replace with the actual check-in time format
+
+                        $query->where('host_homes.check_in_time', '<', $now)
+                            ->orWhere('host_homes.check_in_time', '>', $now->addMinutes($checkInTime->diffInMinutes($now)));
                     })
                     ->get();
 
@@ -1307,6 +1310,7 @@ class UserController extends Controller
 
         return response(['bookings' => $bookingsResource]);
     }
+
 
 
     /**

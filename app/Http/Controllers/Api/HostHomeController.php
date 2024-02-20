@@ -10,6 +10,7 @@ use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Mail\NotificationMail;
 use App\Models\HostHomeBlockedDate;
+use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomedescription;
 use App\Models\Hosthomediscount;
 use App\Models\Hosthomenotice;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class HostHomeController extends Controller
 {
@@ -820,6 +822,142 @@ class HostHomeController extends Controller
         
     }
 
+    /**
+     * @lrd:start
+     * Edit the minimum nights required for booking in the host home.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam night use|required
+     */
+    public function schdulerEditHostHomeMinNights(Request $request, $id)
+    {
+        $data = $request->validate([
+            'night' => ['required', 'numeric']
+        ]);
+
+        $night = $data['night'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'min_nights' => $night,
+        ]);
+
+        return response("Done", 200);
+    }
+
+    /**
+     * @lrd:start
+     * Edit the maximum nights allowed for booking in the host home.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam night use|required
+     */
+    public function schdulerEditHostHomeMaxNights(Request $request, $id)
+    {
+        $data = $request->validate([
+            'night' => ['required', 'numeric']
+        ]);
+
+        $night = $data['night'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'max_nights' => $night,
+        ]);
+
+        return response("Done", 200);
+    }
+
+    /**
+     * @lrd:start
+     * Edit the advance notice required for booking in the host home.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam notice use|required
+     */
+    public function schdulerEditHostHomeAdvanceNotice(Request $request, $id)
+    {
+        $data = $request->validate([
+            'notice' => ['required', 'numeric']
+        ]);
+
+        $notice = $data['notice'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'advance_notice' => $notice,
+        ]);
+
+        return response("Done", 200);
+    }
+
+    /**
+     * @lrd:start
+     * Edit the preparation time required for booking in the host home.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam preparation_time use|required
+     */
+    public function schdulerEditHostHomePreparationTime(Request $request, $id)
+    {
+        $data = $request->validate([
+            'preparation_time' => ['required', 'numeric']
+        ]);
+
+        $preparation_time = $data['preparation_time'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'preparation_time' => $preparation_time,
+        ]);
+
+        return response("Done", 200);
+    }
+
+    /**
+     * @lrd:start
+     * Edit the availability window for booking in the host home.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     * @lrd:end
+     * @LRDparam availability_window use|required
+     */
+    public function schdulerEditHostHomeAvailabilityWindow(Request $request, $id)
+    {
+        $data = $request->validate([
+            'availability_window' => ['required', 'numeric']
+        ]);
+
+        $availability_window = $data['availability_window'];
+
+        $hostHome = HostHome::find($id);
+
+        $hostHome->update([
+            'availability_window' => $availability_window,
+        ]);
+
+        return response("Done", 200);
+    }
+
+
     
     /**
      * @lrd:start
@@ -853,8 +991,112 @@ class HostHomeController extends Controller
         return response("Date blocked successfully", 200);
         
     }
+    
+    /**
+     * @lrd:start
+     * Update the discount for a host home based on custom criteria.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Host home ID
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Validation\ValidationException
+     * @lrd:end
+     * 
+     * @LRDparam duration use|required
+     * @LRDparam discount_percentage use|required
+     */
+    public function schdulerEditHostHomediscount(Request $request, $id)
+    {
+        try {
+            // Validate the incoming request data
+            $data = $request->validate([
+                'duration' => [
+                    'required',
+                    Rule::in(['1 week', '2 weeks', '3 weeks', '1 month', '2 months', '3 months']),
+                ],
+                'discount_percentage' => 'required|numeric',
+            ]);
+
+            $duration = $data['duration'];
+            $discount_percentage = $data['discount_percentage'];
+
+            $hostHome = HostHome::findOrFail($id);
+
+            // Find existing discount with the same duration
+            $existingDiscount = HostHomeCustomDiscount::where('host_home_id', $id)
+                ->where('duration', $duration)
+                ->first();
+
+            if ($existingDiscount) {
+                // Update existing discount percentage
+                $existingDiscount->update(['discount_percentage' => $discount_percentage]);
+            } else {
+                // Create new discount
+                $ostHomeCustomDiscount = new HostHomeCustomDiscount();
+                $ostHomeCustomDiscount->duration = $duration;
+                $ostHomeCustomDiscount->discount_percentage = $discount_percentage;
+                $ostHomeCustomDiscount->host_home_id = $id;
+                $ostHomeCustomDiscount->save();
+            }
+
+            // Provide a success response
+            return response()->json([
+                'message' => 'Discount updated successfully.',
+                'data' => $existingDiscount ?? $ostHomeCustomDiscount,
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Provide a response for validation failure
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
+    /**
+     * Determine the category of the duration (week or month).
+     *
+     * @param string $duration
+     * @return string
+     */
+    private function getDurationCategory($duration)
+    {
+        // Implement your logic to determine the category
+        // For example, check if the duration contains 'week' or 'month'
+        if (strpos($duration, 'week') !== false) {
+            return 'week';
+        } elseif (strpos($duration, 'month') !== false) {
+            return 'month';
+        }
+    
+        return 'other';
+    }
+    
+    /**
+     * Get all durations within the specified category.
+     *
+     * @param string $category
+     * @return array
+     */
+    private function getDurationsInCategory($category)
+    {
+        // Replace this with your dynamic logic to get durations in the specified category
+        // For example, return all weeks or all months based on the category
+        if ($category === 'week') {
+            return ['1 week', '2 weeks', '3 weeks'];
+        } elseif ($category === 'month') {
+            return ['1 month', '2 months', '3 months'];
+        }
+    
+        return [];
+    }
 
     /**
      * @lrd:start

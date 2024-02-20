@@ -780,6 +780,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Models\\Homepage' => __DIR__ . '/../..' . '/app/Models/Homepage.php',
         'App\\Models\\HostHome' => __DIR__ . '/../..' . '/app/Models/HostHome.php',
         'App\\Models\\HostHomeBlockedDate' => __DIR__ . '/../..' . '/app/Models/HostHomeBlockedDate.php',
+        'App\\Models\\HostHomeCustomDiscount' => __DIR__ . '/../..' . '/app/Models/HostHomeCustomDiscount.php',
         'App\\Models\\HostView' => __DIR__ . '/../..' . '/app/Models/HostView.php',
         'App\\Models\\Hosthomedescription' => __DIR__ . '/../..' . '/app/Models/Hosthomedescription.php',
         'App\\Models\\Hosthomediscount' => __DIR__ . '/../..' . '/app/Models/Hosthomediscount.php',

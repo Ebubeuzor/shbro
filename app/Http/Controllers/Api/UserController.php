@@ -59,7 +59,7 @@ class UserController extends Controller
     public function index()
     {
         return UserResource::collection(
-            User::Where('verified' , "Not Verified")->get()
+            User::Where('verified' , "Not Verified")->distinct()->get()
         );
     }
     /**
@@ -577,7 +577,7 @@ class UserController extends Controller
     {
         
         $user = User::where('id', auth()->id())->firstOrFail();
-        $userWishlist = $user->wishlistcontainers()->get();
+        $userWishlist = $user->wishlistcontainers()->distinct()->get();
         return response()->json(['userWishlist' => $userWishlist]);
     }
     
@@ -593,7 +593,7 @@ class UserController extends Controller
         $user = User::where('id', auth()->id())->firstOrFail();
 
         // Eager load wishlist containers with associated items and hosthomes
-        $userWishlist = $user->wishlistcontainers()->with('items')->get();
+        $userWishlist = $user->wishlistcontainers()->with('items')->distinct()->get();
 
         // Transform the userWishlist to include hosthomes details without items
         $formattedWishlist = $userWishlist->map(function ($wishlistContainer) {
@@ -698,7 +698,7 @@ class UserController extends Controller
             });
         }
 
-        $result = $filteredHostHomes->get();
+        $result = $filteredHostHomes->distinct()->get();
 
         return HostHomeResource::collection($result);
     }
@@ -793,7 +793,7 @@ class UserController extends Controller
         // Delete all wishlist containers and their items for the user
         if ($user) {
             return UserTripResource::collection(
-                UserTrip::where('user_id',$user->id)->latest()->get()
+                UserTrip::where('user_id',$user->id)->latest()->distinct()->get()
             );
         }
 
@@ -886,7 +886,7 @@ class UserController extends Controller
     {
         $user = User::where('id', $userid)->first();
             
-        $userCard = UserCard::where('user_id', $user->id)->get();
+        $userCard = UserCard::where('user_id', $user->id)->distinct()->get();
 
         return response([
             "data" => $userCard
@@ -918,7 +918,7 @@ class UserController extends Controller
             $user = User::findOrFail($userid);
                 
             // Retrieve the user's bank account information
-            $userBankInfo = Userbankinfo::where('user_id', $user->id)->get();
+            $userBankInfo = Userbankinfo::where('user_id', $user->id)->distinct()->get();
 
             return response([
                 "data" => $userBankInfo
@@ -1138,7 +1138,7 @@ class UserController extends Controller
             }
     
             // Fetch the filtered results along with associated host home photos
-            $result = $query->with('hosthomephotos')->get();
+            $result = $query->with('hosthomephotos')->distinct()->get();
     
             // Return the filtered data as JSON response
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
@@ -1199,7 +1199,7 @@ class UserController extends Controller
                 });
             }
 
-            $result = $query->with('hosthomephotos')->get();
+            $result = $query->with('hosthomephotos')->distinct()->get();
 
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
         } catch (QueryException $e) {
@@ -1233,7 +1233,7 @@ class UserController extends Controller
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
                         ->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
-                        ->get();
+                        ->distinct()->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1268,7 +1268,7 @@ class UserController extends Controller
                             $query->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
                             ->orWhere('check_out', '>=', Carbon::today()->toDateString());
                         })
-                        ->get();
+                        ->distinct()->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1297,7 +1297,7 @@ class UserController extends Controller
                     ->whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', auth()->id())
-                    ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->get();
+                    ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->distinct()->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1328,7 +1328,7 @@ class UserController extends Controller
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
             ->where('hostId', auth()->id())
-            ->get();
+            ->distinct()->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1352,7 +1352,7 @@ class UserController extends Controller
         // Get upcoming reservations using a join
         $bookings = Booking::whereNotNull('paymentStatus')
             ->where('hostId', auth()->id())
-            ->get();
+            ->distinct()->get();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);

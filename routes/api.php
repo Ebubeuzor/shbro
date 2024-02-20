@@ -51,6 +51,13 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('userTrips', [UserController::class, 'userTrips']);
     Route::delete('deleteUserWishlistContainers', [UserController::class, 'deleteUserWishlistContainers']);
     
+    Route::put('schdulerEditHostHomeMinNights/{id}', [HostHomeController::class, 'schdulerEditHostHomeMinNights']);
+    Route::put('schdulerEditHostHomeMaxNights/{id}', [HostHomeController::class, 'schdulerEditHostHomeMaxNights']);
+    Route::put('schdulerEditHostHomeAdvanceNotice/{id}', [HostHomeController::class, 'schdulerEditHostHomeAdvanceNotice']);
+    Route::put('schdulerEditHostHomePreparationTime/{id}', [HostHomeController::class, 'schdulerEditHostHomePreparationTime']);
+    Route::put('schdulerEditHostHomeAvailabilityWindow/{id}', [HostHomeController::class, 'schdulerEditHostHomeAvailabilityWindow']);
+    Route::post('schdulerEditHostHomediscount/{id}', [HostHomeController::class, 'schdulerEditHostHomediscount']);
+
     Route::middleware('googleSignup')->group(function(){
 
         Route::post('changePassword', [AuthController::class, 'changePassword']);

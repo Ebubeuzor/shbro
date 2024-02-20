@@ -28,6 +28,9 @@ return new class extends Migration
             $table->string("title");
             $table->text("description");
             $table->string("reservation");
+            $table->string("advance_notice");
+            $table->string("preparation_time");
+            $table->string("availability_window");
             $table->string("price");
             $table->string("actualPrice");
             $table->string("weekendPrice")->nullable();
@@ -38,6 +41,8 @@ return new class extends Migration
             $table->string("cancellation_policy");
             $table->string("security_deposit");
             $table->integer('service_fee');
+            $table->integer('min_nights');
+            $table->integer('max_nights');
             $table->integer('tax');
             $table->integer('total');
             $table->string('disapproved')->nullable();

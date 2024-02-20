@@ -104,6 +104,7 @@ return array(
     'App\\Models\\Homepage' => $baseDir . '/app/Models/Homepage.php',
     'App\\Models\\HostHome' => $baseDir . '/app/Models/HostHome.php',
     'App\\Models\\HostHomeBlockedDate' => $baseDir . '/app/Models/HostHomeBlockedDate.php',
+    'App\\Models\\HostHomeCustomDiscount' => $baseDir . '/app/Models/HostHomeCustomDiscount.php',
     'App\\Models\\HostView' => $baseDir . '/app/Models/HostView.php',
     'App\\Models\\Hosthomedescription' => $baseDir . '/app/Models/Hosthomedescription.php',
     'App\\Models\\Hosthomediscount' => $baseDir . '/app/Models/Hosthomediscount.php',

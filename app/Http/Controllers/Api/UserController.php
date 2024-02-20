@@ -793,7 +793,10 @@ class UserController extends Controller
         // Delete all wishlist containers and their items for the user
         if ($user) {
             return UserTripResource::collection(
-                UserTrip::where('user_id',$user->id)->latest()->distinct()->get()
+                UserTrip::where('user_id', $user->id)
+                    ->groupBy('id') // Group by the 'id' column to get distinct values
+                    ->latest()
+                    ->get()
             );
         }
 

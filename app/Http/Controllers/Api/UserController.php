@@ -794,9 +794,9 @@ class UserController extends Controller
         if ($user) {
             return UserTripResource::collection(
                 UserTrip::where('user_id', $user->id)
-                    ->groupBy('id') // Group by the 'id' column to get distinct values
-                    ->latest()
-                    ->get()
+                ->distinct()
+                ->orderBy('created_at', 'asc')
+                ->get()
             );
         }
 

@@ -342,6 +342,8 @@ class BookingsController extends Controller
                     $durationOfStay = $booking->duration_of_stay;
                     $checkoutDate = $checkInDateTime->addDays($durationOfStay); 
                     $checkouttime = $hostHome->check_out_time; 
+                    $checkintime = $hostHome->check_in_time; 
+                    $priceForANight = $hostHome->price; 
                     $amount = $data['data']['amount'];
                     // $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
                     // $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
@@ -362,7 +364,9 @@ class BookingsController extends Controller
                         'profit' => $profit,
                         'vat_charge' => $vat_charge,
                         'securityDeposit' => $hostHome->security_deposit,
-                        'check_out_time' => $checkouttime
+                        'check_out_time' => $checkouttime,
+                        'check_in_time' => $checkintime,
+                        'priceForANight' => $priceForANight,
                     ]);
 
                     $userTrip = new UserTrip();

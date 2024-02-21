@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('check_in');
             $table->string('check_out');
             $table->string('check_out_time')->nullable();
+            $table->string('check_in_time')->nullable();
+            $table->string('priceForANight')->nullable();
             $table->integer('duration_of_stay');
             $table->string('paymentStatus')->nullable();
             $table->string("transactionID")->nullable();

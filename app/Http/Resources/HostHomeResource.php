@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Booking;
+use App\Models\Review;
 use App\Models\Wishlistcontainer;
 use Carbon\Carbon;
 use Illuminate\Console\View\Components\Info;
@@ -36,6 +37,10 @@ class HostHomeResource extends JsonResource
             ];
         });
 
+        $reviews = Review::where('host_home_id', $this->id)->get();
+    
+        $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
+
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
@@ -67,6 +72,7 @@ class HostHomeResource extends JsonResource
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,
             'vat' => $this->tax,
+            'ratings' => $ratings,
             'guest_fee' => $this->service_fee,
             'adminStatus' => "Pending Approval",
             'bookedDates' => $bookingDates != null ? $formattedDates : [],

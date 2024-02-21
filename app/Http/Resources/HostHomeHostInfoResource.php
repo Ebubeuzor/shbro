@@ -43,7 +43,15 @@ class HostHomeHostInfoResource extends JsonResource
             'rating' => $ratings ?? [],
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
             'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
-            'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans() ?? null,
+            'yearsOfHosting' => function () {
+                $firstHostHome = $this->hosthomes->first();
+            
+                if ($firstHostHome) {
+                    return $firstHostHome->created_at->diffForHumans();
+                } else {
+                    return null; 
+                }
+            },
             'totalHomes' => $this->hosthomes()
                 ->where('verified', 1)
                 ->where('disapproved', null)

@@ -118,6 +118,8 @@ return array(
     'App\\Models\\Message' => $baseDir . '/app/Models/Message.php',
     'App\\Models\\Notification' => $baseDir . '/app/Models/Notification.php',
     'App\\Models\\Pendingreview' => $baseDir . '/app/Models/Pendingreview.php',
+    'App\\Models\\ReportPropertyDamage' => $baseDir . '/app/Models/ReportPropertyDamage.php',
+    'App\\Models\\ReportPropertyDamagePhotos' => $baseDir . '/app/Models/ReportPropertyDamagePhotos.php',
     'App\\Models\\ReportUser' => $baseDir . '/app/Models/ReportUser.php',
     'App\\Models\\Reporthosthome' => $baseDir . '/app/Models/Reporthosthome.php',
     'App\\Models\\Review' => $baseDir . '/app/Models/Review.php',

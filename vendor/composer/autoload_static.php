@@ -794,6 +794,8 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Models\\Message' => __DIR__ . '/../..' . '/app/Models/Message.php',
         'App\\Models\\Notification' => __DIR__ . '/../..' . '/app/Models/Notification.php',
         'App\\Models\\Pendingreview' => __DIR__ . '/../..' . '/app/Models/Pendingreview.php',
+        'App\\Models\\ReportPropertyDamage' => __DIR__ . '/../..' . '/app/Models/ReportPropertyDamage.php',
+        'App\\Models\\ReportPropertyDamagePhotos' => __DIR__ . '/../..' . '/app/Models/ReportPropertyDamagePhotos.php',
         'App\\Models\\ReportUser' => __DIR__ . '/../..' . '/app/Models/ReportUser.php',
         'App\\Models\\Reporthosthome' => __DIR__ . '/../..' . '/app/Models/Reporthosthome.php',
         'App\\Models\\Review' => __DIR__ . '/../..' . '/app/Models/Review.php',

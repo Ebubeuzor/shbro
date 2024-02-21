@@ -19,7 +19,13 @@ class HostHomeHostInfoResource extends JsonResource
      */
     public function toArray($request)
     {
-        $reviews = Review::where('host_id',$this->id)->get();
+        $hostId = $this->id;
+
+        $reviews = Review::where('host_id', $hostId)
+            ->join('users', 'reviews.user_id', '=', 'users.id')
+            ->select('reviews.*', 'users.name as user_name')
+            ->get();
+    
         $successfulCheckOut = Booking::where('hostId',$this->id)
         ->where('checkOutNotification','!=',null)
         ->get();
@@ -31,19 +37,19 @@ class HostHomeHostInfoResource extends JsonResource
             'email' =>$this->email,
             'Status' =>$this->host == 0 ? "Guest" : "Host And Guest",
             'profilePicture' => URL::to($this->profilePicture),
-            'reviews' => count($reviews),
-            'actualReviews' => $reviews,
-            'successfulCheckOut' => $successfulCheckOutNumber,
-            'rating' => $ratings,
-            'hosthomeDetails' => $this->hosthomeDetails(),
-            'bookedhosthomeDetails' => $this->bookedhosthomeDetails(),
-            'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans(),
+            'reviews' => count($reviews) ?? 0,
+            'actualReviews' => $reviews ?? [],
+            'successfulCheckOut' => $successfulCheckOutNumber ?? [],
+            'rating' => $ratings ?? [],
+            'hosthomeDetails' => $this->hosthomeDetails() ?? [],
+            'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
+            'yearsOfHosting' => optional($this->hosthomes->first())->created_at->diffForHumans() ?? null,
             'totalHomes' => $this->hosthomes()
                 ->where('verified', 1)
                 ->where('disapproved', null)
                 ->whereNull('banned')
                 ->whereNull('suspend')
-                ->count()
+                ->count() ?? 0
         ];
 
     }

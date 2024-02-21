@@ -30,7 +30,7 @@ class ReportController extends Controller
     public function index()
     {
         return HostHomeReportsResource::collection(
-            Reporthosthome::all()
+            Reporthosthome::latest()->get()
         );
     }
     
@@ -44,7 +44,7 @@ class ReportController extends Controller
     public function getUsersReports()
     {
         return UserReportsResource::collection(
-            ReportUser::all()
+            ReportUser::latest()->get()
         );
     }
 

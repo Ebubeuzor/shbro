@@ -795,7 +795,7 @@ class UserController extends Controller
             return UserTripResource::collection(
                 UserTrip::where('user_id', $user->id)
                 ->distinct()
-                ->orderBy('created_at', 'asc')
+                ->orderBy('created_at', 'desc')
                 ->get()
             );
         }

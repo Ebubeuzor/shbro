@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('report_property_damage_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('report_property_damage_id')->constrained()->onDelete('cascade');
-            $table->string("photos");
+            $table->string("photos")->nullable();
+            $table->string("video")->nullable();
             $table->timestamps();
         });
     }

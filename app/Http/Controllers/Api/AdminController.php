@@ -12,6 +12,7 @@ use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
 use App\Models\Review;
+use App\Models\Servicecharge;
 use App\Models\User;
 use App\Models\Visitor;
 use Carbon\Carbon;
@@ -112,15 +113,66 @@ class AdminController extends Controller
     
     /**
      * @lrd:start
-     * this gets all the bookings that has been checked out for the admin
+     * Get receivable and payable information for the admin.
+     *
+     * This method retrieves details such as Date, paymentId, Host Email, Total Amount,
+     * Guest Service Charge, Host Service Charge, Net Profit, and Amount to Host for all
+     * bookings that have been checked out and have a successful payment status.
      * @lrd:end
      */
     public function receivablePayable() {
 
         $bookings = Booking::where('paymentStatus', 'success')
-        
+        ->whereNull('paidHostStatus')
         ->get();
 
+        // Prepare the data for response
+        $responseData = $bookings->map(function ($booking) {
+            return [
+                'Date' => $booking->created_at->format('Y-m-d H:i:s'),
+                'paymentId' => $booking->paymentId,
+                'Host Email' => optional(User::find($booking->hostId))->email,
+                'Total Amount' => $booking->totalamount,
+                'Guest Service Charge' => $booking->guest_service_charge,
+                'Host Service Charge' => $booking->host_service_charge,
+                'Net Profit' => $booking->profit,
+                'Amount to Host' => $booking->hostBalance,
+            ];
+        });
+
+        // Return the response
+        return response()->json(['data' => $responseData], 200);
+    }
+    
+    /**
+     * @lrd:start
+     * Get details of paid payments for the admin.
+     *
+     * This method retrieves details such as paymentId, Host Email, status, paidHostdate,
+     * and Amount to Host for all bookings with a successful payment status and a paid host status.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+    */
+    public function paidPayments() {
+
+        $bookings = Booking::where('paymentStatus', 'success')
+        ->whereNotNull('paidHostStatus')
+        ->get();
+
+        // Prepare the data for response
+        $responseData = $bookings->map(function ($booking) {
+            return [
+                'paymentId' => $booking->paidHostPaymentId,
+                'Host Email' => optional(User::find($booking->hostId))->email,
+                'status' => "Paid",
+                'paidHostdate' => $booking->paidHostdate,
+                'Amount to Host' => $booking->hostBalance,
+            ];
+        });
+
+        // Return the response
+        return response()->json(['data' => $responseData], 200);
     }
     
     
@@ -464,6 +516,52 @@ class AdminController extends Controller
         return response("Ok",200);
     }
     
+    /**
+     * @lrd:start
+     * Update service charges.
+     *
+     * This method updates the guest and host service charges.
+     *
+     * @lrd:end
+     * @LRDparam guest_services_charge use|required
+     * @LRDparam host_services_charge use|required
+     */
+    public function updateServiceCharges(Request $request)
+    {
+        $request->validate([
+            'guest_services_charge' => 'required|numeric',
+            'host_services_charge' => 'required|numeric',
+        ]);
+
+        // Divide the values by 100 before storing
+        $guestCharge = $request->input('guest_services_charge') / 100;
+        $hostCharge = $request->input('host_services_charge') / 100;
+
+        // Update the service charges (assuming there's only one row)
+        ServiceCharge::first()->update([
+            'guest_services_charge' => $guestCharge,
+            'host_services_charge' => $hostCharge,
+        ]);
+
+        return response()->json(['message' => 'Service charges updated successfully']);
+    }
+
+    /**
+     * @lrd:start
+     * 
+     * Get service charges.
+     *
+     * This method retrieves the guest and host service charges.
+     *
+     * @lrd:end
+     */
+    public function getServiceCharges()
+    {
+        // Retrieve the service charges (assuming there's only one row)
+        $serviceCharges = Servicecharge::first();
+
+        return response()->json(['data' => $serviceCharges]);
+    }
     
     /**
      * @lrd:start

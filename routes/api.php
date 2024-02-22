@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::middleware('role:admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
+        Route::post("updateServiceCharges", [AdminController::class, 'updateServiceCharges']);
         
         Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);
         
@@ -109,9 +110,12 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('checkedOutBookings', [AdminController::class, 'checkedOutBookings']);
         Route::get('adminAnalytical', [AdminController::class, 'adminAnalytical']);
         Route::get('getReviews', [AdminController::class, 'getReviews']);
+        Route::get('getServiceCharges', [AdminController::class, 'getServiceCharges']);
         Route::get('bookings', [AdminController::class, 'bookings']);
         Route::get('hosts', [AdminController::class, 'hosts']);
+        Route::get('receivablePayable', [AdminController::class, 'receivablePayable']);
         Route::get('cancelledTrips', [AdminController::class, 'cancelledTrips']);
+        Route::get('paidPayments', [AdminController::class, 'paidPayments']);
         
         Route::put('editUserWishlistContainerName/{id}', [UserController::class, 'editUserWishlistContainerName']);
         Route::delete('deleteUserWishlistContainer/{id}', [UserController::class, 'deleteUserWishlistContainer']);
@@ -122,8 +126,10 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
         
         Route::get('/reporthosthome', [ReportController::class, 'index']);
+        Route::get('/getReportDamagesForAdmin', [ReportController::class, 'getReportDamagesForAdmin']);
         Route::get('/getUsersReports', [ReportController::class, 'getUsersReports']);
         Route::delete('/reporthosthome/{id}', [ReportController::class, 'destroy']);
+        Route::delete('/markDamageReportResolved/{id}', [ReportController::class, 'markDamageReportResolved']);
         Route::delete('/destroyReportUser/{id}', [ReportController::class, 'destroyReportUser']);
     });
     
@@ -134,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
+    Route::get('hostCompletedPayoutsHistory', [UserController::class, 'hostCompletedPayoutsHistory']);
     Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
     Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
     Route::post('/otp/resend', [UserController::class, 'resendOtp']);
@@ -141,6 +148,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('guestReview/{guestId}', [UserController::class, 'guestReview']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('transactionHistory', [UserController::class, 'transactionHistory']);
+    Route::get('hostAnalysisEarnings', [UserController::class, 'hostAnalysisEarnings']);
     Route::get('getUserWishlistContainersAndItems', [UserController::class, 'getUserWishlistContainersAndItems']);
     Route::delete('/deleteHostHome/{hostHomeId}', [HostHomeController::class, 'deleteHostHome']);
     Route::get('/searchHomeByProperty_typeForAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);

@@ -13,12 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('report_property_damages', function (Blueprint $table) {
+        Schema::create('servicecharges', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('host_id')->constrained('users', 'id')->onDelete('cascade');
-            $table->string("booking_number");
-            $table->string("status")->default("pending");
-            $table->string("damage_description");
+            $table->integer("guest_services_charge");
+            $table->integer("host_services_charge");
             $table->timestamps();
         });
     }
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('report_property_damages');
+        Schema::dropIfExists('servicecharges');
     }
 };

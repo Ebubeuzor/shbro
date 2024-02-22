@@ -27,6 +27,7 @@ class ReportDamageRequest extends FormRequest
             "description" => 'required',
             "booking_number" => 'required',
             "photos" => 'required | array',
+            "video" => 'required | array',
         ];
     }
 }

@@ -294,6 +294,22 @@ class UserController extends Controller
 
     /**
      * @lrd:start
+     * This retrieve all a hostCompleted Payouts Transactions
+     * @lrd:end
+     * 
+     * @LRDparam per_page use|required
+     */
+    public function hostCompletedPayoutsHistory(Request $request) {
+
+        $perPage = $request->input('per_page', 10);
+        $bookings = Booking::where('hostId',auth()->id())
+        ->where('paymentStatus', 'success')->paginate($perPage);
+
+        return UserTransactionResource::collection($bookings);
+    }
+
+    /**
+     * @lrd:start
      * 
      * This method is responsible for recording views on a specific host home by a host user.
      *
@@ -451,6 +467,8 @@ class UserController extends Controller
         }
         return __($otp['status']);
     }
+
+
     /**
      * @lrd:start
      * This is used to create a wishlistcontainer and wishlistitem
@@ -1246,6 +1264,8 @@ class UserController extends Controller
 
 
     /**
+     * 
+     * @lrd:start
      * Retrieve currently hosted bookings.
      *
      * This endpoint allows a host to retrieve a list of currently hosted bookings.
@@ -1278,6 +1298,98 @@ class UserController extends Controller
 
         return response(['bookings' => $bookingsResource]);
     }
+
+    /**
+     * 
+     * @lrd:start
+     * Get earnings analysis for the host.
+     *
+     * This method retrieves earnings analysis for the currently hosted bookings of the authenticated host.
+     * It considers bookings that have already checked in and have a payment status of 'success'.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @response 200 {
+     *     "bookings": [
+     *         // Additional bookings details
+     *     ]
+     * }
+     * 
+     * @lrd:end
+     */
+    public function hostAnalysisEarnings()
+    {
+
+        // Get currently hosted bookings using a join
+        $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
+                        ->where('paymentStatus', 'success')
+                        ->where('hostId', auth()->id())->distinct()->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
+    /**
+     * @lrd:start
+     * Get earnings analysis for the host by month and year.
+     *
+     * This method retrieves earnings analysis for the host based on new bookings
+     * for the specified month and year with a payment status of 'success'.
+     *
+     * @param string $month The month in full (e.g., 'january').
+     * @param int $year The year for which to retrieve earnings analysis.
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @response 200 {
+     *     "bookings": [
+     *         // Additional bookings details
+     *     ]
+     * }
+     *
+     * @response 400 {
+     *     "error": "Invalid month provided"
+     * }
+     * @lrd:end
+    */
+    public function hostAnalyticsEarningsByMonthYear($month, $year)
+    {   
+        $hostId = auth()->id();
+
+        // Validate the month input
+        $validMonths = [
+            'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+
+        if (!in_array($month, $validMonths)) {
+            return response()->json(['error' => 'Invalid month provided'], 400);
+        }
+
+        // Convert month name to numeric representation
+        $numericMonth = date_parse($month)['month'];
+
+        // Set the date to the first day of the specified month and year
+        $startDate = Carbon::createFromDate($year, $numericMonth, 1)->startOfDay();
+
+        // Set the date to the last day of the specified month and year
+        $endDate = $startDate->copy()->endOfMonth();
+
+        // Find the host user
+        $host = User::findOrFail($hostId);
+
+        // Get the new bookings count for the specified month and year
+        $bookings = Booking::where('hostId', $host->id)
+            ->where('paymentStatus', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+
+        // Transform the bookings into the BookedResource
+        $bookingsResource = BookedResource::collection($bookings);
+
+        return response(['bookings' => $bookingsResource]);
+    }
+
 
     /**
      * Retrieve bookings arriving soon.

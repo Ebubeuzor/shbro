@@ -11,6 +11,7 @@ use App\Repository\ChatRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ChatController extends Controller
 {

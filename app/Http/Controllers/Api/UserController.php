@@ -1319,17 +1319,37 @@ class UserController extends Controller
      */
     public function hostAnalysisEarnings()
     {
-        // Get currently hosted bookings using a join
+        // Get all hosted bookings (both paid and unpaid) using a join
         $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
-                        ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())->distinct()->get();
 
-        // Calculate total amount
-        $totalAmount = Booking::where('hostId', auth()->id())
+        // Calculate total amount for all bookings
+        $totalAmountAllBookings = Booking::where('hostId', auth()->id())
             ->where('paymentStatus', '=', 'success')->sum('totalamount');
 
-        // Determine paid status
-        $paidToHostStatus = $totalAmount > 0 ? "Paid out" : "Expected";
+        // Calculate total amount for paid bookings
+        $totalAmountPaidBookings = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->whereNotNull('paidHostStatus')
+            ->sum('totalamount');
+
+        // Calculate total amount for unpaid bookings
+        $totalAmountUnpaidBookings = $totalAmountAllBookings - $totalAmountPaidBookings;
+
+        // Determine paid status for all bookings
+        $paidToHostStatusAllBookings = $totalAmountAllBookings > 0 ? "Paid out" : "Expected";
+
+        // Determine paid status for paid bookings
+        $paidToHostStatusPaidBookings = $totalAmountPaidBookings > 0 ? "Paid out" : "Expected";
+
+        // Determine paid status for unpaid bookings
+        $paidToHostStatusUnpaidBookings = $totalAmountUnpaidBookings > 0 ? "Paid out" : "Expected";
+
+        // Check if there are unpaid bookings
+        $unpaidBookings = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->whereNull('paidHostStatus')
+            ->exists();
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1337,12 +1357,18 @@ class UserController extends Controller
         // Add additional information to the response
         $response = [
             'earnings' => $bookingsResource,
-            'hostTotalAmount' => $totalAmount,
-            'paidToHostStatus' => $paidToHostStatus,
+            'totalAmountAllBookings' => $totalAmountAllBookings,
+            'paidToHostStatusAllBookings' => $paidToHostStatusAllBookings,
+            'totalAmountPaidBookings' => $totalAmountPaidBookings,
+            'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
+            'totalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
+            'paidToHostStatusUnpaidBookings' => $paidToHostStatusUnpaidBookings,
+            'unpaidBookings' => $unpaidBookings,
         ];
 
         return response($response);
     }
+
 
 
     /**
@@ -1398,13 +1424,30 @@ class UserController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
-        // Calculate total amount
-        $totalAmount = Booking::where('hostId', auth()->id())
+        // Calculate total amount for all bookings
+        $totalAmountAllBookings = Booking::where('hostId', auth()->id())
             ->where('paymentStatus', '=', 'success')
-            ->whereBetween('created_at', [$startDate, $endDate])->sum('totalamount');
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('totalamount');
 
-        // Determine paid status
-        $paidToHostStatus = $totalAmount > 0 ? "Paid out" : "Expected";
+        // Calculate total amount for paid bookings
+        $totalAmountPaidBookings = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->whereNotNull('paidHostStatus')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->sum('totalamount');
+
+        // Calculate total amount for unpaid bookings
+        $totalAmountUnpaidBookings = $totalAmountAllBookings - $totalAmountPaidBookings;
+
+        // Determine paid status for all bookings
+        $paidToHostStatusAllBookings = $totalAmountAllBookings > 0 ? "Paid out" : "Expected";
+
+        // Determine paid status for paid bookings
+        $paidToHostStatusPaidBookings = $totalAmountPaidBookings > 0 ? "Paid out" : "Expected";
+
+        // Determine paid status for unpaid bookings
+        $paidToHostStatusUnpaidBookings = $totalAmountUnpaidBookings > 0 ? "Paid out" : "Expected";
 
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
@@ -1412,12 +1455,18 @@ class UserController extends Controller
         // Add additional information to the response
         $response = [
             'earnings' => $bookingsResource,
-            'hostTotalAmount' => $totalAmount,
-            'paidToHostStatus' => $paidToHostStatus,
+            'hostTotalAmountAllBookings' => $totalAmountAllBookings,
+            'paidToHostStatusAllBookings' => $paidToHostStatusAllBookings,
+            'hostTotalAmountPaidBookings' => $totalAmountPaidBookings,
+            'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
+            'hostTotalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
+            'paidToHostStatusUnpaidBookings' => $paidToHostStatusUnpaidBookings,
+            'unpaidBookings' => $totalAmountUnpaidBookings > 0,
         ];
 
         return response($response);
     }
+
 
 
     /**

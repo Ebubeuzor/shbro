@@ -131,12 +131,12 @@ class AdminController extends Controller
             return [
                 'Date' => $booking->created_at->format('Y-m-d H:i:s'),
                 'paymentId' => $booking->paymentId,
-                'Host Email' => optional(User::find($booking->hostId))->email,
-                'Total Amount' => $booking->totalamount,
-                'Guest Service Charge' => $booking->guest_service_charge,
-                'Host Service Charge' => $booking->host_service_charge,
-                'Net Profit' => $booking->profit,
-                'Amount to Host' => $booking->hostBalance,
+                'hostEmail' => optional(User::find($booking->hostId))->email,
+                'totalAmount' => $booking->totalamount,
+                'guestServiceCharge' => $booking->guest_service_charge,
+                'hostServiceCharge' => $booking->host_service_charge,
+                'netProfit' => $booking->profit,
+                'amountToHost' => $booking->hostBalance,
             ];
         });
 
@@ -164,10 +164,10 @@ class AdminController extends Controller
         $responseData = $bookings->map(function ($booking) {
             return [
                 'paymentId' => $booking->paidHostPaymentId,
-                'Host Email' => optional(User::find($booking->hostId))->email,
+                'hostEmail' => optional(User::find($booking->hostId))->email,
                 'status' => "Paid",
                 'paidHostdate' => $booking->paidHostdate,
-                'Amount to Host' => $booking->hostBalance,
+                'amountToHost' => $booking->hostBalance,
             ];
         });
 

@@ -29,7 +29,14 @@ class BookedResource extends JsonResource
         $review = Review::where('user_id',$this->user_id)->where('host_home_id',$this->host_home_id)
         ->where('booking_id',$this->id)->first();
 
-        return [
+        // Separate array for 'hostTotalAmount' and 'paidToHostStatus'
+        $hostInfo = [
+            'hostTotalAmount' => $totalAmount,
+            'paidToHostStatus' => $this->paidHostStatus != null ? "Paid out" : "Expected",
+        ];
+
+        // Existing array
+        $bookingArray = [
             'name' => $user->name,
             'aboutGuest' => new GuestReviewsResource($user),
             'profilepic' => URL::to($user->profilePicture),
@@ -45,9 +52,10 @@ class BookedResource extends JsonResource
             'guests' => intval($this->adults) + intval($this->children) + intval($this->infants),
             'datePosted' => $hosthome->created_at->format('Y-m-d'),
             'amount' => $this->hostBalance,
-            'hostTotalAmount' => $totalAmount,
-            'paidToHostStatus' => $this->paidHostStatus != null ? "Paid out" : "Expected",
             'check_out_time' => $this->check_out_time,
         ];
+
+        // Merge the arrays
+        return array_merge($bookingArray, $hostInfo);
     }
 }

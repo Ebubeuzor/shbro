@@ -1328,7 +1328,7 @@ class UserController extends Controller
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
 
-        return response(['bookings' => $bookingsResource]);
+        return response(['earnings' => $bookingsResource]);
     }
 
     /**

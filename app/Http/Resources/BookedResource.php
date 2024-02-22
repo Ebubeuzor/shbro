@@ -23,20 +23,10 @@ class BookedResource extends JsonResource
 
         $hosthome = HostHome::find($this->host_home_id);
 
-        $totalAmount = Booking::where('hostId', auth()->id())
-        ->where('paymentStatus', '=', 'success')->sum('totalamount');
-
         $review = Review::where('user_id',$this->user_id)->where('host_home_id',$this->host_home_id)
         ->where('booking_id',$this->id)->first();
 
-        // Separate array for 'hostTotalAmount' and 'paidToHostStatus'
-        $hostInfo = [
-            'hostTotalAmount' => $totalAmount,
-            'paidToHostStatus' => $this->paidHostStatus != null ? "Paid out" : "Expected",
-        ];
-
-        // Existing array
-        $bookingArray = [
+        return [
             'name' => $user->name,
             'aboutGuest' => new GuestReviewsResource($user),
             'profilepic' => URL::to($user->profilePicture),
@@ -54,8 +44,5 @@ class BookedResource extends JsonResource
             'amount' => $this->hostBalance,
             'check_out_time' => $this->check_out_time,
         ];
-
-        // Merge the arrays
-        return array_merge($bookingArray, $hostInfo);
     }
 }

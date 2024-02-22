@@ -1319,17 +1319,31 @@ class UserController extends Controller
      */
     public function hostAnalysisEarnings()
     {
-
         // Get currently hosted bookings using a join
         $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())->distinct()->get();
 
+        // Calculate total amount
+        $totalAmount = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')->sum('totalamount');
+
+        // Determine paid status
+        $paidToHostStatus = $totalAmount > 0 ? "Paid out" : "Expected";
+
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
 
-        return response(['earnings' => $bookingsResource]);
+        // Add additional information to the response
+        $response = [
+            'earnings' => $bookingsResource,
+            'hostTotalAmount' => $totalAmount,
+            'paidToHostStatus' => $paidToHostStatus,
+        ];
+
+        return response($response);
     }
+
 
     /**
      * @lrd:start
@@ -1384,10 +1398,25 @@ class UserController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
+        // Calculate total amount
+        $totalAmount = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->whereBetween('created_at', [$startDate, $endDate])->sum('totalamount');
+
+        // Determine paid status
+        $paidToHostStatus = $totalAmount > 0 ? "Paid out" : "Expected";
+
         // Transform the bookings into the BookedResource
         $bookingsResource = BookedResource::collection($bookings);
 
-        return response(['bookings' => $bookingsResource]);
+        // Add additional information to the response
+        $response = [
+            'earnings' => $bookingsResource,
+            'hostTotalAmount' => $totalAmount,
+            'paidToHostStatus' => $paidToHostStatus,
+        ];
+
+        return response($response);
     }
 
 

@@ -1362,7 +1362,6 @@ class UserController extends Controller
             'totalAmountPaidBookings' => $totalAmountPaidBookings,
             'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
             'totalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
-            'paidToHostStatusUnpaidBookings' => $paidToHostStatusUnpaidBookings,
             'unpaidBookings' => $unpaidBookings,
         ];
 
@@ -1460,7 +1459,6 @@ class UserController extends Controller
             'hostTotalAmountPaidBookings' => $totalAmountPaidBookings,
             'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
             'hostTotalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
-            'paidToHostStatusUnpaidBookings' => $paidToHostStatusUnpaidBookings,
             'unpaidBookings' => $totalAmountUnpaidBookings > 0,
         ];
 

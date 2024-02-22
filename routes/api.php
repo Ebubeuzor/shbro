@@ -179,6 +179,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/allReservation', [UserController::class, 'allReservation']);
     Route::get('/hostAnalytics', [UserController::class, 'hostAnalytics']);
     Route::get('/hostAnalyticsByMonthYear/{month}/{year}', [UserController::class, 'hostAnalyticsByMonthYear']);
+    Route::get('/hostAnalyticsEarningsByMonthYear/{month}/{year}', [UserController::class, 'hostAnalyticsEarningsByMonthYear']);
     Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);

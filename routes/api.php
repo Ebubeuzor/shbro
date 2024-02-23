@@ -136,6 +136,7 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('/reporthosthome', [ReportController::class, 'store']);
     Route::post('/reportUser', [ReportController::class, 'reportUser']);
+    Route::post('/reportDamage', [ReportController::class, 'reportDamage']);
     
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);

@@ -71,7 +71,7 @@ class UserController extends Controller
     public function getVerifiedUsers()
     {
         return UserResource::collection(
-            User::Where('verified' , "Not Verified")->distinct()->get()
+            User::Where('verified' , "Verified")->distinct()->get()
         );
     }
 

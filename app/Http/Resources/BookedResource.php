@@ -29,6 +29,7 @@ class BookedResource extends JsonResource
 
         return [
             'name' => $user->name,
+            'dateUserJoined' => $user->created_at->format('M j, Y'),
             'aboutGuest' => new GuestReviewsResource($user),
             'profilepic' => URL::to($user->profilePicture),
             'check_in_date' => $this->formattedCheckIn,
@@ -59,13 +60,13 @@ class BookedResource extends JsonResource
         if ($this->paymentStatus === "successButCancelled") {
             return "CANCELLED";
         } elseif ($today->isBefore($checkInDateTime)) {
-            return "RESERVED";
+            return "UPCOMING";
         } elseif ($today->isSameDay($checkInDateTime) || $today->isBetween($checkInDateTime, $checkOutDateTime)) {
             return "CHECKED IN";
         } elseif ($today->isSameDay($checkOutDateTime) || $today->isAfter($checkOutDateTime)) {
-            return "CHECKED OUT";
+            return "COMPLETED";
         } else {
-            return "RESERVED";
+            return "PENDING";
         }
     }
 }

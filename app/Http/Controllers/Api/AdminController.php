@@ -46,7 +46,7 @@ class AdminController extends Controller
     public function cancelledTrips() {
 
         return CancelTripsResource::collection(
-            Canceltrip::all()
+            Canceltrip::latest()->get()
         );
 
     }

@@ -1296,13 +1296,12 @@ class UserController extends Controller
     public function currentlyHosting()
     {
 
-        // Get currently hosted bookings using a join
-        $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
+        $bookings = Booking::where('check_in', '>=', Carbon::today()->toDateString())
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
                         ->where(function ($query){
-                            $query->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
-                            ->orWhere('check_out', '>=', Carbon::today()->toDateString());
+                            $query->where('check_out_time', '<=', Carbon::now()->format('g:i A'))
+                            ->orWhere('check_out', '<=', Carbon::today()->toDateString());
                         })
                         ->distinct()->get();
 

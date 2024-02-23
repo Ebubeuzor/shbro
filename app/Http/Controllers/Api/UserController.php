@@ -62,6 +62,19 @@ class UserController extends Controller
             User::Where('verified' , "Not Verified")->distinct()->get()
         );
     }
+    
+    /**
+     * @lrd:start
+     * this gets the details of every user that is verified 
+     * @lrd:end
+     */
+    public function getVerifiedUsers()
+    {
+        return UserResource::collection(
+            User::Where('verified' , "Not Verified")->distinct()->get()
+        );
+    }
+
     /**
      * @lrd:start
      * this gets the tips of an auth user

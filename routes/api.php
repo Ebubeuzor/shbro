@@ -107,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('approveHome/{id}', [HostHomeController::class, 'approveHome']);
         Route::put('disapproveHome/{user}/{hosthomeid}', [HostHomeController::class, 'disapproveHome']);
         Route::get('guests', [AdminController::class, 'guests']);
+        Route::get('getVerifiedUsers', [UserController::class, 'getVerifiedUsers']);
         Route::get('checkedOutBookings', [AdminController::class, 'checkedOutBookings']);
         Route::get('adminAnalytical', [AdminController::class, 'adminAnalytical']);
         Route::get('getReviews', [AdminController::class, 'getReviews']);

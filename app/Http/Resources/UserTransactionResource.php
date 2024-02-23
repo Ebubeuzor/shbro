@@ -35,6 +35,7 @@ class UserTransactionResource extends JsonResource
             "securityFee" => $hostHome->security_deposit,
             "propertyID" => $this->host_home_id,
             "paymentAmount" => $this->totalamount,
+            'paymentDate' => Carbon::parse($this->created_at)->format('M j, Y'),
             'check_in' => Carbon::parse($this->check_in)->format('M j, Y'),
             'check_out' => Carbon::parse($this->check_out)->format('M j, Y'),
         ];

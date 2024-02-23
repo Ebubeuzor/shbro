@@ -33,6 +33,10 @@ class HostHome extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function reservedPricesForCertainDay(){
+        return $this->hasMany(ReservedPricesForCertainDay::class);
+    }
+
     public function hosthomediscounts(){
         return $this->hasMany(Hosthomediscount::class);
     }
@@ -51,6 +55,14 @@ class HostHome extends Model
 
     public function hosthomereservations(){
         return $this->hasMany(Hosthomereservation::class);
+    }
+
+    public function hosthomecustomdiscounts(){
+        return $this->hasMany(HostHomeCustomDiscount::class);
+    }
+
+    public function hosthomeblockeddates(){
+        return $this->hasMany(HostHomeBlockedDate::class);
     }
 
     public function hosthomerules(){

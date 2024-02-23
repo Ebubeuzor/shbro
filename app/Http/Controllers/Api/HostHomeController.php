@@ -19,6 +19,7 @@ use App\Models\Hosthomephoto;
 use App\Models\Hosthomereservation;
 use App\Models\Hosthomerule;
 use App\Models\Notification as Notification;
+use App\Models\ReservedPricesForCertainDay;
 use App\Models\Tip;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -751,6 +752,7 @@ class HostHomeController extends Controller
     /**
      * 
      * @lrd:start
+     * 
      * Edit the price of a host home for the scheduler.
      *
      * This method allows the scheduler to edit the regular price of a host home.
@@ -759,34 +761,38 @@ class HostHomeController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request  The request containing the new price.
      * @param  int  $id  The ID of the host home.
-     * @return \Illuminate\Http\Response
+     * date should be in format of YYYY-MM-DD
+     * 
      * @lrd:end
+     * 
      * @LRDparam price use|required
+     * @LRDparam date use|required
     */
     public function schdulerEditHostHomePrice(Request $request, $id)
     {
 
         $data = $request-> validate([
-            'price'=>['required','numeric']
+            'price'=>['required','numeric'],
+            'date' => 'date_format:Y-m-d'
         ]);
 
         $price = $data['price'];
+        $date = $data['date'];
 
-        $hostHome = HostHome::find($id);
+        $hostHome = HostHome::findOrFail($id);
 
-        if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
-            $priceDiscount = intval($price) * 0.2;
-            $newPrice = intval($price) - $priceDiscount;
-            $hostHome->update([
-                'price' => $newPrice,
-                'actualPrice' => $price,
-            ]);
-        }else{
-            $hostHome->update([
-                'price' => $price,
-                'actualPrice' => $price,
-            ]);
+        if (!$hostHome) {
+            abort(404, "Hosthome not found");
         }
+
+        $reservedDate = new ReservedPricesForCertainDay();
+       
+        $reservedDate->price = $price;
+        $reservedDate->date = $date;
+        $reservedDate->host_home_id = $hostHome->id;
+        
+        $reservedDate->save();
+
         return response("Done", 200);
     }
     
@@ -1008,7 +1014,7 @@ class HostHomeController extends Controller
     public function schdulerEditHostHomediscount(Request $request, $id)
     {
         try {
-            // Validate the incoming request data
+            
             $data = $request->validate([
                 'duration' => [
                     'required',
@@ -1022,6 +1028,7 @@ class HostHomeController extends Controller
 
             $hostHome = HostHome::findOrFail($id);
 
+            $hostHome->hosthomediscounts->delete();
             // Find existing discount with the same duration
             $existingDiscount = HostHomeCustomDiscount::where('host_home_id', $id)
                 ->where('duration', $duration)

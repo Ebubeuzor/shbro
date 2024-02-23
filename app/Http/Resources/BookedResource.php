@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\Review;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\URL;
 
@@ -42,7 +43,29 @@ class BookedResource extends JsonResource
             'guests' => intval($this->adults) + intval($this->children) + intval($this->infants),
             'datePosted' => $hosthome->created_at->format('Y-m-d'),
             'amount' => $this->hostBalance,
+            'status' => $this->status(),
             'check_out_time' => $this->check_out_time,
         ];
+
+    }
+
+    protected function status()
+    {
+        $hosthome = HostHome::find($this->host_home_id);
+        $checkInDateTime = Carbon::parse($this->check_in . ' ' . $hosthome->check_in_time);
+        $checkOutDateTime = Carbon::parse($this->check_out . ' ' . $this->check_out_time);
+        $today = Carbon::now();
+
+        if ($this->paymentStatus === "successButCancelled") {
+            return "CANCELLED";
+        } elseif ($today->isBefore($checkInDateTime)) {
+            return "RESERVED";
+        } elseif ($today->isSameDay($checkInDateTime) || $today->isBetween($checkInDateTime, $checkOutDateTime)) {
+            return "CHECKED IN";
+        } elseif ($today->isSameDay($checkOutDateTime) || $today->isAfter($checkOutDateTime)) {
+            return "CHECKED OUT";
+        } else {
+            return "RESERVED";
+        }
     }
 }

@@ -202,7 +202,7 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
 
-Route::put('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
+Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
 
 Route::put('schduler/host-homes/{id}/edit-weekend-price', [HostHomeController::class, 'schdulerEditHostHomeWeekendPrice']);
 

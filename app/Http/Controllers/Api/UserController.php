@@ -17,6 +17,7 @@ use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Requests\VerifyOtpRequest;
 use App\Http\Resources\BookedResource;
 use App\Http\Resources\GuestReviewsResource;
+use App\Http\Resources\HostHomeEarningsResource;
 use App\Http\Resources\HostHomeHostInfoResource;
 use App\Http\Resources\HostHomeResource;
 use App\Http\Resources\StoreWishlistResource;
@@ -28,6 +29,7 @@ use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
 use App\Models\Booking;
 use App\Models\HostHome;
+use App\Models\Hosthomecohost;
 use App\Models\HostView;
 use App\Models\Notification;
 use App\Models\Tip;
@@ -43,6 +45,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -1332,49 +1335,107 @@ class UserController extends Controller
     public function hostAnalysisEarnings()
     {
         // Get all hosted bookings (both paid and unpaid) using a join
-        $bookings = Booking::where('check_in', '<=', Carbon::today()->toDateString())
+        $bookings = Booking::where('paymentStatus', '=', 'success')
                         ->where('hostId', auth()->id())->distinct()->get();
 
-        // Calculate total amount for all bookings
-        $totalAmountAllBookings = Booking::where('hostId', auth()->id())
-            ->where('paymentStatus', '=', 'success')->sum('totalamount');
+        $cohostBookings = Hosthomecohost::where('user_id', auth()->id())->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            $cobookings = Booking::where('host_home_id', $cohostUser->id)
+            ->where('paymentStatus', '=', 'success')
+            ->distinct()->get();
+            return $cobookings;
+        })
+        ->flatten();
+
+
+        $allBookings = $bookings->merge($cohostBookings);
+
+
+        $groupedSummedBookings = $allBookings->groupBy('host_home_id')->map(function ($bookings) {
+            return $bookings->sum('hostBalance');
+        });
+
+
+        // Create a new collection with unique host_home_id and summed hostBalance
+        $uniqueHostHomes = collect($groupedSummedBookings)->map(function ($summedBalance, $host_home_id) {
+            return [
+                'host_home_id' => $host_home_id,
+                'summed_balance' => $summedBalance,
+            ];
+        });
+        
+        $bookingsResource = HostHomeEarningsResource::collection(
+            $uniqueHostHomes->map(function ($item) {
+                return new HostHomeEarningsResource(['host_home_id' => $item['host_home_id'], 'summed_balance' => $item['summed_balance']]);
+            })
+        );
+
+        // Calculate total amount for paid bookings
+        $totalAmountBookings = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->sum('hostBalance');
+
+        $cohostTotalAmountBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) {
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success');
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
+
+        
+        $allTotals = $totalAmountBookings + $cohostTotalAmountBookings;
 
         // Calculate total amount for paid bookings
         $totalAmountPaidBookings = Booking::where('hostId', auth()->id())
             ->where('paymentStatus', '=', 'success')
             ->whereNotNull('paidHostStatus')
-            ->sum('totalamount');
+            ->sum('hostBalance');
 
-        // Calculate total amount for unpaid bookings
-        $totalAmountUnpaidBookings = $totalAmountAllBookings - $totalAmountPaidBookings;
+        $cohostTotalAmountPaidBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) {
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success')
+                ->whereNotNull('paidHostStatus');
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
 
-        // Determine paid status for all bookings
-        $paidToHostStatusAllBookings = $totalAmountAllBookings > 0 ? "Paid out" : "Expected";
-
-        // Determine paid status for paid bookings
-        $paidToHostStatusPaidBookings = $totalAmountPaidBookings > 0 ? "Paid out" : "Expected";
-
-        // Determine paid status for unpaid bookings
-        $paidToHostStatusUnpaidBookings = $totalAmountUnpaidBookings > 0 ? "Paid out" : "Expected";
-
-        // Check if there are unpaid bookings
-        $unpaidBookings = Booking::where('hostId', auth()->id())
+        // Calculate total amount for paid bookings
+        $totalAmountUnPaidBookings = Booking::where('hostId', auth()->id())
             ->where('paymentStatus', '=', 'success')
             ->whereNull('paidHostStatus')
-            ->exists();
+            ->sum('hostBalance');
 
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
+        $cohostTotalAmountUnPaidBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) {
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success')
+                ->whereNull('paidHostStatus');
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
+
+        $allPaid = $totalAmountPaidBookings + $cohostTotalAmountPaidBookings;
+        $allUnPaid = $totalAmountUnPaidBookings + $cohostTotalAmountUnPaidBookings;
+
 
         // Add additional information to the response
         $response = [
             'earnings' => $bookingsResource,
-            'totalAmountAllBookings' => $totalAmountAllBookings,
-            'paidToHostStatusAllBookings' => $paidToHostStatusAllBookings,
-            'totalAmountPaidBookings' => $totalAmountPaidBookings,
-            'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
-            'totalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
-            'unpaidBookings' => $unpaidBookings,
+            'totalAmountAllBookings' => $allTotals,
+            'totalAmountPaidBookings' => $allPaid,
+            'totalAmountUnpaidBookings' => $allUnPaid,
         ];
 
         return response($response);
@@ -1405,7 +1466,7 @@ class UserController extends Controller
      * @lrd:end
     */
     public function hostAnalyticsEarningsByMonthYear($month, $year)
-    {   
+    {
         $hostId = auth()->id();
 
         // Validate the month input
@@ -1426,60 +1487,125 @@ class UserController extends Controller
         // Set the date to the last day of the specified month and year
         $endDate = $startDate->copy()->endOfMonth();
 
-        // Find the host user
-        $host = User::findOrFail($hostId);
-
-        // Get the new bookings count for the specified month and year
-        $bookings = Booking::where('hostId', $host->id)
+        // Get all hosted bookings (both paid and unpaid) using a join for the specified month and year
+        $bookings = Booking::where('hostId', $hostId)
             ->where('paymentStatus', 'success')
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->distinct()
             ->get();
 
+        $cohostBookings = Hosthomecohost::where('user_id', $hostId)
+            ->with('hosthome')
+            ->get()
+            ->map(function ($cohost) use ($startDate, $endDate) {
+                $cohostUser = HostHome::findOrFail($cohost->host_home_id);
+
+                $cobookings = Booking::where('host_home_id', $cohostUser->id)
+                    ->where('paymentStatus', 'success')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->distinct()
+                    ->get();
+
+                return $cobookings;
+            })
+            ->flatten();
+
+        $allBookings = $bookings->merge($cohostBookings);
+
+        $groupedSummedBookings = $allBookings->groupBy('host_home_id')->map(function ($bookings) {
+            return $bookings->sum('hostBalance');
+        });
+
+        // Create a new collection with unique host_home_id and summed hostBalance
+        $uniqueHostHomes = collect($groupedSummedBookings)->map(function ($summedBalance, $host_home_id) {
+            return [
+                'host_home_id' => $host_home_id,
+                'summed_balance' => $summedBalance,
+            ];
+        });
+
+        $bookingsResource = HostHomeEarningsResource::collection(
+            $uniqueHostHomes->map(function ($item) {
+                return new HostHomeEarningsResource(['host_home_id' => $item['host_home_id'], 'summed_balance' => $item['summed_balance']]);
+            })
+        );
+
         // Calculate total amount for all bookings
-        $totalAmountAllBookings = Booking::where('hostId', auth()->id())
-            ->where('paymentStatus', '=', 'success')
+        $totalAmountBookings = Booking::where('hostId', $hostId)
+            ->where('paymentStatus', 'success')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->sum('totalamount');
 
+        $cohostTotalAmountBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) use($startDate, $endDate){
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success')
+                ->whereBetween('bookings.created_at', [$startDate, $endDate]);
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
+
+        
+        $allTotals = $totalAmountBookings + $cohostTotalAmountBookings;
+        
         // Calculate total amount for paid bookings
         $totalAmountPaidBookings = Booking::where('hostId', auth()->id())
             ->where('paymentStatus', '=', 'success')
-            ->whereNotNull('paidHostStatus')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('totalamount');
+            ->whereNotNull('paidHostStatus')
+            ->sum('hostBalance');
 
-        // Calculate total amount for unpaid bookings
-        $totalAmountUnpaidBookings = $totalAmountAllBookings - $totalAmountPaidBookings;
+        $cohostTotalAmountPaidBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) use($startDate, $endDate){
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success')
+                ->whereNotNull('paidHostStatus')
+                ->whereBetween('bookings.created_at', [$startDate, $endDate]);
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
 
-        // Determine paid status for all bookings
-        $paidToHostStatusAllBookings = $totalAmountAllBookings > 0 ? "Paid out" : "Expected";
+        // Calculate total amount for paid bookings
+        $totalAmountUnPaidBookings = Booking::where('hostId', auth()->id())
+            ->where('paymentStatus', '=', 'success')
+            ->whereNull('paidHostStatus')
+            ->sum('hostBalance');
 
-        // Determine paid status for paid bookings
-        $paidToHostStatusPaidBookings = $totalAmountPaidBookings > 0 ? "Paid out" : "Expected";
+        $cohostTotalAmountUnPaidBookings = Hosthomecohost::select(
+            // No alias used
+            DB::raw('SUM(bookings.hostBalance)')
+            )
+            ->join('bookings', function ($join) use($startDate, $endDate){
+                $join->on('bookings.host_home_id', '=', 'hosthomecohosts.host_home_id')
+                ->where('bookings.paymentStatus', '=', 'success')
+                ->whereNull('paidHostStatus')
+                ->whereBetween('bookings.created_at', [$startDate, $endDate]);
+            })
+            ->where('hosthomecohosts.user_id', auth()->id())
+            ->sum('bookings.hostBalance');
 
-        // Determine paid status for unpaid bookings
-        $paidToHostStatusUnpaidBookings = $totalAmountUnpaidBookings > 0 ? "Paid out" : "Expected";
+        $allPaid = $totalAmountPaidBookings + $cohostTotalAmountPaidBookings;
+        $allUnPaid = $totalAmountUnPaidBookings + $cohostTotalAmountUnPaidBookings;
 
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
-
-        // Add additional information to the response
         $response = [
             'earnings' => $bookingsResource,
-            'hostTotalAmountAllBookings' => $totalAmountAllBookings,
-            'paidToHostStatusAllBookings' => $paidToHostStatusAllBookings,
-            'hostTotalAmountPaidBookings' => $totalAmountPaidBookings,
-            'paidToHostStatusPaidBookings' => $paidToHostStatusPaidBookings,
-            'hostTotalAmountUnpaidBookings' => $totalAmountUnpaidBookings,
-            'unpaidBookings' => $totalAmountUnpaidBookings > 0,
+            'totalAmountAllBookings' => $allTotals,
+            'totalAmountPaidBookings' => $allPaid,
+            'totalAmountUnpaidBookings' => $allUnPaid,
         ];
 
         return response($response);
     }
 
 
-
     /**
+     * @lrd:start
      * Retrieve bookings arriving soon.
      *
      * This endpoint allows a host to retrieve a list of bookings for the same day and before the check_in_time.
@@ -1493,17 +1619,37 @@ class UserController extends Controller
      */
     public function arrivingSoon()
     {
-        info(Carbon::now()->format('g:i A'));
-        // Get bookings where the check_in date is the present day using a join
+        
+        $hostId = auth()->id();
+
         $bookings = Booking::select('bookings.*')
                     ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
                     ->whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
-                    ->where('hostId', auth()->id())
+                    ->where('hostId', $hostId)
                     ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->distinct()->get();
 
+        // Get upcoming reservations for homes where the authenticated user is a co-host
+        $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            $bookings = Booking::select('bookings.*')
+            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->whereDate('check_in', Carbon::today()->toDateString())
+            ->where('paymentStatus', 'success')
+            ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))
+            ->where('host_home_id', $cohostUser->id)
+            ->distinct()->get();
+            return $bookings;
+        })
+        ->flatten();
+
+        
+        // Combine both sets of reservations
+        $allBookings = $bookings->merge($cohostBookings);
+
         // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
+        $bookingsResource = BookedResource::collection($allBookings);
 
         return response(['bookings' => $bookingsResource]);
     }
@@ -1524,19 +1670,40 @@ class UserController extends Controller
      */
     public function upcomingReservation()
     {
+        $hostId = auth()->id();
         // Get upcoming reservations using a join
         $bookings = Booking::select('bookings.*')
             ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
             ->whereDate('check_in', '>', Carbon::today())
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
-            ->where('hostId', auth()->id())
+            ->where('hostId', $hostId)
             ->distinct()->get();
 
+        // Get upcoming reservations for homes where the authenticated user is a co-host
+        $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            $bookings = Booking::select('bookings.*')
+            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->whereDate('check_in', '>', Carbon::today())
+            ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
+            ->where('paymentStatus', 'success')
+            ->where('host_home_id', $cohostUser->id)
+            ->distinct()->get();
+            return $bookings;
+        })
+        ->flatten();
+
+        
+        // Combine both sets of reservations
+        $allBookings = $bookings->merge($cohostBookings);
+
         // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
+        $bookingsResource = BookedResource::collection($allBookings);
 
         return response(['bookings' => $bookingsResource]);
+    
     }
 
     /**
@@ -1552,16 +1719,34 @@ class UserController extends Controller
      */
     public function allReservation()
     {
-        // Get upcoming reservations using a join
-        $bookings = Booking::whereNotNull('paymentStatus')
-            ->where('hostId', auth()->id())
+        $hostId = auth()->id();
+
+        // Get upcoming reservations for the authenticated user (host)
+        $hostBookings = Booking::whereNotNull('paymentStatus')
+            ->where('hostId', $hostId)
             ->distinct()->get();
 
+        // Get upcoming reservations for homes where the authenticated user is a co-host
+        $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            $bookings = Booking::whereNotNull('paymentStatus')
+            ->where('host_home_id', $cohostUser->id)
+            ->distinct()->get();
+            return $bookings;
+        })
+        ->flatten();
+
+        
+        // Combine both sets of reservations
+        $allBookings = $hostBookings->merge($cohostBookings);
+
         // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
+        $bookingsResource = BookedResource::collection($allBookings);
 
         return response(['bookings' => $bookingsResource]);
     }
+
 
 
 

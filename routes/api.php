@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
     Route::post('hosthomes', [HostHomeController::class, 'store']);
     Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
+    Route::get('addCoHost/{homeId}', [HostHomeController::class, 'addCoHost']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
     Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
     

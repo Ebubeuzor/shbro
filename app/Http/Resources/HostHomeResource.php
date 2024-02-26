@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Booking;
 use App\Models\Review;
+use App\Models\User;
 use App\Models\Wishlistcontainer;
 use Carbon\Carbon;
 use Illuminate\Console\View\Components\Info;
@@ -24,7 +25,6 @@ class HostHomeResource extends JsonResource
     {
         $user = $request->user();
         
-        Log::info(auth()->user());
         $bookingDates = Booking::select('check_in', 'check_out')
         ->where('paymentStatus', 'success')
         ->where('host_home_id', $this->id)
@@ -36,14 +36,24 @@ class HostHomeResource extends JsonResource
                 'check_out' => Carbon::parse($booking->check_out)->format('Y-m-d'),
             ];
         });
-
+        
         $reviews = Review::where('host_home_id', $this->id)->get();
-    
+        
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
+        
+        $cohosts = $this->cohosthomes;
+        
+        Log::info($cohosts);
+
+        // Map each co-host to the corresponding HostHomeHostInfoResource
+        $cohostResources = $cohosts->map(function ($cohost) {
+            return new HostHomeHostInfoResource(User::find($cohost->user_id));
+        });
 
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
+            'cohosts' => $cohostResources->isNotEmpty() ? $cohostResources : null,
             'property_type' => $this->property_type,
             'guest_choice' => $this->guest_choice,
             'address' => $this->address,

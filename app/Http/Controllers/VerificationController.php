@@ -24,13 +24,8 @@ class VerificationController extends Controller
 
                 $recentToken = $user->usertokens->last();
 
-                $allowedOrigins = ['http://localhost:5173', 'https://shbro.onrender.com'];
+                return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
 
-                if (in_array(request()->header('Origin'), $allowedOrigins)) {
-                    return redirect()->away(request()->header('Origin') . '/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
-                } else {
-                    abort(403); 
-                }
 
             }    
             else{

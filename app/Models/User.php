@@ -59,6 +59,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(HostHome::class);
     }
 
+    public function cohosthomes(){
+        return $this->hasMany(Hosthomecohost::class);
+    }
+
     public function pendingReviews(){
         return $this->hasMany(Pendingreview::class);
     }
@@ -100,5 +104,4 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         }
     }
-    
 }

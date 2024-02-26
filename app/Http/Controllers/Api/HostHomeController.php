@@ -8,8 +8,12 @@ use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
+use App\Mail\CoHostInvitation;
 use App\Mail\NotificationMail;
+use App\Mail\VerifyYourEmail;
+use App\Mail\WelcomeMail;
 use App\Models\HostHomeBlockedDate;
+use App\Models\Hosthomecohost;
 use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomedescription;
 use App\Models\Hosthomediscount;
@@ -87,8 +91,10 @@ class HostHomeController extends Controller
         // Find the host home by ID
         $hostHome = HostHome::find($hostHomeId);
 
-        // Check if the authenticated user owns the host home
-        if ($hostHome && $hostHome->user_id == Auth::id()) {
+        // Check if the authenticated user is the owner or a co-host
+        $isAuthorized = ($hostHome && ($hostHome->user_id == Auth::id() || $hostHome->cohosthomes->contains('user_id', Auth::id())));
+
+        if ($isAuthorized) {
             $hostHome->hosthomedescriptions()->delete();
             $hostHome->hosthomediscounts()->delete();
             $hostHome->hosthomenotices()->delete();
@@ -106,6 +112,7 @@ class HostHomeController extends Controller
         }
     }
 
+
     /**
      * @lrd:start
      * Get all host homes for the authenticated user.
@@ -117,6 +124,19 @@ class HostHomeController extends Controller
     {
         // Retrieve all host homes for the authenticated user
         $userHostHomes = Auth::user()->hostHomes;
+
+        $userCohostedHomes = Auth::user()->cohosthomes()->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            return $cohostUser; // Return an empty collection if user not found
+        })
+        ->flatten();
+
+            // Combine both sets of homes
+        $userHostHomes = $userHostHomes->merge($userCohostedHomes);
+
+        // Use unique to remove potential duplicates
+        $userHostHomes = $userHostHomes->unique();
 
         return response([
             "userHostHomes" => HostHomeResource::collection($userHostHomes),
@@ -741,14 +761,29 @@ class HostHomeController extends Controller
     {
         $hostId = auth()->id();
 
-        $hostHome = HostHome::where("user_id",$hostId)
-        ->whereNull('banned')
-        ->whereNull('suspend')
-        ->get();
+        // Retrieve host homes owned by the authenticated user
+        $userOwnedHostHomes = HostHome::where("user_id", $hostId)
+            ->whereNull('banned')
+            ->whereNull('suspend')
+            ->get();
 
-        return GetHostHomeAndIdResource::collection($hostHome);
+        // Retrieve co-hosted homes where the authenticated user is a co-host
+        $userCohostedHomes = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+            return $cohostUser; // Return an empty collection if user not found
+        })
+        ->flatten();
+
+        // Combine both sets of homes
+        $userHostHomes = $userOwnedHostHomes->merge($userCohostedHomes);
+
+        // Use unique to remove potential duplicates
+        $userHostHomes = $userHostHomes->unique();
+
+        return GetHostHomeAndIdResource::collection($userHostHomes);
     }
-    
+
     /**
      * 
      * @lrd:start
@@ -1068,6 +1103,102 @@ class HostHomeController extends Controller
 
 
     /**
+     * @lrd:start
+     * Send a co-host invitation to join the host home.
+     *
+     * This method allows the primary host to send an invitation link to a potential co-host.
+     * If the provided email corresponds to an existing user, the invitation is sent directly.
+     * If the email does not match any user, a new user is created, and welcome/verification emails are sent.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $homeId The ID of the host home to which the co-host is being invited.
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the success of the invitation.
+     * @lrd:end
+     * @LRDparam email use|required
+     */
+    public function addCoHost(Request $request, $homeId)
+    {
+        try {
+            // Validate the incoming request data
+            $data = $request->validate([
+                'email' => 'required|email',
+            ]);
+
+            // Check if a user with the provided email already exists
+            $user = User::where('email', $data['email'])
+            ->whereNull('banned')
+            ->whereNull('suspend')
+            ->first();
+
+            // If the user doesn't exist or is soft-deleted, create a new user
+            if (!$user && $user->banned == null && $user->suspend == null) {
+                $user = User::create([
+                    'name' => 'New Co-Host',
+                    'email' => $data['email'],
+                    'co_host' => true,
+                    'password' => bcrypt(Str::random(16)),
+                ]);
+
+                // Send welcome and verification emails to the new user
+                Mail::to($user->email)->send(new WelcomeMail($user));
+                Mail::to($user->email)->send(new VerifyYourEmail($user));
+            }
+
+            // Check if the user is eligible for co-host invitation
+            if (!$user || $user->banned || $user->suspend || $user->trashed()) {
+                abort(400, "User not eligible for co-host invitation");
+            }
+
+            $user->update([
+                "co_host" => true,
+            ]);
+
+            // Find the host home by its ID
+            $hostHome = HostHome::find($homeId);
+
+            // If the host home doesn't exist, return a 404 response
+            if (!$hostHome) {
+                abort(404, "Host home not found");
+            }
+
+            // Send the co-host invitation email with a link to join the host home
+            Mail::to($data['email'])->send(new CoHostInvitation($user, $hostHome));
+
+            // Provide a success response
+            return response()->json(['message' => 'Co-host invitation sent successfully'], 200);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while sending the co-host invitation.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function becomeACoHost($userid,$hosthomeid)
+    {
+        $existingCoHost = Hosthomecohost::where('user_id',$userid)
+        ->where('host_home_id',$hosthomeid)
+        ->first();
+
+        if ($existingCoHost) {
+            abort(404,"The User is already a Co host to this home");
+        }
+
+        $hosthomeCoHost = new Hosthomecohost();
+        $hosthomeCoHost->user_id = $userid;
+        $hosthomeCoHost->host_home_id = $hosthomeid;
+        $hosthomeCoHost->save();
+
+        
+        
+        return redirect()->away('http://localhost:5173');
+
+        
+    }
+
+    /**
      * Determine the category of the duration (week or month).
      *
      * @param string $duration
@@ -1115,13 +1246,19 @@ class HostHomeController extends Controller
         $hostHome = HostHome::find($hostHomeId);
         $user = Auth::user();
 
-        if ($hostHome && $user->hosthomes->contains('id', $hostHomeId)) {
+        if ($hostHome && $user->hosthomes->contains('id', $hostHomeId) ) {
             return new HostHomeResource($hostHome);
-        }else if ($user->adminStatus != null) {
+        }
+        else if ($user->adminStatus != null) {
             return new HostHomeResource($hostHome);
-        }else{
+        }
+        else if ($user->cohosthomes->contains('host_home_id',$hostHomeId)) {
+            return new HostHomeResource($hostHome);
+        }
+        else{
             abort(403,'Unauthorized Access');
         }
+
     }
     
 

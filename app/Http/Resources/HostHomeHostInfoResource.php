@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\Review;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
@@ -42,6 +43,7 @@ class HostHomeHostInfoResource extends JsonResource
             'successfulCheckOut' => $successfulCheckOutNumber ?? [],
             'rating' => $ratings ?? [],
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
+            'cohosthomeDetails' => $this->cohosthomeDetails() ?? [],
             'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
             'yearsOfHosting' => function () {
                 $firstHostHome = $this->hosthomes->first();
@@ -71,6 +73,37 @@ class HostHomeHostInfoResource extends JsonResource
         ->whereNull('suspend')
         ->get();
         
+        return $hosthomes->map(function ($hosthome) {
+            $firstPhoto = $hosthome->hosthomephotos->first();
+    
+            if ($firstPhoto) {
+                $photoData = json_decode($firstPhoto, true);
+    
+                return [
+                    "hosthome_id" => $hosthome->id,
+                    "hosthome_title" => $hosthome->title,
+                    "photo_image" => url($photoData['image'])
+                ];
+            }
+        
+            return null;
+        })->filter();
+    }
+
+    protected function cohosthomeDetails()
+    {
+
+        $hosthomes = Auth::user()->cohosthomes()->with('hosthome')->get()
+        ->map(function ($cohost) {
+            $cohostUser = HostHome::where('id', $cohost->host_home_id)
+            ->where('verified', 1)
+            ->where('disapproved', null)
+            ->whereNull('banned')
+            ->whereNull('suspend')->first();
+            return $cohostUser; // Return an empty collection if user not found
+        })
+        ->flatten();
+
         return $hosthomes->map(function ($hosthome) {
             $firstPhoto = $hosthome->hosthomephotos->first();
     

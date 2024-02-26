@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BookingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ForgotPassword;
+use App\Http\Controllers\Api\HostHomeController;
 use App\Http\Controllers\VerificationController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,8 @@ use Illuminate\Http\Request;
 Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
+
+Route::get('/becomeACoHost/{userid}/{hosthomeid}', [HostHomeController::class, 'becomeACoHost'])->name('becomeACoHost');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

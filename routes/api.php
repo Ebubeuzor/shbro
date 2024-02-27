@@ -144,6 +144,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('hostCompletedPayoutsHistory', [UserController::class, 'hostCompletedPayoutsHistory']);
+    Route::get('getPendingSecurityDeposits', [UserController::class, 'getPendingSecurityDeposits']);
     Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
     Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
     Route::post('/otp/resend', [UserController::class, 'resendOtp']);
@@ -204,6 +205,7 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById/{}']);
 
 Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
 

@@ -46,6 +46,8 @@ return new class extends Migration
             $table->string('paidHostApproval')->nullable();
             $table->string('paidHostdate')->nullable();
             $table->string('paidHostPaymentId')->nullable();
+            $table->string('guestPaidStatus')->nullable();
+            $table->string('guestPaidDate')->nullable();
             $table->integer('hostId')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('host_home_id')->constrained()->onDelete('cascade');

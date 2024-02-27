@@ -1603,6 +1603,70 @@ class UserController extends Controller
         return response($response);
     }
 
+    /**
+     * @lrd:start
+     * Retrieve pending security deposits for successful bookings.
+     *
+     * This method fetches all bookings with a null guestPaidStatus and paymentStatus set to 'success'.
+     * It compiles relevant information such as booking ID, security deposit, user name, email, and payment date.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+     */
+    public function getPendingSecurityDeposits()
+    {
+        // Retrieve bookings with null guestPaidStatus and successful paymentStatus
+        $pendingBookings = Booking::whereNull('guestPaidStatus')
+            ->where('paymentStatus', 'success')
+            ->get();
+
+        $result = [];
+
+        // Iterate through each booking to extract and compile relevant information
+        foreach ($pendingBookings as $booking) {
+            // Find the associated user for the booking
+            $user = User::find($booking->user_id);
+
+            // Add booking information to the result array
+            $result[] = [
+                'id' => $booking->id,
+                'security_deposit' => $booking->securityDeposit,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'payment_date' => $booking->created_at->format('M j, Y'),
+            ];
+        }
+
+        // Return the result as a JSON response
+        return response(['pending_security_deposits' => $result], 200);
+    }
+
+
+    /**
+     * @lrd:start
+     * Update the security deposit for a booking based on its ID.
+     *
+     * @param  int  $bookingId
+     * @param  float  $newSecurityDeposit
+     * @lrd:end
+    */
+    public function updateSecurityDepositById($bookingId, $newSecurityDeposit)
+    {
+        // Find the booking by ID
+        $booking = Booking::find($bookingId);
+
+        // Check if the booking exists
+        if ($booking) {
+            // Update the security deposit
+            $booking->update(['securityDeposit' => $newSecurityDeposit]);
+
+            // Return a success response
+            return response(['message' => 'Security deposit updated successfully'], 200);
+        } else {
+            // Return an error response if the booking is not found
+            return response(['error' => 'Booking not found'], 404);
+        }
+    }
 
     /**
      * @lrd:start

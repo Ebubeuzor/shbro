@@ -1643,7 +1643,7 @@ class UserController extends Controller
 
 
     /**
-     * @lrd:start
+     * @lrd:start 
      * Update the security deposit for a booking based on its ID.
      *
      * @param  int  $bookingId

@@ -24,4 +24,4 @@ jobs:
         username: ${{ secrets.USERNAME }} 
         password: ${{ secrets.PASSWORD }}
         timeout: 1000000
-        
+        port: 21

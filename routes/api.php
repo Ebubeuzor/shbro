@@ -21,6 +21,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    
+    Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById']);
+
+    Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
+
+    Route::put('schduler/host-homes/{id}/edit-weekend-price', [HostHomeController::class, 'schdulerEditHostHomeWeekendPrice']);
+
+    Route::post('schduler/host-homes/{id}/edit-blocked-date', [HostHomeController::class, 'schdulerEditHostHomeBlockedDate']);
+
     Route::get('/user', [UserController::class, 'getUserInfo']); 
 
     Route::apiResource('/userDetail', UserController::class);
@@ -205,13 +214,6 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
-Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById/{}']);
-
-Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
-
-Route::put('schduler/host-homes/{id}/edit-weekend-price', [HostHomeController::class, 'schdulerEditHostHomeWeekendPrice']);
-
-Route::post('schduler/host-homes/{id}/edit-blocked-date', [HostHomeController::class, 'schdulerEditHostHomeBlockedDate']);
 Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
 Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);

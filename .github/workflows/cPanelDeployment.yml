@@ -22,4 +22,4 @@ jobs:
       with:
         server: ${{ secrets.SERVER }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        password: ${{ secrets.PASSWORD }} 

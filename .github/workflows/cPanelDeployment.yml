@@ -22,5 +22,4 @@ jobs:
       with:
         server: ${{ secrets.SERVER }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }} 
-        timeout: 30000 
+        password: ${{ secrets.PASSWORD }}

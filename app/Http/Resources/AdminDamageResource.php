@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Booking;
 use App\Models\HostHome;
+use App\Models\ReportPropertyDamagePhotos;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -45,13 +46,14 @@ class AdminDamageResource extends JsonResource
                 'email' => $guest->email,
                 'phone_number' => $guest->phone,
             ],
-            'images' => $this->imagesandvideo,
+            'images' => $this->damagePhotosUrls(),
             'video' => $this->damageVideoUrls(),
         ];
     }
+    
     protected function damagePhotosUrls()
     {
-        return collect($this->imagesandvideo)->filter()->map(function ($photo) {
+        return collect(ReportPropertyDamagePhotos::where('report_property_damage_id',$this->id)->get())->filter()->map(function ($photo) {
             $photoData = json_decode($photo, true);
             return [
                 "id" => $photoData['id'],
@@ -62,7 +64,7 @@ class AdminDamageResource extends JsonResource
 
     protected function damageVideoUrls()
     {
-        return collect($this->imagesandvideo)->filter()->map(function ($photo) {
+        return collect(ReportPropertyDamagePhotos::where('report_property_damage_id',$this->id)->get())->filter()->map(function ($photo) {
             $photoData = json_decode($photo, true);
             return [
                 "id" => $photoData['id'],

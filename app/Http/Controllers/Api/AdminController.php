@@ -89,7 +89,7 @@ class AdminController extends Controller
         $user->name = $data['name'];
         $user->email = $data['email'];
         $user->password = bcrypt($data['password']);
-        $user->adminStatus = $data['role'];
+        $user->adminStatus = strtolower($data['role']);
         $user->verified = "Verified";
         $user->email_verified_at = $now;
         $user->save();

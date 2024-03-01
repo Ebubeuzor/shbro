@@ -53,7 +53,7 @@ class HostHomeResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
-            'cohosts' => $cohostResources->isNotEmpty() ? $cohostResources : null,
+            'cohosts' => $cohostResources ?? null,
             'property_type' => $this->property_type,
             'guest_choice' => $this->guest_choice,
             'address' => $this->address,

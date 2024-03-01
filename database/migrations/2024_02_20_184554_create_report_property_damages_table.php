@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('host_id')->constrained('users', 'id')->onDelete('cascade');
             $table->string("booking_number");
+            $table->string("video")->nullable();
             $table->string("status")->default("pending");
             $table->string("damage_description");
             $table->timestamps();

@@ -10,7 +10,7 @@ class ReportPropertyDamage extends Model
     use HasFactory;
     protected $guarded = [];
 
-    public function imagesandvideo(){
+    public function damagePhotos(){
         return $this->hasMany(ReportPropertyDamagePhotos::class);
     }
     

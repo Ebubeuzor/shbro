@@ -167,6 +167,7 @@ class ReportController extends Controller
             $reportDamage->booking_number = $data['booking_number'];
             $reportDamage->host_id = auth()->id();
             $reportDamage->damage_description = $data['description'];
+            $reportDamage->video = $this->saveVideo($data['video']);
             $reportDamage->save();
 
             // Iterate through each photo and create an Image record
@@ -175,9 +176,8 @@ class ReportController extends Controller
                 $imageData = [
                     'photos' => $base64Image,
                     'report_property_damage_id' => $reportDamage->id,
-                    "video" => $data['video']
                 ];
-                $this->createImagesAndVideo($imageData);
+                $this->createImages($imageData);
             }
 
             // Provide a success response
@@ -306,12 +306,11 @@ class ReportController extends Controller
         return $relativePath;
     }
     
-    public function createImagesAndVideo($data)
+    public function createImages($data)
     {
         // Validate the input data
         $validator = Validator::make($data, [
-            'photos' => 'string',
-            'video' => 'string',
+            'photos' => ' required | string',
             'report_property_damage_id' => 'exists:App\Models\ReportPropertyDamage,id'
         ]);
 
@@ -322,7 +321,6 @@ class ReportController extends Controller
         }
 
         $data2 = $validator->validated();
-        $data2['video'] = $this->saveVideo($data2['video']);
         $data2['photos'] = $this->saveImage($data2['photos'], $data2['report_property_damage_id']);
 
         return ReportPropertyDamagePhotos::create($data2);

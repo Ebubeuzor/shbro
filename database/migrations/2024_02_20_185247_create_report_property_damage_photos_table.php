@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('report_property_damage_id')->constrained()->onDelete('cascade');
             $table->string("photos")->nullable();
-            $table->string("video")->nullable();
             $table->timestamps();
         });
     }

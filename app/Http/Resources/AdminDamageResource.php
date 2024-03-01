@@ -46,29 +46,18 @@ class AdminDamageResource extends JsonResource
                 'email' => $guest->email,
                 'phone_number' => $guest->phone,
             ],
-            'images' => ReportPropertyDamagePhotos::all(),
-            'video' => $this->damageVideoUrls(),
+            'images' => $this->damageVideoUrls(),
+            'video' => url($this->video) ?? null,
         ];
     }
     
     protected function damagePhotosUrls()
     {
-        return collect(ReportPropertyDamagePhotos::where('report_property_damage_id',$this->id)->get())->filter()->map(function ($photo) {
+        return collect($this->damagePhotos)->filter()->map(function ($photo) {
             $photoData = json_decode($photo, true);
             return [
                 "id" => $photoData['id'],
                 "images" => url($photoData['photos']),
-            ];
-        })->toArray();
-    }
-
-    protected function damageVideoUrls()
-    {
-        return collect(ReportPropertyDamagePhotos::where('report_property_damage_id',$this->id)->get())->filter()->map(function ($photo) {
-            $photoData = json_decode($photo, true);
-            return [
-                "id" => $photoData['id'],
-                "video" => url($photoData['video']),
             ];
         })->toArray();
     }

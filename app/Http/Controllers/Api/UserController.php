@@ -337,7 +337,7 @@ class UserController extends Controller
 
         $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('hostId',auth()->id())
-        ->where('paymentStatus', 'success')->paginate($perPage);
+        ->where('paymentStatus', 'success')->latest()->paginate($perPage);
 
         return UserTransactionResource::collection($bookings);
     }
@@ -354,8 +354,7 @@ class UserController extends Controller
         $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('hostId',auth()->id())
         ->where('paymentStatus', 'success')
-        ->whereNotNull('paidHostStatus')
-        ->paginate($perPage);
+        ->whereNotNull('paidHostStatus')->latest()->paginate($perPage);
 
         return HostTransactionHistoryResource::collection($bookings);
     }

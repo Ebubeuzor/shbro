@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\Review;
+use App\Models\User;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -92,8 +93,8 @@ class HostHomeHostInfoResource extends JsonResource
 
     protected function cohosthomeDetails()
     {
-
-        $hosthomes = Auth::user()->cohosthomes()->with('hosthome')->get()
+        $user = User::find($this->id);
+        $hosthomes = $user->cohosthomes()->with('hosthome')->get()
         ->map(function ($cohost) {
             $cohostUser = HostHome::where('id', $cohost->host_home_id)
             ->where('verified', 1)

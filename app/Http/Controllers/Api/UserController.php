@@ -1570,7 +1570,7 @@ class UserController extends Controller
         $totalAmountBookings = Booking::where('hostId', $hostId)
             ->where('paymentStatus', 'success')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('totalamount');
+            ->sum('hostBalance');
 
         $cohostTotalAmountBookings = Hosthomecohost::select(
             // No alias used

@@ -33,6 +33,12 @@ class HostHomeHostInfoResource extends JsonResource
         ->get();
         $successfulCheckOutNumber = $successfulCheckOut->isEmpty() ? 0 : count($successfulCheckOut);
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
+        $firstHome = $this->hosthomes->first();
+        Log::info($firstHome);
+        $createdAt = $firstHome ? $firstHome->created_at->diffForHumans() : null;
+
+        Log::info($createdAt);
+
         return [
             'id' =>$this->id,
             'name' =>$this->name,
@@ -46,15 +52,7 @@ class HostHomeHostInfoResource extends JsonResource
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
             'cohosthomeDetails' => $this->cohosthomeDetails() ?? [],
             'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
-            'yearsOfHosting' => function () {
-                $firstHostHome = $this->hosthomes->first();
-            
-                if ($firstHostHome) {
-                    return $firstHostHome->created_at->diffForHumans();
-                } else {
-                    return null; 
-                }
-            },
+            'yearsOfHosting' => $createdAt ?? null,
             'totalHomes' => $this->hosthomes()
                 ->where('verified', 1)
                 ->where('disapproved', null)

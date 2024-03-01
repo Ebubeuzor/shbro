@@ -15,11 +15,13 @@ use App\Http\Requests\StoreWishlistRequest;
 use App\Http\Requests\UpdateUserNumberRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Requests\VerifyOtpRequest;
+use App\Http\Resources\AllReservationsResource;
 use App\Http\Resources\BookedResource;
 use App\Http\Resources\GuestReviewsResource;
 use App\Http\Resources\HostHomeEarningsResource;
 use App\Http\Resources\HostHomeHostInfoResource;
 use App\Http\Resources\HostHomeResource;
+use App\Http\Resources\HostTransactionHistoryResource;
 use App\Http\Resources\StoreWishlistResource;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\UserTransactionResource;
@@ -27,6 +29,7 @@ use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
+use App\Models\Adminrole;
 use App\Models\Booking;
 use App\Models\HostHome;
 use App\Models\Hosthomecohost;
@@ -102,7 +105,22 @@ class UserController extends Controller
      */
     public function getUserInfo(Request $request)
     {
-        return $request->user();
+        // Get the authenticated user
+        $user = $request->user();
+
+        // Check if the user has adminStatus as 'admin' or 'super admin'
+        if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
+            // Fetch the admin roles for the user
+            $adminRoles = Adminrole::where('user_id', $user->id)->get(['rolePermission']);
+
+            // Merge the admin roles with the user data
+            $userDataWithRoles = $user->toArray() + ['adminRoles' => $adminRoles];
+
+            return response($userDataWithRoles, 200);
+        }
+
+        // If not an admin, return user data without admin roles
+        return response($user, 200);
     }
     
     /**
@@ -322,6 +340,24 @@ class UserController extends Controller
         ->where('paymentStatus', 'success')->paginate($perPage);
 
         return UserTransactionResource::collection($bookings);
+    }
+    
+    /**
+     * @lrd:start
+     * Gets the transaction history for the paid authenticated host user.
+     * @lrd:end
+     * 
+     * @LRDparam per_page use|required
+     */
+    public function hostTransactionHistory(Request $request) {
+
+        $perPage = $request->input('per_page', 10);
+        $bookings = Booking::where('hostId',auth()->id())
+        ->where('paymentStatus', 'success')
+        ->whereNotNull('paidHostStatus')
+        ->paginate($perPage);
+
+        return HostTransactionHistoryResource::collection($bookings);
     }
 
     /**
@@ -1806,7 +1842,7 @@ class UserController extends Controller
         $allBookings = $hostBookings->merge($cohostBookings);
 
         // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($allBookings);
+        $bookingsResource = AllReservationsResource::collection($allBookings);
 
         return response(['bookings' => $bookingsResource]);
     }

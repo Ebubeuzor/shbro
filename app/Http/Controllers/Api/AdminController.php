@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignRolesToAdminRequest;
+use App\Http\Requests\SignupRequest;
 use App\Http\Resources\AllBookingsResource;
 use App\Http\Resources\AllReviewssResource;
 use App\Http\Resources\CancelTripsResource;
 use App\Http\Resources\GuestsResource;
 use App\Mail\NotificationMail;
+use App\Models\Adminrole;
 use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
@@ -20,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
 
 class AdminController extends Controller
 {
@@ -51,6 +55,7 @@ class AdminController extends Controller
 
     }
     
+
     /**
      * @lrd:start
      * this gets all the reviews for the admin
@@ -64,6 +69,101 @@ class AdminController extends Controller
 
     }
     
+
+    /**
+     * @lrd:start
+     * Create a new admin user.
+     *
+     * This method creates a new admin user based on the provided data.
+     * 
+     * @return \Illuminate\Http\Response A response indicating the success of user creation.
+     * @lrd:end
+     */
+    public function createAdmin(SignupRequest $request) {
+
+        $data = $request->validated(); 
+        
+        $now = Carbon::now();
+
+        $user = new User();
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->password = bcrypt($data['password']);
+        $user->adminStatus = $data['role'];
+        $user->verified = "Verified";
+        $user->email_verified_at = $now;
+        $user->save();
+
+        return response("User created successfully",201);
+
+    }
+    
+    /**
+     * @lrd:start
+     * Get all users with admin or super admin status.
+     * @lrd:end
+     */
+    public function getAllAdminUsers()
+    {
+        // Assuming 'admin' and 'super admin' are the values for adminStatus
+        $adminUsers = User::whereIn('adminStatus', ['admin', 'super admin'])
+            ->get(['id', 'name', 'adminStatus']);
+
+        // Fetch admin roles for each admin user
+        $adminUsersWithRoles = $adminUsers->map(function ($user) {
+            $adminRoles = AdminRole::where('user_id', $user->id)->get(['rolePermission']);
+            return $user->toArray() + ['adminRoles' => $adminRoles];
+        });
+
+        return response(['adminUsers' => $adminUsersWithRoles], 200);
+    }
+    
+    /**
+     * @lrd:start
+     * Assign roles to an admin user based on provided permissions.
+     *
+     * This method takes a validated request containing a list of permissions and assigns
+     * each permission to the specified admin user. The assigned roles are created using
+     * the createAdminRoles method.
+     *
+     * @param  AssignRolesToAdminRequest $request The validated request containing permissions.
+     * @param  int                      $userid  The ID of the admin user to assign roles.
+     * @lrd:end
+    */
+    public function assignRolesToAdmin(AssignRolesToAdminRequest $request,$userid)
+    {
+        $data = $request->validated();
+
+        $permissions = $data['permission'];
+
+        foreach ($permissions as $permission) {
+            $permissionData = ['rolePermission' => $permission, 'user_id' => $userid];
+            $this->createAdminRoles($permissionData);
+        }
+
+        return response("Done");
+    }
+
+    
+    private function createAdminRoles($data)
+    {
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'rolePermission' => 'string',
+            'user_id' => 'exists:App\Models\User,id'
+        ]);
+
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+
+        $data2 = $validator->validated();
+
+        return Adminrole::create($data2);
+        
+    }
     /**
      * @lrd:start
      * this gets all the bookings that has not been checked out for the admin

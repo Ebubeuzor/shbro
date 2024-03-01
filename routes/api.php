@@ -106,6 +106,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::middleware('role:admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
+        Route::post("createAdmin", [AdminController::class, 'createAdmin']);
+        Route::post("assignRolesToAdmin/{userid}", [AdminController::class, 'assignRolesToAdmin']);
         Route::post("updateServiceCharges", [AdminController::class, 'updateServiceCharges']);
         
         Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);
@@ -121,6 +123,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::get('checkedOutBookings', [AdminController::class, 'checkedOutBookings']);
         Route::get('adminAnalytical', [AdminController::class, 'adminAnalytical']);
         Route::get('getReviews', [AdminController::class, 'getReviews']);
+        Route::get('getAllAdminUsers', [AdminController::class, 'getAllAdminUsers']);
         Route::get('getServiceCharges', [AdminController::class, 'getServiceCharges']);
         Route::get('bookings', [AdminController::class, 'bookings']);
         Route::get('hosts', [AdminController::class, 'hosts']);
@@ -153,6 +156,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('hostCompletedPayoutsHistory', [UserController::class, 'hostCompletedPayoutsHistory']);
+    Route::get('hostTransactionHistory', [UserController::class, 'hostTransactionHistory']);
     Route::get('getPendingSecurityDeposits', [UserController::class, 'getPendingSecurityDeposits']);
     Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
     Route::post('/otp/verify', [UserController::class, 'verifyOtp']);

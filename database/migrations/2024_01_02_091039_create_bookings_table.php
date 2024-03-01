@@ -31,6 +31,8 @@ return new class extends Migration
             $table->string('paymentType')->nullable();
             $table->string('host_service_charge')->nullable();
             $table->string('guest_service_charge')->nullable();
+            $table->string('host_service_charge_percentage')->nullable();
+            $table->string('guest_services_charge_percentage')->nullable();
             $table->string('vat_charge')->nullable();
             $table->string('totalamount')->nullable();
             $table->string('profit')->nullable();

@@ -23,6 +23,7 @@ class HostHomeReviewResource extends JsonResource
             'ratings' => $this->ratings,
             'user_name' => $this->user->name,
             'user_profilePic' => URL::to($this->user->profilePicture),
+            'datePosted' => $this->created_at->format('M j, Y'),
         ];
     }
 }

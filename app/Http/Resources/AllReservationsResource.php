@@ -65,7 +65,7 @@ class AllReservationsResource extends JsonResource
         } elseif ($today->isSameDay($checkOutDateTime) || $today->isAfter($checkOutDateTime)) {
             return "completed";
         } else { 
-            return "pending";
+            return "pending review";
         }
     }
 }

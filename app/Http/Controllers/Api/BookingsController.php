@@ -10,7 +10,9 @@ use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
+use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomediscount;
+use App\Models\Servicecharge;
 use App\Models\User;
 use App\Models\UserTrip;
 use Carbon\Carbon;
@@ -24,6 +26,21 @@ use Unicodeveloper\Paystack\Facades\Paystack;
 
 class BookingsController extends Controller
 {
+
+    protected $guestServicesCharge;
+    protected $hostServicesCharge;
+    protected $tax;
+
+    public function __construct()
+    {
+        // Retrieve the service charge record (assuming there's only one)
+        $serviceCharge = Servicecharge::first();
+
+        // Set global variables to zero if no record is found
+        $this->guestServicesCharge = $serviceCharge ? $serviceCharge->guest_services_charge : 0;
+        $this->hostServicesCharge = $serviceCharge ? $serviceCharge->host_services_charge : 0;
+        $this->tax = $serviceCharge ? $serviceCharge->tax : 0;
+    }
 
     /**
      * @lrd:start
@@ -77,8 +94,8 @@ class BookingsController extends Controller
 
         // Retrieve the booking with the specified hostHomeId
         $bookings = Booking::where('host_home_id', $hostHomeId)
-        ->where('paymentStatus','success')
-        ->get();
+            ->where('paymentStatus', 'success')
+            ->get();
 
         foreach ($bookings as $booking) {
             // Check if the selected dates are valid
@@ -93,23 +110,21 @@ class BookingsController extends Controller
 
             // Check if the HostHome is already booked for the selected dates
             $isBooked = Booking::where('host_home_id', $hostHomeId)
-            ->where('id', '!=', $booking->id)
-            ->where('paymentStatus', 'success')
-            ->where(function ($query) use ($checkIn, $checkOut) {
-                $query->where(function ($query) use ($checkIn, $checkOut) {
-                    $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
-                        ->whereRaw('? < DATE(check_out)', [$checkIn->format('Y-m-d')]);
-                })->orWhere(function ($query) use ($checkIn, $checkOut) {
-                    $query->whereRaw('? > DATE(check_in)', [$checkOut->format('Y-m-d')])
-                        ->whereRaw('? <= DATE(check_out)', [$checkOut->format('Y-m-d')]);
-                })->orWhere(function ($query) use ($checkIn, $checkOut) {
-                    $query->whereRaw('? = DATE(check_in)', [$checkIn->format('Y-m-d')])
-                        ->whereRaw('? = DATE(check_out)', [$checkOut->format('Y-m-d')]);
-                });
-            })
-            ->exists();
-
-
+                ->where('id', '!=', $booking->id)
+                ->where('paymentStatus', 'success')
+                ->where(function ($query) use ($checkIn, $checkOut) {
+                    $query->where(function ($query) use ($checkIn, $checkOut) {
+                        $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
+                            ->whereRaw('? < DATE(check_out)', [$checkIn->format('Y-m-d')]);
+                    })->orWhere(function ($query) use ($checkIn, $checkOut) {
+                        $query->whereRaw('? > DATE(check_in)', [$checkOut->format('Y-m-d')])
+                            ->whereRaw('? <= DATE(check_out)', [$checkOut->format('Y-m-d')]);
+                    })->orWhere(function ($query) use ($checkIn, $checkOut) {
+                        $query->whereRaw('? = DATE(check_in)', [$checkIn->format('Y-m-d')])
+                            ->whereRaw('? = DATE(check_out)', [$checkOut->format('Y-m-d')]);
+                    });
+                })
+                ->exists();
 
             if ($isBooked) {
                 $bookedDates = Booking::where('host_home_id', $hostHomeId)
@@ -124,40 +139,39 @@ class BookingsController extends Controller
                         });
                     })
                     ->pluck('check_in', 'check_out');
-            
+
                 foreach ($bookedDates as $checkOutDate => $checkInDate) {
                     $formattedCheckIn = date('jS F Y', strtotime($checkInDate));
                     $formattedCheckOut = date('jS F Y', strtotime($checkOutDate));
-            
+
                     $formattedDates[] = "{$formattedCheckIn} - {$formattedCheckOut}";
                 }
-            
+
                 return response([
                     'message' => 'This Home is already booked for the selected dates',
                     'booked_dates' => $formattedDates,
-                    'dateDifference' => $dateDifference 
+                    'dateDifference' => $dateDifference
                 ], 400);
             }
-        
         }
 
         $selectedUserCard = "";
         if ($data['option'] == 1) {
             $selectedUserCard = $user->userCards()->where('Selected', 'Selected')->first();
             if (!$selectedUserCard) {
-                return response("No card selected",400);
+                return response("No card selected", 400);
             }
-        }elseif ($data['option'] == 2) {
+        } elseif ($data['option'] == 2) {
             $selectedUserCard = [
                 "card_number" => $data["card_number"],
                 "expiry_data" => $data["expiry_data"],
                 "CVV" => $data["CVV"],
             ];
-        }else{
-            return response("Invalid option",400);
+        } else {
+            return response("Invalid option", 400);
         }
         if (!is_object($selectedUserCard)) {
-            $selectedUserCard = (object)$selectedUserCard;
+            $selectedUserCard = (object) $selectedUserCard;
         }
 
         $booking = new Booking();
@@ -166,14 +180,26 @@ class BookingsController extends Controller
             $booking->check_out = $checkOut->format('Y-m-d');
         }
 
-        $discounts = Hosthomediscount::where('host_home_id', $hostHomeId)->get();
+        // Fetch standard discounts for the host home
+        $standardDiscounts = Hosthomediscount::where('host_home_id', $hostHomeId)->get();
 
-        // Calculate the discounted price
-        $discountedPrice = $this->calculateDiscountedPrice($hostHome->price, $discounts, $dateDifference);
+        // Fetch custom discounts for the host home
+        $customDiscounts = HostHomeCustomDiscount::where('host_home_id', $hostHomeId)->get();
 
-        // Use the discounted price if not null, otherwise use the actual price
-        $bookingPrice = !is_null($discountedPrice) ? $discountedPrice : $hostHome->price;
+        // Calculate the discounted price including both standard and custom discounts
+        $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
 
+
+
+        $bookingPrice = $discountedPrice;
+
+        //  'host_service_charge' => $host_service_charge,
+        $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
+        $tax = (($bookingPrice * $dateDifference) * $this->tax);
+        $subhostbalance = $bookingPrice * $dateDifference;
+        $hostfee = $subhostbalance * $this->hostServicesCharge;
+        $hostBalance = $subhostbalance - $hostfee;
+        $taxAndFees = $fees + $tax;
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];
         $booking->pets = $data['pets'];
@@ -182,8 +208,13 @@ class BookingsController extends Controller
         $booking->check_in = $checkIn->format('Y-m-d');
         $booking->check_out = $checkOut->format('Y-m-d');
         $booking->user_id = $user->id;
-        $booking->hostBalance = $bookingPrice * $dateDifference;
+        $booking->guest_service_charge = $fees;
+        $booking->host_service_charge = $hostfee;
+        $booking->vat_charge = $tax;
+        $booking->priceForANight = $hostHome->actualPrice;
+        $booking->hostBalance = $hostBalance;
         $booking->host_home_id = $hostHome->id;
+        $booking->profit = $taxAndFees;
         $booking->hostId = $hostHome->user_id;
         $booking->save();
 
@@ -192,17 +223,17 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = (($bookingPrice * $dateDifference) + intval($hostHome->security_deposit)) * 100;
-    
+        $total = (($bookingPrice * $dateDifference) + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
             'email' => $user->email,
             'reference' => $reference,
             'currency' => 'NGN',
             'callback_url' => route('callback', [
-                'userId' => $user->id, 
+                'userId' => $user->id,
                 'bookingId' => $booking->id,
-                'usertoken' => $recentToken->token, 
+                'usertoken' => $recentToken->token,
                 'userrem' => $user->remember_token,
                 'hostHomeId' => $hostHome->id
             ]),
@@ -220,32 +251,75 @@ class BookingsController extends Controller
         ]);
     }
 
-    private function calculateDiscountedPrice($actualPrice, $discounts, $durationOfStay = 0)
+    private function calculateDiscountedPrice($actualPrice, $standardDiscounts, $customDiscounts, $durationOfStay = 0, $bookingCount)
     {
         $discountedPrice = $actualPrice;
-    
-        foreach ($discounts as $discount) {
-            $discountedPrice = $this->applyDiscount($discountedPrice, $discount, $durationOfStay);
+
+        // Apply standard discounts
+        foreach ($standardDiscounts as $discount) {
+            $discountedPrice = $this->applyDiscount($discountedPrice, $discount, $durationOfStay,$bookingCount);
         }
-    
+
+        // Apply custom discounts
+        $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
+
         return $discountedPrice;
     }
-    
-    private function applyDiscount($price, $discount, $durationOfStay = 0)
+
+
+    private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay = 0)
+    {
+        foreach ($customDiscounts as $customDiscount) {
+            switch ($customDiscount->duration) {
+                case '1 week':
+                    $price = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '2 weeks':
+                    $price = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '3 weeks':
+                    $price = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '4 weeks':
+                    $price = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '1 month':
+                    $price = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '2 months':
+                    $price = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                case '3 months':
+                    $price = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                // Add more cases for other durations as needed
+            }
+        }
+
+        return $price;
+    }
+
+
+    private function applyDiscount($price, $discount, $durationOfStay = 0,$bookingCount)
     {
         // Check the discount type and apply accordingly
-        switch ($discount->discount) {
-            case '20% New listing promotion':
-                return $price;
-            case '5% Weekly discount':
-                return $durationOfStay >= 7 ? $price - ($price * 0.05) : $price; // 5% off for stays of 7 nights or more
-            case '10% Monthly discount':
-                return $durationOfStay >= 28 ? $price - ($price * 0.1) : $price; // 10% off for stays of 28 nights or more
-            default:
-                return $price;
+        if ($discount) {
+            switch ($discount->discount) {
+                case '20% New listing promotion':
+                    return $bookingCount < 3 ? $price - ($price * 0.2) : $price;
+                case '5% Weekly discount':
+                    return $durationOfStay >= 7 ? $price - ($price * 0.05) : $price; // 5% off for stays of 7 nights or more
+                case '10% Monthly discount':
+                    return $durationOfStay >= 28 ? $price - ($price * 0.1) : $price; // 10% off for stays of 28 nights or more
+                // Add more cases for other standard discounts as needed
+                default:
+                    return $price;
+            }
         }
+
+        // Default case if no standard discount is provided
+        return $price;
     }
-    
 
 
     /**
@@ -348,10 +422,6 @@ class BookingsController extends Controller
                     // $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
                     // $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
                     $hostBalance = $booking->hostBalance;
-                    $host_service_charge = 0.00;
-                    $guest_service_charge = (intval($hostHome->service_fee) * $durationOfStay);
-                    $vat_charge = (intval($hostHome->tax) * $durationOfStay);
-                    $profit = (($amount/100) - $hostBalance) - intval($hostHome->security_deposit);
                     $paymentType = $data['data']['authorization']['card_type'];
 
                     $booking->update([
@@ -359,14 +429,12 @@ class BookingsController extends Controller
                         "paymentStatus" => $status,
                         'paymentId' => $transactionID,
                         'paymentType' => $paymentType,
-                        'host_service_charge' => $host_service_charge,
-                        'guest_service_charge' => $guest_service_charge,
-                        'profit' => $profit,
-                        'vat_charge' => $vat_charge,
                         'securityDeposit' => $hostHome->security_deposit,
                         'check_out_time' => $checkouttime,
                         'check_in_time' => $checkintime,
                         'priceForANight' => $priceForANight,
+                        'host_services_charge_percentage' => intval($this->hostServicesCharge) * 100,
+                        'guest_services_charge_percentage' => intval($this->guestServicesCharge) * 100,
                     ]);
 
                     $userTrip = new UserTrip();

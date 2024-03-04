@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Booking;
 use App\Models\Review;
+use App\Models\Servicecharge;
 use App\Models\User;
 use App\Models\Wishlistcontainer;
 use Carbon\Carbon;
@@ -24,7 +25,13 @@ class HostHomeResource extends JsonResource
     public function toArray($request)
     {
         $user = $request->user();
-        
+        $serviceCharge = Servicecharge::first();
+
+        // Set global variables to zero if no record is found
+        $guestServicesCharge = $serviceCharge ? $serviceCharge->guest_services_charge : 0;
+        $hostServicesCharge = $serviceCharge ? $serviceCharge->host_services_charge : 0;
+        $tax = $serviceCharge ? $serviceCharge->tax : 0;
+
         $bookingDates = Booking::select('check_in', 'check_out')
         ->where('paymentStatus', 'success')
         ->where('host_home_id', $this->id)
@@ -74,6 +81,11 @@ class HostHomeResource extends JsonResource
             'reservations' => $this->hosthomereservations,
             'dicountprice' => $this->price,
             'bookingCount' => $this->bookingCount,
+            'min_nights' => $this->min_nights,
+            'max_nights' => $this->max_nights,
+            'advance_notice' => $this->advance_notice,
+            'preparation_time' => $this->preparation_time,
+            'availability_window' => $this->availability_window,
             'price' => $this->actualPrice,
             'weekend' => $this->weekendPrice ?? null,
             'discounts' => $this->hosthomediscounts,
@@ -86,9 +98,9 @@ class HostHomeResource extends JsonResource
             'cancelPolicy' => $this->cancellation_policy,
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,
-            'vat' => $this->tax,
+            'vat' => $tax,
             'ratings' => $ratings,
-            'guest_fee' => $this->service_fee,
+            'guest_fee' => $guestServicesCharge,
             'adminStatus' => "Pending Approval",
             'bookedDates' => $bookingDates != null ? $formattedDates : [],
             'status' => $this->verified == 0 ? "Not published" : "Published",

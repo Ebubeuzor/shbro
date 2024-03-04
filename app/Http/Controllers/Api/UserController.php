@@ -321,7 +321,7 @@ class UserController extends Controller
 
         $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('user_id',auth()->id())
-        ->where('paymentStatus', 'success')->paginate($perPage);
+        ->where('paymentStatus', 'success')->latest()->paginate($perPage);
 
         return UserTransactionResource::collection($bookings);
     }
@@ -864,7 +864,7 @@ class UserController extends Controller
             return UserTripResource::collection(
                 UserTrip::where('user_id', $user->id)
                 ->distinct()
-                ->orderBy('created_at', 'desc')
+                ->latest()
                 ->get()
             );
         }
@@ -1305,6 +1305,7 @@ class UserController extends Controller
                         ->where('paymentStatus', 'success')
                         ->where('hostId', auth()->id())
                         ->where('check_out_time', '>=', Carbon::now()->format('g:i A'))
+                        ->latest()
                         ->distinct()->get();
 
         // Transform the bookings into the BookedResource
@@ -1341,6 +1342,7 @@ class UserController extends Controller
                             $query->where('check_out_time', '<=', Carbon::now()->format('g:i A'))
                             ->orWhere('check_out', '<=', Carbon::today()->toDateString());
                         })
+                        ->latest()
                         ->distinct()->get();
 
         // Transform the bookings into the BookedResource
@@ -1653,6 +1655,7 @@ class UserController extends Controller
         // Retrieve bookings with null guestPaidStatus and successful paymentStatus
         $pendingBookings = Booking::whereNull('guestPaidStatus')
             ->where('paymentStatus', 'success')
+            ->latest()
             ->get();
 
         $result = [];
@@ -1726,7 +1729,7 @@ class UserController extends Controller
                     ->whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', $hostId)
-                    ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->distinct()->get();
+                    ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->latest()->distinct()->get();
 
         // Get upcoming reservations for homes where the authenticated user is a co-host
         $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
@@ -1737,7 +1740,7 @@ class UserController extends Controller
             ->whereDate('check_in', Carbon::today()->toDateString())
             ->where('paymentStatus', 'success')
             ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))
-            ->where('host_home_id', $cohostUser->id)
+            ->where('host_home_id', $cohostUser->id)->latest()
             ->distinct()->get();
             return $bookings;
         })
@@ -1777,6 +1780,7 @@ class UserController extends Controller
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
             ->where('hostId', $hostId)
+            ->latest()
             ->distinct()->get();
 
         // Get upcoming reservations for homes where the authenticated user is a co-host
@@ -1789,6 +1793,7 @@ class UserController extends Controller
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
             ->where('host_home_id', $cohostUser->id)
+            ->latest()
             ->distinct()->get();
             return $bookings;
         })
@@ -1823,6 +1828,7 @@ class UserController extends Controller
         // Get upcoming reservations for the authenticated user (host)
         $hostBookings = Booking::whereNotNull('paymentStatus')
             ->where('hostId', $hostId)
+            ->latest()
             ->distinct()->get();
 
         // Get upcoming reservations for homes where the authenticated user is a co-host
@@ -1831,6 +1837,7 @@ class UserController extends Controller
             $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
             $bookings = Booking::whereNotNull('paymentStatus')
             ->where('host_home_id', $cohostUser->id)
+            ->latest()
             ->distinct()->get();
             return $bookings;
         })

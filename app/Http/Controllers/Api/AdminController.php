@@ -625,26 +625,37 @@ class AdminController extends Controller
      * @lrd:end
      * @LRDparam guest_services_charge use|required
      * @LRDparam host_services_charge use|required
+     * @LRDparam tax use|required
      */
     public function updateServiceCharges(Request $request)
     {
         $request->validate([
             'guest_services_charge' => 'required|numeric',
             'host_services_charge' => 'required|numeric',
+            'tax' => 'required|numeric',
         ]);
 
+        info(json_encode($request->guest_services_charge));
+        
         // Divide the values by 100 before storing
-        $guestCharge = $request->input('guest_services_charge') / 100;
-        $hostCharge = $request->input('host_services_charge') / 100;
+        $guestCharge = $request->guest_services_charge / 100;
+        $hostCharge = $request->host_services_charge / 100;
+        $tax = $request->tax / 100;
 
-        // Update the service charges (assuming there's only one row)
-        ServiceCharge::first()->update([
-            'guest_services_charge' => $guestCharge,
-            'host_services_charge' => $hostCharge,
-        ]);
+        info($guestCharge);
+        // Update or create the service charge record
+        ServiceCharge::updateOrCreate(
+            ['id' => 1], // Assuming the ID is 1 for the single record
+            [
+                'guest_services_charge' => $guestCharge,
+                'host_services_charge' => $hostCharge,
+                'tax' => $tax,
+            ]
+        );
 
         return response()->json(['message' => 'Service charges updated successfully']);
     }
+
 
     /**
      * @lrd:start

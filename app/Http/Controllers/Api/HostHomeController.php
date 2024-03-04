@@ -808,13 +808,19 @@ class HostHomeController extends Controller
 
         $data = $request-> validate([
             'price'=>['required','numeric'],
-            'date' => 'date_format:Y-m-d'
+            'date' => 'nullable | date_format:Y-m-d'
         ]);
 
         $price = $data['price'];
+        $hostHome = HostHome::findOrFail($id);
+        if (!isset($data['date'])) {
+            $hostHome->update(
+               [ 'actualPrice' => $price]
+            );
+            return response("price for all homes updated");
+        }
         $date = $data['date'];
 
-        $hostHome = HostHome::findOrFail($id);
 
         if (!$hostHome) {
             abort(404, "Hosthome not found");
@@ -1063,7 +1069,7 @@ class HostHomeController extends Controller
 
             $hostHome = HostHome::findOrFail($id);
 
-            $hostHome->hosthomediscounts->delete();
+            $hostHome->hosthomediscounts()->delete();
             // Find existing discount with the same duration
             $existingDiscount = HostHomeCustomDiscount::where('host_home_id', $id)
                 ->where('duration', $duration)

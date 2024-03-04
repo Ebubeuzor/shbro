@@ -15,8 +15,9 @@ return new class extends Migration
     {
         Schema::create('servicecharges', function (Blueprint $table) {
             $table->id();
-            $table->integer("guest_services_charge");
-            $table->integer("host_services_charge");
+            $table->string("guest_services_charge");
+            $table->string("host_services_charge");
+            $table->string("tax");
             $table->timestamps();
         });
     }

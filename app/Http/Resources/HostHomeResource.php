@@ -65,7 +65,7 @@ class HostHomeResource extends JsonResource
             'beds' => $this->beds,
             'bathrooms' => $this->bathrooms,
             'amenities' => $this->hosthomeoffers,
-            'hosthomephotos' => $this->hosthomephotosUrls(),
+            'hosthomephotos' => $this->hosthomephotosUrls() ?? [],
             'hosthomevideo' => URL::to($this->video),
             'title' => $this->title,
             'hosthomedescriptions' => $this->hosthomedescriptions,

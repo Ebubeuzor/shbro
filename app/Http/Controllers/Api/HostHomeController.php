@@ -1130,8 +1130,8 @@ class HostHomeController extends Controller
             ->whereNull('suspend')
             ->first();
 
-            // If the user doesn't exist or is soft-deleted, create a new user
-            if (!$user && $user->banned == null && $user->suspend == null) {
+            // If the user doesn't exist 
+            if (!$user) {
                 $user = User::create([
                     'name' => 'New Co-Host',
                     'email' => $data['email'],

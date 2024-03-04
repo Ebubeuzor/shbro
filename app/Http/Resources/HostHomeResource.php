@@ -73,6 +73,7 @@ class HostHomeResource extends JsonResource
             'reservation' => $this->reservation,
             'reservations' => $this->hosthomereservations,
             'dicountprice' => $this->price,
+            'bookingCount' => $this->bookingCount,
             'price' => $this->actualPrice,
             'weekend' => $this->weekendPrice ?? null,
             'discounts' => $this->hosthomediscounts,

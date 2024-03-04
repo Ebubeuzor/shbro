@@ -50,7 +50,6 @@ class HostHomeHostInfoResource extends JsonResource
             'successfulCheckOut' => $successfulCheckOutNumber ?? [],
             'rating' => $ratings ?? [],
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
-            'cohosthomeDetails' => $this->cohosthomeDetails() ?? [],
             'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
             'yearsOfHosting' => $createdAt ?? null,
             'totalHomes' => $this->hosthomes()
@@ -89,36 +88,36 @@ class HostHomeHostInfoResource extends JsonResource
         })->filter();
     }
 
-    protected function cohosthomeDetails()
-    {
-        $user = User::find($this->id);
-        $hosthomes = $user->cohosthomes()->with('hosthome')->get()
-        ->map(function ($cohost) {
-            $cohostUser = HostHome::where('id', $cohost->host_home_id)
-            ->where('verified', 1)
-            ->where('disapproved', null)
-            ->whereNull('banned')
-            ->whereNull('suspend')->first();
-            return $cohostUser; // Return an empty collection if user not found
-        })
-        ->flatten();
+    // protected function cohosthomeDetails()
+    // {
+    //     $user = User::find($this->id);
+    //     $hosthomes = $user->cohosthomes()->with('hosthome')->get()
+    //     ->map(function ($cohost) {
+    //         $cohostUser = HostHome::where('id', $cohost->host_home_id)
+    //         ->where('verified', 1)
+    //         ->where('disapproved', null)
+    //         ->whereNull('banned')
+    //         ->whereNull('suspend')->first();
+    //         return $cohostUser; // Return an empty collection if user not found
+    //     })
+    //     ->flatten();
 
-        return $hosthomes->map(function ($hosthome) {
-            $firstPhoto = $hosthome->hosthomephotos->first() ?? null;
+    //     return $hosthomes->map(function ($hosthome) {
+    //         $firstPhoto = $hosthome->hosthomephotos->first() != null ? $hosthome->hosthomephotos->first() : null;
     
-            if ($firstPhoto != null) {
-                $photoData = json_decode($firstPhoto, true);
+    //         if ($firstPhoto != null) {
+    //             $photoData = json_decode($firstPhoto, true);
     
-                return [
-                    "hosthome_id" => $hosthome->id,
-                    "hosthome_title" => $hosthome->title,
-                    "photo_image" => url($photoData['image'])
-                ];
-            }
+    //             return [
+    //                 "hosthome_id" => $hosthome->id,
+    //                 "hosthome_title" => $hosthome->title,
+    //                 "photo_image" => url($photoData['image'])
+    //             ];
+    //         }
         
-            return [];
-        })->filter();
-    }
+    //         return [];
+    //     })->filter();
+    // }
     
     protected function bookedhosthomeDetails()
     {

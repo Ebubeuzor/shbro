@@ -104,9 +104,9 @@ class HostHomeHostInfoResource extends JsonResource
         ->flatten();
 
         return $hosthomes->map(function ($hosthome) {
-            $firstPhoto = $hosthome->hosthomephotos->first();
+            $firstPhoto = $hosthome->hosthomephotos->first() != null ? $hosthome->hosthomephotos->first() : null;
     
-            if ($firstPhoto) {
+            if ($firstPhoto != null) {
                 $photoData = json_decode($firstPhoto, true);
     
                 return [
@@ -116,7 +116,7 @@ class HostHomeHostInfoResource extends JsonResource
                 ];
             }
         
-            return null;
+            return [];
         })->filter();
     }
     

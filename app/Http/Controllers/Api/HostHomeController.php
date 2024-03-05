@@ -805,37 +805,49 @@ class HostHomeController extends Controller
     */
     public function schdulerEditHostHomePrice(Request $request, $id)
     {
-
-        $data = $request-> validate([
-            'price'=>['required','numeric'],
-            'date' => 'nullable | date_format:Y-m-d'
+        $data = $request->validate([
+            'price' => ['required', 'numeric'],
+            'date' => 'nullable|date_format:Y-m-d',
         ]);
 
         $price = $data['price'];
         $hostHome = HostHome::findOrFail($id);
-        if (!isset($data['date'])) {
-            $hostHome->update(
-               [ 'actualPrice' => $price]
-            );
-            return response("price for all homes updated");
-        }
-        $date = $data['date'];
-
 
         if (!$hostHome) {
             abort(404, "Hosthome not found");
         }
 
-        $reservedDate = new ReservedPricesForCertainDay();
-       
-        $reservedDate->price = $price;
-        $reservedDate->date = $date;
-        $reservedDate->host_home_id = $hostHome->id;
-        
-        $reservedDate->save();
+        if (!isset($data['date'])) {
+            $hostHome->update([
+                'actualPrice' => $price,
+            ]);
 
-        return response("Done", 200);
+            return response("Price for all homes updated", 200);
+        }
+
+        $date = $data['date'];
+
+        $reservedDate = ReservedPricesForCertainDay::where('host_home_id', $hostHome->id)
+            ->where('date', $date)
+            ->first();
+
+        if ($reservedDate) {
+            $reservedDate->update([
+                'price' => $price,
+            ]);
+        } else {
+            $reservedDate = new ReservedPricesForCertainDay([
+                'price' => $price,
+                'date' => $date,
+                'host_home_id' => $hostHome->id,
+            ]);
+
+            $reservedDate->save();
+        }
+
+        return response("Price for home on $date updated", 200);
     }
+
     
 
     /**

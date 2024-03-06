@@ -948,7 +948,7 @@ class HostHomeController extends Controller
     public function schdulerEditHostHomeAdvanceNotice(Request $request, $id)
     {
         $data = $request->validate([
-            'notice' => ['required', 'numeric']
+            'notice' => ['required']
         ]);
 
         $notice = $data['notice'];
@@ -975,7 +975,7 @@ class HostHomeController extends Controller
     public function schdulerEditHostHomePreparationTime(Request $request, $id)
     {
         $data = $request->validate([
-            'preparation_time' => ['required', 'numeric']
+            'preparation_time' => ['required']
         ]);
 
         $preparation_time = $data['preparation_time'];
@@ -1002,7 +1002,7 @@ class HostHomeController extends Controller
     public function schdulerEditHostHomeAvailabilityWindow(Request $request, $id)
     {
         $data = $request->validate([
-            'availability_window' => ['required', 'numeric']
+            'availability_window' => ['required']
         ]);
 
         $availability_window = $data['availability_window'];

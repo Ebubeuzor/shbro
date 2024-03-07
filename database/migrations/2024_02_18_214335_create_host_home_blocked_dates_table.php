@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('host_home_blocked_dates', function (Blueprint $table) {
             $table->id();
             $table->string("date");
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->foreignId('host_home_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

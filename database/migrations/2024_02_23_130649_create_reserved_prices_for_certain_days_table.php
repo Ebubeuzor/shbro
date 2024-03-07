@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string("date");
             $table->string("price");
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->foreignId('host_home_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

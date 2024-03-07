@@ -807,48 +807,44 @@ class HostHomeController extends Controller
     {
         $data = $request->validate([
             'price' => ['required', 'numeric'],
-            'date' => 'nullable|date_format:Y-m-d',
+            'dates' => 'nullable|array|min:2',
+            'dates.*' => 'date_format:Y-m-d',
         ]);
 
         $price = $data['price'];
+        
         $hostHome = HostHome::findOrFail($id);
 
         if (!$hostHome) {
             abort(404, "Hosthome not found");
         }
 
-        if (!isset($data['date'])) {
-            $hostHome->update([
-                'actualPrice' => $price,
-            ]);
+        $dates = $data['dates'];
 
-            return response("Price for all homes updated", 200);
-        }
-
-        $date = $data['date'];
-
-        $reservedDate = ReservedPricesForCertainDay::where('host_home_id', $hostHome->id)
-            ->where('date', $date)
-            ->first();
-
-        if ($reservedDate) {
-            $reservedDate->update([
-                'price' => $price,
-            ]);
-        } else {
+        foreach ($dates as $index => $date) {
             $reservedDate = new ReservedPricesForCertainDay([
                 'price' => $price,
                 'date' => $date,
                 'host_home_id' => $hostHome->id,
             ]);
 
+            // Set start_date for the first entry
+            if ($index === 0) {
+                $reservedDate->start_date = $date;
+            }
+
+            // Set end_date for the last entry
+            if ($index === count($dates) - 1) {
+                $reservedDate->end_date = $date;
+            }
+
             $reservedDate->save();
         }
 
-        return response("Price for home on $date updated", 200);
+        return response("Prices updated successfully", 200);
     }
 
-    
+
 
     /**
      * @lrd:start
@@ -880,6 +876,7 @@ class HostHomeController extends Controller
         return response("Done", 200);
         
     }
+
 
     /**
      * @lrd:start
@@ -1033,23 +1030,36 @@ class HostHomeController extends Controller
     */
     public function schdulerEditHostHomeBlockedDate(Request $request, $id)
     {
-
-        $data = $request-> validate([
-            'date'=>['required','date_format:Y-m-d']
+        $data = $request->validate([
+            'dates' => 'nullable|array',
+            'dates.*' => 'date_format:Y-m-d',
         ]);
 
-        $date = $data['date'];
-
+        $dates = $data['dates'];
         $hostHome = HostHome::findOrFail($id);
 
-        $hostHomeBlockDate = new HostHomeBlockedDate();
-        $hostHomeBlockDate->date = $date;
-        $hostHomeBlockDate->host_home_id= $id;
-        $hostHomeBlockDate->save();
+        if (!$hostHome) {
+            abort(404, "Hosthome not found");
+        }
 
-        return response("Date blocked successfully", 200);
-        
+        foreach ($dates as $index => $date) {
+            $hostHomeBlockDate = new HostHomeBlockedDate();
+            $hostHomeBlockDate->date = $date;
+            $hostHomeBlockDate->host_home_id = $id;
+            if ($index === 0) {
+                $hostHomeBlockDate->start_date = $date;
+            }
+
+            // Set end_date for the last entry
+            if ($index === count($dates) - 1) {
+                $hostHomeBlockDate->end_date = $date;
+            }
+            $hostHomeBlockDate->save();
+        }
+
+        return response("Dates blocked successfully", 200);
     }
+
     
     /**
      * @lrd:start
@@ -1214,6 +1224,39 @@ class HostHomeController extends Controller
         return redirect()->away('http://localhost:5173');
 
         
+    }
+
+    /**
+     * @lrd:start
+     * Remove a cohost from a host home.
+     *
+     * This method removes the specified user as a cohost from the given host home.
+     * If the user is not a cohost for the specified home, a 404 error is returned.
+     *
+     * @param  int  $userid      The ID of the user to be removed as a cohost.
+     * @param  int  $hosthomeid  The ID of the host home from which the cohost should be removed.
+     * @return \Illuminate\Http\Response
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException if the cohost relationship is not found.
+     * @lrd:end
+     */
+    public function removeCoHost($userid, $hosthomeid)
+    {
+        // Check if the specified user is a cohost for the given host home
+        $coHost = Hosthomecohost::where('user_id', $userid)
+            ->where('host_home_id', $hosthomeid)
+            ->first();
+
+        // If the user is not a cohost, return a 404 error
+        if (!$coHost) {
+            abort(404, "The User is not a Co host to this home");
+        }
+
+        // Delete the cohost relationship
+        $coHost->delete();
+
+        // Return a success response
+        return response("Cohost removed successfully", 200);
     }
 
     /**

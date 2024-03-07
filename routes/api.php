@@ -102,6 +102,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('addCoHost/{homeId}', [HostHomeController::class, 'addCoHost']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
     Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
+    Route::delete('removeCoHost/{userid}/{hosthomeid}', [HostHomeController::class, 'removeCoHost']);
     
     Route::middleware('role:admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);

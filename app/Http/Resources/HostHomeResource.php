@@ -66,9 +66,9 @@ class HostHomeResource extends JsonResource
             'address' => $this->address,
             'guest' => $this->guests,
             'bedroom' => $this->bedroom,
-            'reservedPricesForCertainDay' => $this->reservedPricesForCertainDay ?? [],
+            'reservedPricesForCertainDay' => $this->formatReservedPrices($this->reservedPricesForCertainDay ?? []),
             'hosthomecustomdiscounts' => $this->hosthomecustomdiscounts ?? [],
-            'hosthomeblockeddates' => $this->hosthomeblockeddates ?? [],
+            'hosthomeblockeddates' => $this->formatDateRange($this->hosthomeblockeddates ?? []),
             'beds' => $this->beds,
             'bathrooms' => $this->bathrooms,
             'amenities' => $this->hosthomeoffers,
@@ -109,6 +109,90 @@ class HostHomeResource extends JsonResource
         
         ];
     }
+    protected function formatDateRange($dates)
+    {
+        $formattedDates = [];
+        $currentGroup = [];
+
+        foreach ($dates as $dateRange) {
+            if (empty($currentGroup) || $this->isConsecutive($currentGroup, $dateRange)) {
+                $currentGroup[] = [
+                    'date' => $dateRange['date'],
+                    'start_date' => $dateRange['start_date'],
+                    'end_date' => $dateRange['end_date'],
+                ];
+            } else {
+                $formattedDates[] = $currentGroup;
+                $currentGroup = [
+                    [
+                        'date' => $dateRange['date'],
+                        'start_date' => $dateRange['start_date'],
+                        'end_date' => $dateRange['end_date'],
+                    ],
+                ];
+            }
+        }
+
+        if (!empty($currentGroup)) {
+            $formattedDates[] = $currentGroup;
+        }
+
+        return $formattedDates;
+    }
+
+    protected function isConsecutive($group, $dateRange)
+    {
+        $lastDate = end($group);
+        return $lastDate['end_date'] === null && $lastDate['date'] === date('Y-m-d', strtotime($dateRange['date'] . ' -1 day'));
+    }
+
+    protected function formatReservedPrices($reservedPrices)
+    {
+        $formattedPrices = [];
+        $currentGroup = [];
+
+        foreach ($reservedPrices as $reservedPrice) {
+            if (empty($currentGroup) || $this->isConsecutiveReservedPrices($currentGroup, $reservedPrice)) {
+                $currentGroup[] = [
+                    'id' => $reservedPrice['id'],
+                    'date' => $reservedPrice['date'],
+                    'price' => $reservedPrice['price'],
+                    'start_date' => $reservedPrice['start_date'],
+                    'end_date' => $reservedPrice['end_date'],
+                    'host_home_id' => $reservedPrice['host_home_id'],
+                    'created_at' => $reservedPrice['created_at'],
+                    'updated_at' => $reservedPrice['updated_at'],
+                ];
+            } else {
+                $formattedPrices[] = $currentGroup;
+                $currentGroup = [
+                    [
+                        'id' => $reservedPrice['id'],
+                        'date' => $reservedPrice['date'],
+                        'price' => $reservedPrice['price'],
+                        'start_date' => $reservedPrice['start_date'],
+                        'end_date' => $reservedPrice['end_date'],
+                        'host_home_id' => $reservedPrice['host_home_id'],
+                        'created_at' => $reservedPrice['created_at'],
+                        'updated_at' => $reservedPrice['updated_at'],
+                    ],
+                ];
+            }
+        }
+
+        if (!empty($currentGroup)) {
+            $formattedPrices[] = $currentGroup;
+        }
+
+        return $formattedPrices;
+    }
+
+    protected function isConsecutiveReservedPrices($group, $reservedPrice)
+    {
+        $lastPrice = end($group);
+        return $lastPrice['end_date'] === null && $lastPrice['date'] === date('Y-m-d', strtotime($reservedPrice['date'] . ' -1 day'));
+    }
+
 
     protected function isAddedToWishlist($userId, $hostHomeId)
     {

@@ -812,7 +812,7 @@ class HostHomeController extends Controller
         ]);
 
         $price = $data['price'];
-        
+
         $hostHome = HostHome::findOrFail($id);
 
         if (!$hostHome) {
@@ -821,6 +821,14 @@ class HostHomeController extends Controller
 
         $dates = $data['dates'];
 
+        if (!isset($data['dates'])) {
+            $hostHome->update([
+                'actualPrice' => $price,
+            ]);
+    
+            return response("Price for all homes updated", 200);
+        }
+        
         foreach ($dates as $index => $date) {
             $reservedDate = new ReservedPricesForCertainDay([
                 'price' => $price,

@@ -807,7 +807,7 @@ class HostHomeController extends Controller
     {
         $data = $request->validate([
             'price' => ['required', 'numeric'],
-            'dates' => 'nullable|array|min:2',
+            'dates' => 'nullable|array',
             'dates.*' => 'date_format:Y-m-d',
         ]);
 

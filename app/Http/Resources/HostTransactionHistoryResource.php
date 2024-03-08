@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class HostTransactionHistoryResource extends JsonResource
@@ -17,18 +18,19 @@ class HostTransactionHistoryResource extends JsonResource
     {
         
         $guest = User::find($this->user_id);
+        $host = User::find($this->hostId);
 
         return [
             "transactionID" => $this->paymentId,
-            "hostname" => $guest->name,
-            'paidHostdate' => $this->paidHostdate,
-            'amountToHost' => $this->hostBalance,
-            "amountForOneNight" => $this->priceForANight,
+            'paymentDate' => Carbon::parse($this->created_at)->format('M j, Y'),
+            "guestid" => $guest->id,
+            "hostid" => $host->id,
+            "paymentStatus" => "Completed",
+            "paymentDescription" => "Payment for apartment rental",
+            "host_home_id" => $this->host_home_id,
             "paymentAmount" => $this->totalamount,
             'paymentforHostId' => $this->paidHostPaymentId,
             "duration_of_stay" => $this->duration_of_stay,
-            "serviceFee" => $this->host_service_charge ?? 0,
-            "serviceFeePercentage" => $this->host_service_charge_percentage ?? 0,
         ];
     }
 }

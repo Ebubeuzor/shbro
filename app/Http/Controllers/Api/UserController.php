@@ -328,12 +328,12 @@ class UserController extends Controller
 
     /**
      * @lrd:start
-     * This retrieve all a hostCompleted Payouts Transactions
+     * Gets the transaction history for the paid authenticated host user.
      * @lrd:end
      * 
      * @LRDparam per_page use|required
      */
-    public function hostCompletedPayoutsHistory(Request $request) {
+    public function hostTransactionHistory(Request $request) {
 
         $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('hostId',auth()->id())
@@ -344,12 +344,12 @@ class UserController extends Controller
     
     /**
      * @lrd:start
-     * Gets the transaction history for the paid authenticated host user.
+     * This retrieve all a hostCompleted Payouts Transactions
      * @lrd:end
      * 
      * @LRDparam per_page use|required
      */
-    public function hostTransactionHistory(Request $request) {
+    public function hostCompletedPayoutsHistory(Request $request) {
 
         $perPage = $request->input('per_page', 10);
         $bookings = Booking::where('hostId',auth()->id())
@@ -1466,9 +1466,34 @@ class UserController extends Controller
         $allPaid = $totalAmountPaidBookings + $cohostTotalAmountPaidBookings;
         $allUnPaid = $totalAmountUnPaidBookings + $cohostTotalAmountUnPaidBookings;
 
+        $currentYear = now()->year;
+        $monthlyEarnings = [];
+    
+        for ($month = 1; $month <= 12; $month++) {
+            $startOfMonth = Carbon::createFromDate($currentYear, $month, 1)->startOfDay();
+            $endOfMonth = $startOfMonth->copy()->endOfMonth();
+    
+            // Earnings for main host
+            $earningsForMonth = $allBookings->filter(function ($booking) use ($startOfMonth, $endOfMonth) {
+                return $booking->created_at >= $startOfMonth && $booking->created_at <= $endOfMonth;
+            })->sum('hostBalance');
+    
+            // Earnings for cohosts
+            $cohostEarningsForMonth = $cohostBookings->filter(function ($cobooking) use ($startOfMonth, $endOfMonth) {
+                return $cobooking->created_at >= $startOfMonth && $cobooking->created_at <= $endOfMonth;
+            })->sum('hostBalance');
+    
+            $totalEarningsForMonth = $earningsForMonth + $cohostEarningsForMonth;
+    
+            $monthlyEarnings[] = [
+                'month' => $startOfMonth->format('F'),
+                'earnings' => $totalEarningsForMonth,
+            ];
+        }
 
         // Add additional information to the response
         $response = [
+            'graph' => $monthlyEarnings,
             'earnings' => $bookingsResource,
             'totalAmountAllBookings' => $allTotals,
             'totalAmountPaidBookings' => $allPaid,
@@ -1630,7 +1655,33 @@ class UserController extends Controller
         $allPaid = $totalAmountPaidBookings + $cohostTotalAmountPaidBookings;
         $allUnPaid = $totalAmountUnPaidBookings + $cohostTotalAmountUnPaidBookings;
 
+        $currentYear = $year;
+        $monthlyEarnings = [];
+    
+        for ($month = 1; $month <= 12; $month++) {
+            $startOfMonth = Carbon::createFromDate($currentYear, $month, 1)->startOfDay();
+            $endOfMonth = $startOfMonth->copy()->endOfMonth();
+    
+            // Earnings for main host
+            $earningsForMonth = $allBookings->filter(function ($booking) use ($startOfMonth, $endOfMonth) {
+                return $booking->created_at >= $startOfMonth && $booking->created_at <= $endOfMonth;
+            })->sum('hostBalance');
+    
+            // Earnings for cohosts
+            $cohostEarningsForMonth = $cohostBookings->filter(function ($cobooking) use ($startOfMonth, $endOfMonth) {
+                return $cobooking->created_at >= $startOfMonth && $cobooking->created_at <= $endOfMonth;
+            })->sum('hostBalance');
+    
+            $totalEarningsForMonth = $earningsForMonth + $cohostEarningsForMonth;
+    
+            $monthlyEarnings[] = [
+                'month' => $startOfMonth->format('F'),
+                'earnings' => $totalEarningsForMonth,
+            ];
+        }
+
         $response = [
+            'graph' => $monthlyEarnings,
             'earnings' => $bookingsResource,
             'totalAmountAllBookings' => $allTotals,
             'totalAmountPaidBookings' => $allPaid,

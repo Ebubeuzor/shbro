@@ -19,6 +19,7 @@ class UserTransactionResource extends JsonResource
     public function toArray($request)
     {
         $host = User::find($this->hostId);
+        $guest = User::find($this->user_id);
         $hostHome = HostHome::find($this->host_home_id);
 
         return [
@@ -28,6 +29,7 @@ class UserTransactionResource extends JsonResource
             "paymentMethod" => $this->paymentType,
             "transactionID" => $this->paymentId,
             "hostname" => $host->name,
+            "guest_name" => $guest->name,
             "amountForOneNight" => $this->priceForANight,
             "serviceFee" => $this->host_service_charge ?? 0,
             "hosthomebeds" => $hostHome->beds ?? 0,

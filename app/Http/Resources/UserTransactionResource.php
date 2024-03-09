@@ -34,7 +34,7 @@ class UserTransactionResource extends JsonResource
             "serviceFee" => $this->host_service_charge ?? 0,
             "hosthomebeds" => $hostHome->beds ?? 0,
             "propertyName" => $hostHome->title ?? 0,
-            "securityFee" => $this->securityDeposit ?? 0,
+            "securityFee" => $this->securityDeposit ?? 0,  
             "propertyID" => $this->host_home_id ?? 0,
             "paymentAmount" => $this->totalamount ?? 0,
             'amountToHost' => $this->hostBalance ?? 0,

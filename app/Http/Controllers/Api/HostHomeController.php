@@ -26,9 +26,11 @@ use App\Models\Notification as Notification;
 use App\Models\ReservedPricesForCertainDay;
 use App\Models\Tip;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -852,7 +854,50 @@ class HostHomeController extends Controller
         return response("Prices updated successfully", 200);
     }
 
+    /**
+     * @lrd:start
+     * Update prices for a specific date range based on the request data.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id The ID of the host home.
+     *
+     * @lrd:end
+     * 
+     * @LRDparam new_price use|required
+     * @LRDparam start_date use|required
+     * @LRDparam end_date use|required
+    */
+    public function schdulerUpdatePricesForDateRange(Request $request, $id)
+    {
+        $data = $request->validate([
+            'new_price' => ['required', 'numeric'],
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d',
+        ]);
 
+        $newPrice = $data['new_price'];
+        $startDate = $data['start_date'];
+        $endDate = $data['end_date'];
+
+        $this->updatePricesForDateRange($id, $startDate, $endDate, $newPrice);
+    }
+
+    public function updatePricesForDateRange($hostHomeId, $startDate, $endDate, $newPrice)
+    {
+        // Find the host home by ID
+        $hostHome = HostHome::findOrFail($hostHomeId);
+
+        if (!$hostHome) {
+            abort(404, "Hosthome not found");
+        }
+
+        // Update prices for the specified date range
+        ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->update(['price' => $newPrice]);
+
+        return response("Prices updated for the specified date range", 200);
+    }
 
     /**
      * @lrd:start
@@ -1034,7 +1079,7 @@ class HostHomeController extends Controller
      * @return \Illuminate\Http\Response
      * @lrd:end
      * 
-     * @LRDparam date use|required
+     * @LRDparam dates use|required|array
     */
     public function schdulerEditHostHomeBlockedDate(Request $request, $id)
     {
@@ -1068,6 +1113,53 @@ class HostHomeController extends Controller
         return response("Dates blocked successfully", 200);
     }
 
+    /**
+     * @lrd:start
+     * 
+     * Unblock specified dates or date ranges for a host home.
+     * Also send the startDate and endDate
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Host home ID
+     * 
+     * @lrd:end
+     * @LRDparam start_date use|required
+     * @LRDparam end_date use|required
+    */
+    public function schdulerUnblockHostHomeDates(Request $request, $id)
+    {
+        // Validate request data
+        $data = $request->validate([
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d',
+        ]);
+
+            
+        $startDate = $data['start_date'];
+        $endDate = $data['end_date'];
+
+        $this->unblockDateRange($id, $startDate, $endDate);
+        // Respond with success message
+        return response("Dates unblocked successfully", 200);
+    }
+
+    
+    public function unblockDateRange($hostHomeId, $startDate, $endDate)
+    {
+        // Find the host home by ID
+        $hostHome = HostHome::findOrFail($hostHomeId);
+
+        if (!$hostHome) {
+            abort(404, "Hosthome not found");
+        }
+
+        // Update prices for the specified date range
+        HostHomeBlockedDate::where('host_home_id', $hostHomeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->delete();
+
+        return response("Prices updated for the specified date range", 200);
+    }
     
     /**
      * @lrd:start

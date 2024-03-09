@@ -97,6 +97,35 @@ class AdminController extends Controller
         return response("User created successfully",201);
 
     }
+
+    /**
+     * @lrd:start
+     * Remove admin status from a user.
+     *
+     * This method removes the admin status for a user based on the provided user ID.
+     *
+     * @param int $userId The ID of the user to remove admin status from.
+     * @return \Illuminate\Http\Response A response indicating the success of admin status removal.
+     * @lrd:end
+    */
+    public function removeAdminStatus($userId)
+    {
+        // Find the user by ID
+        $user = User::findOrFail($userId);
+
+        // Check if the user exists
+        if (!$user) {
+            abort(404, "User not found");
+        }
+
+        // Remove admin status
+        $user->adminStatus = null;
+        $user->save();
+
+        // Return success response
+        return response("Admin status removed successfully", 200);
+    }
+
     
     /**
      * @lrd:start
@@ -164,6 +193,36 @@ class AdminController extends Controller
         return Adminrole::create($data2);
         
     }
+
+    /**
+     * @lrd:start
+     * Unassign roles from an admin user.
+     *
+     * This method takes a validated request containing a list of permissions and
+     * unassigns each specified permission from the admin user.
+     *
+     * @param  UnassignRolesFromAdminRequest $request The validated request containing permissions to unassign.
+     * @param  int                          $userId  The ID of the admin user to unassign roles.
+     * @return \Illuminate\Http\Response A response indicating the success of roles unassignment.
+     * @lrd:end
+     * @LRDparam permission use|required
+     */
+    public function unassignRolesFromAdmin(Request $request, $userId)
+    {
+        $data = $request->validated();
+
+        $permissions = $data['permission'];
+
+        foreach ($permissions as $permission) {
+            // Find and delete the assigned role
+            Adminrole::where('user_id', $userId)
+                ->where('rolePermission', $permission)
+                ->delete();
+        }
+
+        return response("Roles unassigned successfully", 200);
+    }
+
     /**
      * @lrd:start
      * this gets all the bookings that has not been checked out for the admin

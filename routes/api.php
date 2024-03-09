@@ -29,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::put('schduler/host-homes/{id}/edit-weekend-price', [HostHomeController::class, 'schdulerEditHostHomeWeekendPrice']);
 
     Route::post('schduler/host-homes/{id}/edit-blocked-date', [HostHomeController::class, 'schdulerEditHostHomeBlockedDate']);
+    Route::post('schduler/host-homes/{id}/edit-unblock-date', [HostHomeController::class, 'schdulerUnblockHostHomeDates']);
+    Route::put('schdulerUpdatePricesForDateRange/{id}', [HostHomeController::class, 'schdulerUpdatePricesForDateRange']);
 
     Route::get('/user', [UserController::class, 'getUserInfo']); 
 
@@ -108,7 +110,9 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
         Route::post("createAdmin", [AdminController::class, 'createAdmin']);
+        Route::post("removeAdminStatus/{userid}", [AdminController::class, 'removeAdminStatus']);
         Route::post("assignRolesToAdmin/{userid}", [AdminController::class, 'assignRolesToAdmin']);
+        Route::delete("unassignRolesFromAdmin/{userid}", [AdminController::class, 'unassignRolesFromAdmin']);
         Route::post("updateServiceCharges", [AdminController::class, 'updateServiceCharges']);
         
         Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);

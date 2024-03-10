@@ -33,6 +33,7 @@ class NewNotificationEvent implements ShouldBroadcast
     
     public function broadcastWith()
     {
+        info('testing');
         return [
             'notification' => [
                 'id' => $this->notification->id,

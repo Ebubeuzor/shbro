@@ -231,14 +231,11 @@ class AdminController extends Controller
             'permission' => 'required'
         ]);
 
-        $permissions = $data['permission'];
+        $permission = $data['permission'];
 
-        foreach ($permissions as $permission) {
-            // Find and delete the assigned role
-            Adminrole::where('user_id', $userId)
-                ->where('rolePermission', $permission)
-                ->delete();
-        }
+        Adminrole::where('user_id', $userId)
+            ->where('rolePermission', $permission)
+            ->delete();
 
         return response("Roles unassigned successfully", 200);
     }

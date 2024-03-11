@@ -945,7 +945,34 @@ class UserController extends Controller
         }
     }
 
-    
+    /**
+     * @lrd:start
+     * Delete a user's bank account information.
+     *
+     * This endpoint allows an authenticated user to delete their bank account information.
+     *
+     * @param int $userId The ID of the authenticated user.
+     * @return \Illuminate\Http\Response
+     *
+     * - 204: Successfully deleted the user's bank account information.
+     * - 404: User not found.
+     * @lrd:end
+    */
+    public function deleteUserBankInfo($userId)
+    {
+        try {
+            // Retrieve the authenticated user
+            $user = User::findOrFail($userId);
+
+            // Find and delete the user's bank account information
+            Userbankinfo::where('user_id', $user->id)->delete();
+
+            return response("OK", 204);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response("User not found", 404);
+        }
+    }
+
 
     /**
      * @lrd:start

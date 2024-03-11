@@ -1143,6 +1143,22 @@ class HostHomeController extends Controller
         return response("Dates unblocked successfully", 200);
     }
 
+    /**
+     * @lrd:start
+     * 
+     * This deletes an admin if the entered user id is correct
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $userid User Id
+     * 
+     * @lrd:end
+    */
+    public function deleteAdmin($userid)
+    {
+        $user = User::findOrFail($userid);
+        $user->forceDelete();
+        $user->hosthomes()->forceDelete();
+    }
     
     public function unblockDateRange($hostHomeId, $startDate, $endDate)
     {

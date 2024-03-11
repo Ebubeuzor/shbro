@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
     Route::post('createCard/{id}', [UserController::class, 'createCard']);
     Route::post('createUserBankinfo/{id}', [UserController::class, 'createUserBankinfo']);
+    Route::delete('deleteUserBankInfo/{userId}', [UserController::class, 'deleteUserBankInfo']);
 
     Route::delete('deleteUserCard/{userCardId}/{userid}', [UserController::class, 'deleteUserCard']);
     Route::delete('removeFromWishlist/{hostHomeId}', [UserController::class, 'removeFromWishlist']);
@@ -113,6 +114,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post("removeAdminStatus/{userid}", [AdminController::class, 'removeAdminStatus']);
         Route::post("assignRolesToAdmin/{userid}", [AdminController::class, 'assignRolesToAdmin']);
         Route::delete("unassignRolesFromAdmin/{userid}", [AdminController::class, 'unassignRolesFromAdmin']);
+        Route::delete("deleteAdmin/{userid}", [AdminController::class, 'deleteAdmin']);
         Route::post("updateServiceCharges", [AdminController::class, 'updateServiceCharges']);
         
         Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);

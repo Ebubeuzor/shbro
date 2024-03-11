@@ -114,7 +114,7 @@ class AdminController extends Controller
     public function updateAdminStatus(Request $request, $userId)
     {
         $data = $request->validate([
-            'adminStatus' => ['required', 'string', Rule::in(['admin', 'superadmin'])],
+            'adminStatus' => ['required', 'string', Rule::in(['admin', 'super admin'])],
         ]);
 
         try {

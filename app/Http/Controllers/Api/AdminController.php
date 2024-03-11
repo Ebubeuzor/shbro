@@ -227,7 +227,9 @@ class AdminController extends Controller
      */
     public function unassignRolesFromAdmin(Request $request, $userId)
     {
-        $data = $request->validated();
+        $data = $request->validate([
+            'permission' => 'required'
+        ]);
 
         $permissions = $data['permission'];
 

@@ -833,7 +833,7 @@ class HostHomeController extends Controller
         
         if ($price == $hostHome->actualPrice) {
     
-            abort(200,"Prices are already set to " . $price . ". Nothing to update.");
+            abort(400,"Prices are already set to " . $price . ". Nothing to update.");
         }
 
         foreach ($dates as $index => $date) {

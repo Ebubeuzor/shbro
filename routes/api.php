@@ -112,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
         Route::post("createAdmin", [AdminController::class, 'createAdmin']);
         Route::post("removeAdminStatus/{userid}", [AdminController::class, 'removeAdminStatus']);
+        Route::put("updateAdminStatus/{userid}", [AdminController::class, 'updateAdminStatus']);
         Route::post("assignRolesToAdmin/{userid}", [AdminController::class, 'assignRolesToAdmin']);
         Route::delete("unassignRolesFromAdmin/{userid}", [AdminController::class, 'unassignRolesFromAdmin']);
         Route::delete("deleteAdmin/{userid}", [AdminController::class, 'deleteAdmin']);

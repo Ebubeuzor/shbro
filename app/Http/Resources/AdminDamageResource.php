@@ -46,7 +46,7 @@ class AdminDamageResource extends JsonResource
                 'email' => $guest->email,
                 'phone_number' => $guest->phone,
             ],
-            'images' => $this->damageVideoUrls(),
+            'images' => $this->damagePhotosUrls(),
             'video' => url($this->video) ?? null,
         ];
     }

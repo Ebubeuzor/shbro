@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
@@ -96,6 +97,37 @@ class AdminController extends Controller
 
         return response("User created successfully",201);
 
+    }
+
+    /**
+     * @lrd:start
+     * Update the admin status of a user.
+     *
+     * This method updates the admin status of a user based on the provided data.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request containing the updated admin status.
+     * @param int $userId The ID of the user to update.
+     * 
+     * @return \Illuminate\Http\Response A response indicating the success of the admin status update.
+     * @lrd:end
+    */
+    public function updateAdminStatus(Request $request, $userId)
+    {
+        $data = $request->validate([
+            'adminStatus' => ['required', 'string', Rule::in(['admin', 'superadmin'])],
+        ]);
+
+        try {
+            // Find the user by ID
+            $user = User::findOrFail($userId);
+
+            // Update the admin status
+            $user->update(['adminStatus' => strtolower($data['adminStatus'])]);
+
+            return response("Admin status updated successfully", 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response("User not found", 404);
+        }
     }
 
     

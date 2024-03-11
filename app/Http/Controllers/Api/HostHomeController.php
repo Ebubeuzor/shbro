@@ -831,6 +831,11 @@ class HostHomeController extends Controller
             return response("Price for all homes updated", 200);
         }
         
+        if ($price == $hostHome->actualPrice) {
+    
+            abort(200,"Prices are already set to " . $price . ". Nothing to update.");
+        }
+
         foreach ($dates as $index => $date) {
             $reservedDate = new ReservedPricesForCertainDay([
                 'price' => $price,
@@ -897,8 +902,8 @@ class HostHomeController extends Controller
             ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->delete();
-            
-            return response("Reserved prices deleted for the specified date range", 200);
+
+            return response("Reserved prices deleted for the specified date range because the price is reverted to actualPrice", 200);
         }
 
         // Update prices for the specified date range
@@ -908,6 +913,7 @@ class HostHomeController extends Controller
 
         return response("Prices updated for the specified date range", 200);
     }
+
 
 
     /**

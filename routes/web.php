@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewEvent;
 use App\Http\Controllers\Api\BookingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ForgotPassword;
@@ -20,6 +21,16 @@ use Illuminate\Http\Request;
 |
 */
 
+
+Route::get('/event', function () {
+    NewEvent::dispatch(request()->msg);
+
+    return 'Message sent!';
+});
+
+Route::get('/test', function () {
+    return view('test');
+});
 
 Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 

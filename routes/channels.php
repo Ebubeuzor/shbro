@@ -20,3 +20,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('messanger.{sender}.{receiver}', function ($user) {
     return !is_null($user);
 });
+
+Broadcast::channel('new-public-channel', function ($user) {
+    return true; 
+});

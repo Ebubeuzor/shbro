@@ -27,13 +27,13 @@ class NewNotificationEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
+        info('testing');
         return new PrivateChannel('App.Models.User.' . auth()->id());
 
     }
     
     public function broadcastWith()
     {
-        info('testing');
         return [
             'notification' => [
                 'id' => $this->notification->id,

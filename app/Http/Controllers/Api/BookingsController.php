@@ -12,6 +12,7 @@ use App\Models\Canceltrip;
 use App\Models\HostHome;
 use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomediscount;
+use App\Models\ReservedPricesForCertainDay;
 use App\Models\Servicecharge;
 use App\Models\User;
 use App\Models\UserTrip;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use KingFlamez\Rave\Facades\Rave as Flutterwave;
 use Unicodeveloper\Paystack\Facades\Paystack;
+
+use function PHPSTORM_META\map;
 
 class BookingsController extends Controller
 {
@@ -186,13 +189,54 @@ class BookingsController extends Controller
         // Fetch custom discounts for the host home
         $customDiscounts = HostHomeCustomDiscount::where('host_home_id', $hostHomeId)->get();
 
-        // Calculate the discounted price including both standard and custom discounts
+        $reservedPrices = ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
+        ->where('date', '>=', $checkIn->format('Y-m-d'))
+        ->where('date', '<', $checkOut->format('Y-m-d'))
+        ->get();
+
+        $bookingPrice = 0;
+        $reservedDaysDiscountedPrice = 0;
+        $reservedDays = 0;
+
+        if ($reservedPrices->isNotEmpty()) {
+            $reservedDays +=  count($reservedPrices);
+            $uniquePricesWithOccurrences = $reservedPrices->mapToGroups(function ($item, $key) {
+                return [$item->price => 1];
+            })->map(function ($item, $key) {
+                return [
+                    'price' => $key,
+                    'occurrences' => $item->sum(),
+                ];
+            })->values();
+
+            $uniquePricesWithOccurrences->each(function($item) use($standardDiscounts, $customDiscounts, $hostHome, &$reservedDaysDiscountedPrice) {
+                $price = $this->calculateDiscountedPrice($item['price'], $standardDiscounts, $customDiscounts, $item['occurrences'], $hostHome->bookingCount);
+                $reservedDaysDiscountedPrice += $price * $item['occurrences'];
+            });
+            
+        }
+
+        $weekendPrice = 0;
+        $currentDate = \DateTime::createFromFormat('Y-m-d', $checkIn->format('Y-m-d'));
+        $totalWeekends = 0;
+        
+        while ($currentDate <= $checkOut) {
+            $currentDateFormatted = $currentDate->format('Y-m-d');
+            if ($this->isWeekend($currentDateFormatted) && !is_null($hostHome->weekendPrice) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
+                
+                $totalWeekends++;
+                $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
+            }
+            
+            $currentDate->modify('+1 day');
+        }
+
+        $weekendPrice *= $totalWeekends;
+
         $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
-
-
-
+        
         $bookingPrice = $discountedPrice;
-
+        
         //  'host_service_charge' => $host_service_charge,
         $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
         $tax = (($bookingPrice * $dateDifference) * $this->tax);
@@ -223,7 +267,16 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = (($bookingPrice * $dateDifference) + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+        
+        $total = 0;
+        if ($weekendPrice == 0) {
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));
+            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+        }else {
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+            $reservedDaysDiscountedPrice += $weekendPrice;
+            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+        }
 
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
@@ -249,6 +302,45 @@ class BookingsController extends Controller
         return response([
             'payment_link' => Paystack::getAuthorizationUrl($data2)
         ]);
+    }
+
+    private function isDateReserved($date, $reservedPrices)
+    {
+        return $reservedPrices->contains('date', $date);
+    }
+
+    private function countWeekends($startDate, $endDate, $reservedPrices)
+    {
+        // Convert the start and end dates to DateTime objects if not already
+        $startDate = $startDate instanceof \DateTime ? $startDate : \DateTime::createFromFormat('Y-m-d', $startDate);
+        $endDate = $endDate instanceof \DateTime ? $endDate : \DateTime::createFromFormat('Y-m-d', $endDate);
+
+        $totalWeekends = 0;
+
+        // Iterate over each day and count the weekends
+        while ($startDate <= $endDate) {
+            $currentDateFormatted = $startDate->format('Y-m-d');
+
+            // Check if the current date is a weekend and not reserved
+            if ($this->isWeekend($currentDateFormatted) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
+                $totalWeekends++;
+            }
+
+            $startDate->modify('+1 day');
+        }
+
+        return $totalWeekends;
+    }
+
+    private function isWeekend($date)
+    {
+        // Convert the date to a DateTime object if not already
+        if (!$date instanceof \DateTime) {
+            $date = \DateTime::createFromFormat('Y-m-d', $date);
+        }
+
+        // Check if the day of the week is Saturday or Sunday (assuming Monday is 1 and Sunday is 7)
+        return $date->format('N') >= 6; // 6 is Saturday, 7 is Sunday
     }
 
     private function calculateDiscountedPrice($actualPrice, $standardDiscounts, $customDiscounts, $durationOfStay = 0, $bookingCount)

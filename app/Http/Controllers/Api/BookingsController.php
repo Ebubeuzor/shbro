@@ -230,9 +230,7 @@ class BookingsController extends Controller
             
             $currentDate->modify('+1 day');
         }
-
-        $weekendPrice *= $totalWeekends;
-
+        
         $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
         
         $bookingPrice = $discountedPrice;
@@ -269,16 +267,22 @@ class BookingsController extends Controller
 
         
         $total = 0;
+        info($reservedDaysDiscountedPrice);
+        info($bookingPrice);
+        info($dateDifference);
+        info($reservedDays);
+        info($totalWeekends);
+        info($weekendPrice);
 
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }else {
-            $subTot = $dateDifference - $reservedDays - $totalWeekends;
-            $reservedDaysDiscountedPrice += ($bookingPrice * ($subTot == 0 ? 1  : $subTot));
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
             $reservedDaysDiscountedPrice += $weekendPrice;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }
+        info($total);
 
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo

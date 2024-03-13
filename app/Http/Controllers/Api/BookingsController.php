@@ -267,12 +267,6 @@ class BookingsController extends Controller
 
         
         $total = 0;
-        info($reservedDaysDiscountedPrice);
-        info($bookingPrice);
-        info($dateDifference);
-        info($reservedDays);
-        info($totalWeekends);
-        info($weekendPrice);
 
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));
@@ -282,7 +276,7 @@ class BookingsController extends Controller
             $reservedDaysDiscountedPrice += $weekendPrice;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }
-        info($total);
+        
 
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
@@ -378,11 +372,8 @@ class BookingsController extends Controller
                 case '3 weeks':
                     $price = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
-                case '4 weeks':
-                    $price = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
-                    break;
                 case '1 month':
-                    $price = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $price = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '2 months':
                     $price = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
@@ -390,7 +381,6 @@ class BookingsController extends Controller
                 case '3 months':
                     $price = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
-                // Add more cases for other durations as needed
             }
         }
 

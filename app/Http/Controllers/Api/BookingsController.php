@@ -269,11 +269,13 @@ class BookingsController extends Controller
 
         
         $total = 0;
+
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }else {
-            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+            $subTot = $dateDifference - $reservedDays - $totalWeekends;
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($subTot == 0 ? 1  : $subTot));
             $reservedDaysDiscountedPrice += $weekendPrice;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }

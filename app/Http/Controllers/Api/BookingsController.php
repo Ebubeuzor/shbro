@@ -267,6 +267,7 @@ class BookingsController extends Controller
 
         
         $total = 0;
+        info($bookingPrice);
 
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));
@@ -277,6 +278,10 @@ class BookingsController extends Controller
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }
         
+        info($reservedDaysDiscountedPrice);
+        info($weekendPrice);
+        info($total);
+        info($dateDifference);
 
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo
@@ -361,26 +366,27 @@ class BookingsController extends Controller
 
     private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay = 0)
     {
+        $returnPrice = 0;
         foreach ($customDiscounts as $customDiscount) {
             if ($customDiscount->duration === '3 months' && $durationOfStay >= 90) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '2 months' && $durationOfStay >= 60) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '1 month' && $durationOfStay >= 30) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '4 weeks' && $durationOfStay >= 28) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '3 weeks' && $durationOfStay >= 21) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '2 weeks' && $durationOfStay >= 14) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             } elseif ($customDiscount->duration === '1 week' && $durationOfStay >= 7) {
-                $price -= $price * ($customDiscount->discount_percentage / 100);
+                $returnPrice = $price - ($price * ($customDiscount->discount_percentage / 100));
             }
             // Add more elseif statements for other durations as needed
         }
 
-        return $price;
+        return $returnPrice;
     }
 
 

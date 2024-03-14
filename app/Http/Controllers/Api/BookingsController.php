@@ -368,35 +368,37 @@ class BookingsController extends Controller
     {
         $applicableDiscount = null;
 
-        foreach ($customDiscounts as $customDiscount) {
-            if ($customDiscount->duration === '1 month' && $durationOfStay >= 30) {
-                $applicableDiscount = $customDiscount;
-                break; // If 1 month discount is applicable, no need to check further
-            } elseif ($customDiscount->duration === '2 months' && $durationOfStay >= 60) {
-                $applicableDiscount = $customDiscount;
-            } elseif ($customDiscount->duration === '3 months' && $durationOfStay >= 90) {
-                $applicableDiscount = $customDiscount;
-            } elseif ($customDiscount->duration === '4 weeks' && $durationOfStay >= 28) {
-                $applicableDiscount = $customDiscount;
-            } elseif ($customDiscount->duration === '3 weeks' && $durationOfStay >= 21) {
-                $applicableDiscount = $customDiscount;
-            } elseif ($customDiscount->duration === '2 weeks' && $durationOfStay >= 14) {
-                $applicableDiscount = $customDiscount;
-            } elseif ($customDiscount->duration === '1 week' && $durationOfStay >= 7) {
-                $applicableDiscount = $customDiscount;
+        // Define the order of durations to prioritize
+        $durationOrder = ['3 months', '2 months', '1 month', '4 weeks', '3 weeks', '2 weeks', '1 week'];
+
+        // Find the longest applicable duration discount
+        foreach ($durationOrder as $duration) {
+            foreach ($customDiscounts as $customDiscount) {
+                if ($customDiscount->duration === $duration) {
+                    if (
+                        ($duration === '1 month' && $durationOfStay >= 30) ||
+                        ($duration === '2 months' && $durationOfStay >= 60) ||
+                        ($duration === '3 months' && $durationOfStay >= 90) ||
+                        ($duration === '4 weeks' && $durationOfStay >= 28) ||
+                        ($duration === '3 weeks' && $durationOfStay >= 21) ||
+                        ($duration === '2 weeks' && $durationOfStay >= 14) ||
+                        ($duration === '1 week' && $durationOfStay >= 7)
+                    ) {
+                        $applicableDiscount = $customDiscount;
+                        break 2; 
+                    }
+                }
             }
         }
 
-        // Apply the applicable discount if found
         if ($applicableDiscount !== null) {
             $discountedPrice = $price - ($price * ($applicableDiscount->discount_percentage / 100));
             return $discountedPrice;
         }
-
-        // If no applicable discount found, return original price
+        
         return $price;
     }
-  
+
 
 
     private function applyDiscount($price, $discount, $durationOfStay = 0,$bookingCount)

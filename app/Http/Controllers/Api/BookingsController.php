@@ -75,7 +75,7 @@ class BookingsController extends Controller
      *     ],
      *     "dateDifference": 3
      *   } etc
-     * @lrd:end
+     * @lrd:end 
      */
     public function bookApartment(BookingApartmentRequest $request, $hostHomeId, $userId)
     {

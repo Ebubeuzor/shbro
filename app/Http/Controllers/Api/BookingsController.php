@@ -367,7 +367,7 @@ class BookingsController extends Controller
 
     private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay = 0)
     {
-        $returnPrice = 0;
+        $returnPrice = "";
         foreach ($customDiscounts as $customDiscount) {
             switch ($customDiscount->duration) {
                 case '1 week':
@@ -394,7 +394,7 @@ class BookingsController extends Controller
             }
         }
 
-        return $returnPrice;
+        return (int) $returnPrice;
     }
 
     private function applyDiscount($price, $discount, $durationOfStay = 0,$bookingCount)

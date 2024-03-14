@@ -397,7 +397,6 @@ class BookingsController extends Controller
         return $returnPrice;
     }
 
-
     private function applyDiscount($price, $discount, $durationOfStay = 0,$bookingCount)
     {
         // Check the discount type and apply accordingly

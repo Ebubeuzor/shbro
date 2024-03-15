@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Mail\CoHostInvitation;
+use App\Mail\CoHostInvitationForNonUsers;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
@@ -1273,19 +1274,15 @@ class HostHomeController extends Controller
             ->whereNull('banned')
             ->whereNull('suspend')
             ->first();
+            
+            // Find the host home by its ID
+            $hostHome = HostHome::find($homeId);
 
             // If the user doesn't exist 
             if (!$user) {
-                $user = User::create([
-                    'name' => 'New Co-Host',
-                    'email' => $data['email'],
-                    'co_host' => true,
-                    'password' => bcrypt(Str::random(16)),
-                ]);
-
-                // Send welcome and verification emails to the new user
-                Mail::to($user->email)->send(new WelcomeMail($user));
-                Mail::to($user->email)->send(new VerifyYourEmail($user));
+                $host = User::find($hostHome->user_id);
+                Mail::to($data['email'])->send(new CoHostInvitationForNonUsers($host->remember_token,$data['email'], $host->id ,$hostHome->id));
+                return response()->json(['message' => 'Invitation to join shortlet bookings has been sent'], 200);
             }
 
             // Check if the user is eligible for co-host invitation
@@ -1297,8 +1294,6 @@ class HostHomeController extends Controller
                 "co_host" => true,
             ]);
 
-            // Find the host home by its ID
-            $hostHome = HostHome::find($homeId);
 
             // If the host home doesn't exist, return a 404 response
             if (!$hostHome) {
@@ -1326,8 +1321,14 @@ class HostHomeController extends Controller
         ->where('host_home_id',$hosthomeid)
         ->first();
 
+        $user = User::find($userid);
+
         if ($existingCoHost) {
             abort(404,"The User is already a Co host to this home");
+        }
+
+        if ($user->email_verified_at == null) {
+            abort(400,"Please verify your account first");
         }
 
         $hosthomeCoHost = new Hosthomecohost();

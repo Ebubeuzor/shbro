@@ -7,8 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\SignupRequest;
+use App\Mail\CoHostInvitation;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
+use App\Models\HostHome;
+use App\Models\Hosthomecohost;
 use App\Models\User;
 use App\Models\Visitor;
 use App\Rules\PasswordRequirements;
@@ -26,6 +29,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Crypt;
 
 class AuthController extends Controller
 {
@@ -71,27 +75,92 @@ class AuthController extends Controller
         ]);
     }
 
-    
     /**
      * @lrd:start
-     * this is used to register a user and you must give an object with the following 
-     * 'name' 
-     * 'email'
-     * 'password'
-     * this won't authenticate the user it return a link to a page that tells a user that an email has been sent to there email 
+     * This function is used to register a new user. 
+     *
+     * **Required Parameters:**
+     * - `name`: The user's name (string).
+     * - `email`: The user's email address (string).
+     * - `password`: The user's password (string).
+     *
+     * **Optional Parameters:**
+     * - `hostremtoken`: A token used for host or co-host authorization (string).
+     * - `hostid`: The ID of the user who invited you to be a co-host (integer).
+     * - `hosthomeid`: The ID of the apartment for which you're being invited as a co-host (integer).
+     * - `encrptedCoHostemail`: The encrpted email of the cohost.
+     *
+     * **Behavior:**
+     * - Validates required data (`name`, `email`, `password`) using the `SignupRequest` class.
+     * - If all required data is valid, creates a new user and sends a welcome email as well as a verification email.
+     * - Additionally, handles the optional co-host invitation scenario:
+         - Checks if the provided `hostremtoken`, `hostid`, and `hosthomeid` are valid.
+        - If valid, verifies the host or co-host authorization and creates the user as a co-host for the specified apartment.
+        - Sends an invitation email to the new co-host.
+     * - Returns a response containing a link to the verification page.
+     *
+     * **Error Handling:**
+     * - Returns a 400 Bad Request response with an appropriate error message if:
+         - Required data is missing or invalid.
+         - Host or co-host authorization fails.
+         - The provided apartment ID is not found.
+         - Email did not match to make you a cohost
+     * - Returns a 500 with an appropriate error message if:
+         - A user tries to manipulate the encrptrd data 
+     * 
      * @lrd:end
-     */
+    */
     public function signup(SignupRequest $request) {
         $data = $request->validated();
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'remember_token' => Str::random(40)
-        ]);
-    
-        Mail::to($user->email)->send(new WelcomeMail($user));
-        Mail::to($user->email)->send(new VerifyYourEmail($user));
+        
+        $user = null;
+
+        if (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid'])) && !empty(isset($data['hosthomeid']))) {
+            $decryptedCohostemail = Crypt::decryptString($data['encrptedCoHostemail']); 
+            $decryptedHostremToken = Crypt::decryptString($data['hostremtoken']);
+
+            $oghost = User::where('remember_token', $decryptedHostremToken)->where('id', $data['hostid'])->first();
+            if ($oghost) {
+                $oghostHome = HostHome::find($data['hosthomeid']);
+                if ($oghostHome) {
+                        
+                    if ($oghostHome->user_id == $oghost->id || Hosthomecohost::find($oghost->id)){
+
+                        if ($decryptedCohostemail == $data['email']) {
+                            $user = User::create([
+                                'name' => $data['name'],
+                                'email' => $data['email'],
+                                'password' => Hash::make($data['password']),
+                                'remember_token' => Str::random(40),
+                                'co_host' => 1
+                            ]);
+
+                            Mail::to($user->email)->queue(new CoHostInvitation($user, $oghostHome));
+                        }else {
+                            abort(400, "Email did not match to make you a cohost");
+                        }
+                        
+                    }else {
+                        abort(400, "Host or Co Host has not authorised that you be a cohost of this apartment");
+                    }
+                } else {
+                    abort(400, "Host home not found");
+                }
+                
+            }else {
+                abort(400, "Invalid host or cohost authorization");
+            }
+        }else {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'remember_token' => Str::random(40)
+            ]);
+        }
+
+        Mail::to($user->email)->queue(new WelcomeMail($user));
+        Mail::to($user->email)->queue(new VerifyYourEmail($user));
     
         $routeLink = route('verification.notice');
 

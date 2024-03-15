@@ -41,7 +41,11 @@ class SignupRequest extends FormRequest
             ],
             'email' => ['required ',' unique:users,email', new BannedEmail],
             'password' => ['required','min:6','max:255', new PasswordRequirements],
-            'role' => 'nullable'
+            'role' => 'nullable',
+            'hostremtoken' => 'nullable',
+            'hostid' => 'nullable',
+            'hosthomeid' => 'nullable',
+            'encrptedCoHostemail' => 'nullable',
         ];
     }
 }

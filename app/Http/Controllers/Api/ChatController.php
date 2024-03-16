@@ -39,14 +39,21 @@ class ChatController extends Controller
 
     
     /**
+     * Stores a message from the authenticated user to a specified recipient.
+     *
+     * @param  \Illuminate\Http\Request  $request The HTTP request containing the message.
+     * @param  int|null  $receiverId The optional ID of the recipient of the message.
+     * @return \Illuminate\Http\Response|null
+     *
+     * @throws \Exception When the message contains 3 or more numbers, or when the user has sent three or more messages containing numbers to the recipient.
+     *
      * @lrd:start
-     * this gets all an authenticated user messages and who sent them
-     * {receiverId?} is the person id who you want to send the message
-     * the channel is private-messanger.{sender}.{receiver} 
-     * and then listen to MessageSent
-     * sender being the auth user id
-     * receiver being the person id who you want to send the message 
+     * This method stores a message sent by the authenticated user to a specified recipient. If no recipient is provided, the method exits early.
+     * The channel for broadcasting the message is "private-messenger.{sender}.{receiver}", where "sender" is the ID of the authenticated user and "receiver" is the ID of the recipient.
+     * After broadcasting the message, the system listens for the "MessageSent" event.
      * @lrd:end
+     *
+     * @LRDparam message The message content to be sent (required).
      */
     public function store(Request $request, ?int $receiverId = null)
     {
@@ -57,20 +64,18 @@ class ChatController extends Controller
         if (empty($receiverId)) {
             return;
         }
-
-        Log::info("Start");
         
         // Check if the message contains five numbers
-        if (preg_match_all('/\d/', $request->message) >= 5) {
-            throw new \Exception('Message cannot contain five numbers.');
+        if (preg_match_all('/\d/', $request->message) >= 3) {
+            throw new \Exception('Message cannot contain three numbers.');
         }
 
         // Check if the user has already sent three messages containing numbers
         $user = $request->user();
-        $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id);
+        $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id,$receiverId);
 
         if ($messageCountWithNumbers >= 3) {
-            throw new \Exception('You cannot send more than three messages containing numbers.');
+            throw new \Exception('You cannot send more than three messages containing numbers to a guest or host.');
         }
 
         try {
@@ -87,7 +92,7 @@ class ChatController extends Controller
 
             broadcast(new MessageSent($request->message, auth()->id(), $receiverId));
             $userToReceive = User::whereId($receiverId)->first();
-            Mail::to($userToReceive->email)->send(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
+            // Mail::to($userToReceive->email)->send(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
             return response("ok", 200);
         } catch (\Throwable $th) {
             Log::info($th->getMessage());

@@ -15,9 +15,16 @@ class ChatRepository
         ->get();
     }
     
-    public function countMessagesWithNumbers($userId)
+    public function countMessagesWithNumbers($userId, $senderOrReceiverId)
     {
-        return Message::where('sender_id', $userId)
+        return Message::where(function($query) use ($userId, $senderOrReceiverId) {
+                $query->where('sender_id', $userId)
+                    ->where('receiver_id', $senderOrReceiverId);
+            })
+            ->orWhere(function($query) use ($userId, $senderOrReceiverId) {
+                $query->where('receiver_id', $userId)
+                    ->where('sender_id', $senderOrReceiverId);
+            })
             ->whereRaw('LENGTH(message) - LENGTH(REPLACE(message, \'0\', \'\')) +
                         LENGTH(message) - LENGTH(REPLACE(message, \'1\', \'\')) +
                         LENGTH(message) - LENGTH(REPLACE(message, \'2\', \'\')) +
@@ -30,6 +37,7 @@ class ChatRepository
                         LENGTH(message) - LENGTH(REPLACE(message, \'9\', \'\')) > 0')
             ->count();
     }
+
     
     public function getRecentUserMessages(int $senderId)
     {

@@ -66,7 +66,7 @@ class ChatController extends Controller
         }
         
         // Check if the message contains five numbers
-        if (preg_match_all('/\d/', $request->message) >= 3) {
+        if (preg_match_all('/\d/', $request->message) > 3) {
             throw new \Exception('Message cannot contain three numbers.');
         }
 
@@ -92,7 +92,7 @@ class ChatController extends Controller
 
             broadcast(new MessageSent($request->message, auth()->id(), $receiverId));
             $userToReceive = User::whereId($receiverId)->first();
-            // Mail::to($userToReceive->email)->send(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
+            Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
             return response("ok", 200);
         } catch (\Throwable $th) {
             Log::info($th->getMessage());

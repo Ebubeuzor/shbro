@@ -1361,22 +1361,53 @@ class UserController extends Controller
      */
     public function currentlyHosting()
     {
+        $now = Carbon::now();
 
-        $bookings = Booking::where('check_in', '>=', Carbon::today()->toDateString())
-                        ->where('paymentStatus', 'success')
-                        ->where('hostId', auth()->id())
-                        ->where(function ($query){
-                            $query->where('check_out_time', '<=', Carbon::now()->format('g:i A'))
-                            ->orWhere('check_out', '<=', Carbon::today()->toDateString());
-                        })
-                        ->latest()
-                        ->distinct()->get();
+        $bookings = Booking::where('check_in', '<=', $now->toDateString())
+            ->where('paymentStatus', 'success')
+            ->where('hostId', auth()->id())
+            ->where(function ($query) use ($now) {
+                $query->where('check_out', '>', $now->toDateString()) // Check-out after today
+                    ->orWhere(function ($innerQuery) use ($now) {
+                        $innerQuery->where('check_out', '=', $now->toDateString()) // Check-out today
+                            ->where('check_out_time', '>', $now->format('g:i A')); // Check-out time after current time
+                    });
+            })
+            ->latest()
+            ->distinct()
+            ->get();
 
-        // Transform the bookings into the BookedResource
-        $bookingsResource = BookedResource::collection($bookings);
+            // Get upcoming reservations for homes where the authenticated user is a co-host
+            $cohostBookings = Hosthomecohost::where('user_id', auth()->id())->with('hosthome')->get()
+            ->map(function ($cohost) use($now) {
+                $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+                info($cohostUser);
+                $bookings = Booking::where('check_in', '<=', $now->toDateString())
+                ->where('paymentStatus', 'success')
+                ->where(function ($query) use ($now) {
+                    $query->where('check_out', '>', $now->toDateString()) // Check-out after today
+                        ->orWhere(function ($innerQuery) use ($now) {
+                            $innerQuery->where('check_out', '=', $now->toDateString()) // Check-out today
+                                ->where('check_out_time', '>', $now->format('g:i A')); // Check-out time after current time
+                        });
+                })
+                ->where('host_home_id', $cohostUser->id)->latest()
+                ->distinct()->get();
+                return $bookings;
+            })
+            ->flatten();
+
+
+            // Combine both sets of reservations
+            $allBookings = $bookings->merge($cohostBookings);
+
+            // Transform the bookings into the BookedResource
+            $bookingsResource = BookedResource::collection($allBookings);
 
         return response(['bookings' => $bookingsResource]);
     }
+
+
 
     /**
      * 
@@ -1802,22 +1833,18 @@ class UserController extends Controller
         
         $hostId = auth()->id();
 
-        $bookings = Booking::select('bookings.*')
-                    ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-                    ->whereDate('check_in', Carbon::today()->toDateString())
+        $bookings = Booking::whereDate('check_in', Carbon::today()->toDateString())
                     ->where('paymentStatus', 'success')
                     ->where('hostId', $hostId)
-                    ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))->latest()->distinct()->get();
+                    ->where('check_in_time', '>', Carbon::now()->format('g:i A'))->latest()->distinct()->get();
 
         // Get upcoming reservations for homes where the authenticated user is a co-host
         $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
         ->map(function ($cohost) {
             $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
-            $bookings = Booking::select('bookings.*')
-            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-            ->whereDate('check_in', Carbon::today()->toDateString())
+            $bookings = Booking::whereDate('check_in', Carbon::today()->toDateString())
             ->where('paymentStatus', 'success')
-            ->where('host_homes.check_in_time', '>', Carbon::now()->format('g:i A'))
+            ->where('check_in_time', '>', Carbon::now()->format('g:i A'))
             ->where('host_home_id', $cohostUser->id)->latest()
             ->distinct()->get();
             return $bookings;
@@ -1852,9 +1879,7 @@ class UserController extends Controller
     {
         $hostId = auth()->id();
         // Get upcoming reservations using a join
-        $bookings = Booking::select('bookings.*')
-            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-            ->whereDate('check_in', '>', Carbon::today())
+        $bookings = Booking::whereDate('check_in', '>', Carbon::today())
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
             ->where('hostId', $hostId)
@@ -1865,9 +1890,7 @@ class UserController extends Controller
         $cohostBookings = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
         ->map(function ($cohost) {
             $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
-            $bookings = Booking::select('bookings.*')
-            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
-            ->whereDate('check_in', '>', Carbon::today())
+            $bookings = Booking::whereDate('check_in', '>', Carbon::today())
             ->whereDate('check_in', '<=', Carbon::today()->addDays(3))
             ->where('paymentStatus', 'success')
             ->where('host_home_id', $cohostUser->id)

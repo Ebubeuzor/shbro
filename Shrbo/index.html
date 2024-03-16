@@ -13,5 +13,19 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="https://shortletbooking.com/build/assets/app-c0a5b4ad.js"></script>
+    <script>
+      const channelName = 'new-public-channel';
+
+      // Check if window.Echo is defined
+      if (typeof window.Echo !== 'undefined') {
+          window.Echo.channel(channelName)
+              .listen('NewEvent', (event) => {
+                  document.getElementById('message').innerText = 'Received message: ' + event.message;
+              });
+      } else {
+          console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+      }
+  </script>
   </body>
 </html>

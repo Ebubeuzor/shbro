@@ -13,14 +13,17 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
+Broadcast::channel('new-public-channel', function ($user) {
+    return true; 
+});
+
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('messanger.{sender}.{receiver}', function ($user) {
-    return !is_null($user);
+Broadcast::channel('messanger.{receiver}', function ($user, $id) {
+    // Check if the user is authenticated using Sanctum token
+    return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('new-public-channel', function ($user) {
-    return true; 
-});
+

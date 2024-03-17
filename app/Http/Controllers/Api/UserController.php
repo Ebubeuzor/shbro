@@ -125,6 +125,27 @@ class UserController extends Controller
     
     /**
      * @lrd:start
+     * Gets an auth user token
+     * @lrd:end
+     */
+    public function getUserToken($userId) {
+        // Retrieve the user by ID
+        $user = User::findOrFail($userId);
+    
+        // Check if the user has any personal access tokens
+        if ($user->tokens->isEmpty()) {
+            return response()->json(['error' => 'User does not have any personal access tokens'], 404);
+        }
+
+        $recentToken = $user->tokens->last();
+        info($recentToken);
+    
+        // Return the token associated with the user
+        return $recentToken->token;
+    }
+
+    /**
+     * @lrd:start
      * Not in use
      * @lrd:end
      */

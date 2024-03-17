@@ -23,7 +23,6 @@ class NewEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        info('test123');
         return new Channel('new-public-channel');
         
     }

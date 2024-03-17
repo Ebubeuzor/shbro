@@ -22,8 +22,9 @@ class NotificationMail extends Mailable
         $this->user = $user;
         $this->message = $message;
         $this->title = $title;
+        info("trying");
     }
-
+    
     public function build(){
         return $this->subject($this->title)
         ->view('emails.notification')

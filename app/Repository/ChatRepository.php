@@ -43,19 +43,21 @@ class ChatRepository
     {
         DB::statement("SET SESSION sql_mode=''");
 
-        $recentMessages =  Message::where(function($query) use ($senderId) {
-            $query->where('sender_id',$senderId)
-            ->orWhere('receiver_id',$senderId);
-        })->groupBy('sender_id','receiver_id')
-        ->select('sender_id','receiver_id','message')
-        ->orderBy('id', 'desc')
-        ->limit(30)
-        ->get();
+        // Subquery to get the latest message for each conversation
+        $latestMessagesSubquery = Message::selectRaw('MAX(id) as id')
+            ->where('sender_id', $senderId)
+            ->orWhere('receiver_id', $senderId)
+            ->groupBy(DB::raw('CASE WHEN sender_id = ' . $senderId . ' THEN receiver_id ELSE sender_id END'));
 
+        // Query to retrieve the recent messages based on the latest message IDs
+        $recentMessages = Message::whereIn('id', $latestMessagesSubquery)
+            ->orderBy('id', 'desc')
+            ->limit(30)
+            ->get();
 
-
-        return $this->getfilterRecentMessages($recentMessages,$senderId);
+        return $this->getfilterRecentMessages($recentMessages, $senderId);
     }
+
 
     public function getfilterRecentMessages($recentMessages, $senderId){
         $recentUserWithMessage = [];
@@ -73,7 +75,9 @@ class ChatRepository
         }
 
         foreach ($recentUserWithMessage as $key => $userMessage) {
-            $recentUserWithMessage[$key]['name'] = User::whereId($userMessage['user_id'])->value('name') ?? '';
+            $user = User::whereId($userMessage['user_id'])->first();
+            $recentUserWithMessage[$key]['name'] = $user->name;
+            $recentUserWithMessage[$key]['profilePic'] = $user->profilePicture != null ? url($user->profilePicture) : null;
         }
 
         return $recentUserWithMessage;

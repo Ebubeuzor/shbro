@@ -19,9 +19,12 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 
+
+Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
+
 Route::middleware('auth:sanctum')->group(function(){
 
-    
+
     Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById']);
 
     Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);

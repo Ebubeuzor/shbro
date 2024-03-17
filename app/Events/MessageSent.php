@@ -13,7 +13,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class MessageSent implements ShouldBroadcastNow
+class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -36,16 +36,14 @@ class MessageSent implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        $userId = auth()->id();
-        
-        return new PrivateChannel('messanger.' . $userId . '.' . $this->receiver);
+        return new PrivateChannel('messanger.' . $this->receiver);
     }
 
     public function broadcastWith()
     {
         return [
             'message' => [
-                'sender_id' => $this->receiver,
+                'sender_id' => $this->sender,
                 'message' => $this->message,
             ],
         ];

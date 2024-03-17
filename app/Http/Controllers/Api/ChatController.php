@@ -31,7 +31,7 @@ class ChatController extends Controller
         $messages = empty($receiverId) ? [] : $this->chat->getUserMessages((int) $request->user()->id, (int) $receiverId);
         // $messages = Message::where('sender_id', $request->user()->id)->get();
         return response([
-            'messages' => $messages,
+            'messagesWithAUser' => $messages,
             'recentMessages' => $this->chat->getRecentUserMessages($request->user()->id),
             'receiver' => User::find($receiverId)
         ]);
@@ -39,6 +39,7 @@ class ChatController extends Controller
 
     
     /**
+     * @lrd:start
      * Stores a message from the authenticated user to a specified recipient.
      *
      * @param  \Illuminate\Http\Request  $request The HTTP request containing the message.
@@ -47,9 +48,8 @@ class ChatController extends Controller
      *
      * @throws \Exception When the message contains 3 or more numbers, or when the user has sent three or more messages containing numbers to the recipient.
      *
-     * @lrd:start
      * This method stores a message sent by the authenticated user to a specified recipient. If no recipient is provided, the method exits early.
-     * The channel for broadcasting the message is "private-messenger.{sender}.{receiver}", where "sender" is the ID of the authenticated user and "receiver" is the ID of the recipient.
+     * The channel for broadcasting the message is "messenger.{receiver}", where "receiver" is the ID of the authenticated user
      * After broadcasting the message, the system listens for the "MessageSent" event.
      * @lrd:end
      *
@@ -74,7 +74,7 @@ class ChatController extends Controller
         $user = $request->user();
         $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id,$receiverId);
 
-        if ($messageCountWithNumbers >= 3) {
+        if (preg_match_all('/\d/', $request->message) && $messageCountWithNumbers >= 3) {
             throw new \Exception('You cannot send more than three messages containing numbers to a guest or host.');
         }
 
@@ -90,7 +90,7 @@ class ChatController extends Controller
                 Message::where('sender_id',$user->id)->increment('messages_with_numbers_count');
             }
 
-            broadcast(new MessageSent($request->message, auth()->id(), $receiverId));
+            event(new MessageSent($request->message,auth()->id(), $receiverId));
             $userToReceive = User::whereId($receiverId)->first();
             Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
             return response("ok", 200);

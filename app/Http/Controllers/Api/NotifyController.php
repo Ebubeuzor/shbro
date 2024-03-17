@@ -37,7 +37,7 @@ class NotifyController extends Controller
      * @return \Illuminate\Http\JsonResponse A JSON response indicating the success of the notification sending.
      *
      * This method sends a notification to the authenticated user. After saving the notification to the database, it broadcasts the "NewNotificationEvent" to notify WebSocket clients.
-     * The channel for broadcasting the notification is "private-App.Models.User.{id}", where "id" is the ID of the authenticated user.
+     * The channel for broadcasting the notification is "App.Models.User.{id}", where "id" is the ID of the authenticated user.
      * @lrd:end
     */
     public function sendNotificationToUser()

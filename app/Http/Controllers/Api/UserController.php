@@ -979,14 +979,16 @@ class UserController extends Controller
      * - 404: User not found.
      * @lrd:end
     */
-    public function deleteUserBankInfo($userId)
+    public function deleteUserBankInfo($userId,$accountId)
     {
         try {
             // Retrieve the authenticated user
             $user = User::findOrFail($userId);
 
             // Find and delete the user's bank account information
-            Userbankinfo::where('user_id', $user->id)->delete();
+            Userbankinfo::where('user_id', $user->id)
+            ->where('id',$accountId)
+            ->delete();
 
             return response("OK", 204);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

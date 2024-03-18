@@ -49,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
     Route::post('createCard/{id}', [UserController::class, 'createCard']);
     Route::post('createUserBankinfo/{id}', [UserController::class, 'createUserBankinfo']);
-    Route::delete('deleteUserBankInfo/{userId}', [UserController::class, 'deleteUserBankInfo']);
+    Route::delete('deleteUserBankInfo/{userId}/{accountId}', [UserController::class, 'deleteUserBankInfo']);
 
     Route::delete('deleteUserCard/{userCardId}/{userid}', [UserController::class, 'deleteUserCard']);
     Route::delete('removeFromWishlist/{hostHomeId}', [UserController::class, 'removeFromWishlist']);

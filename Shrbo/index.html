@@ -25,15 +25,16 @@
                 console.log('Echo is defined. Proceeding with initialization.');
         
                 const channelName = `messanger.${receiverId}`;
-                console.log('Channel name:', channelName);
-                console.log('Windows', window.Echo);
-        
+                
                 if (token) {
-                    window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
-                    console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
-        
-                    // Subscribe to the private channel
-                    const privateChannel = window.Echo.private(channelName);
+                  window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
+                  console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+                  
+                  console.log('Echo Host:', window.Echo.host);
+                  // Subscribe to the private channel
+                  const privateChannel = window.Echo.private(channelName);
+                  console.log('Channel name:', channelName);
+                  console.log('Windows', window.Echo);
                     privateChannel.listen('MessageSent', (e) => {
                         console.log('Received message:', e);
                     });

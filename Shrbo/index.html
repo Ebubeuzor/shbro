@@ -13,19 +13,54 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script type="module" src="https://shortletbooking.com/build/assets/app-c0a5b4ad.js"></script>
+    <script type="module" src="https://shortletbooking.com/myjsfile"></script>
+    
     <script>
-      const channelName = 'new-public-channel';
+        function initializeEcho(token) {
+            const receiverId = 1;
+        
+            console.log('Starting Echo initialization...');
+        
+            if (typeof window.Echo !== 'undefined') {
+                console.log('Echo is defined. Proceeding with initialization.');
+        
+                const channelName = `messanger.${receiverId}`;
+                console.log('Channel name:', channelName);
+                console.log('Windows', window.Echo);
+        
+                if (token) {
+                    window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
+                    console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+        
+                    // Subscribe to the private channel
+                    const privateChannel = window.Echo.private(channelName);
+                    privateChannel.listen('MessageSent', (e) => {
+                        console.log('Received message:', e);
+                    });
+                    console.log('Listening for messages on channel:', channelName);
+                } else {
+                    console.log('Authentication token is not available.');
+                }
+            } else {
+                console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+            }
+        }
 
-      // Check if window.Echo is defined
-      if (typeof window.Echo !== 'undefined') {
-          window.Echo.channel(channelName)
-              .listen('NewEvent', (event) => {
-                  document.getElementById('message').innerText = 'Received message: ' + event.message;
-              });
-      } else {
-          console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
-      }
-  </script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const channelName = 'new-public-channel';
+
+            // Check if window.Echo is defined
+            if (typeof window.Echo !== 'undefined') {
+                window.Echo.channel(channelName)
+                    .listen('NewEvent', (event) => {
+                        document.getElementById('root').innerText = 'Received message: ' + event.message;
+                    });
+            } else {
+                console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+            }
+
+            initializeEcho('56|HEmS4F4OunHnk7qqvo7G2ohESLD2Pt2DSFoW3Btfdc187db0');
+        })
+    </script>
   </body>
 </html>

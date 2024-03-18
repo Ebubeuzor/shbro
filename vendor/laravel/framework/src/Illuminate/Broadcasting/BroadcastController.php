@@ -4,6 +4,7 @@ namespace Illuminate\Broadcasting;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -17,7 +18,10 @@ class BroadcastController extends Controller
      */
     public function authenticate(Request $request)
     {
-        if ($request->hasSession()) {
+        // Ensure that the user is authenticated using Sanctum middleware
+        if (!Auth::guard('sanctum')->check()) {
+            throw new AccessDeniedHttpException('Unauthenticated.');
+        }elseif ($request->hasSession()) {
             $request->session()->reflash();
         }
 
@@ -34,7 +38,10 @@ class BroadcastController extends Controller
      */
     public function authenticateUser(Request $request)
     {
-        if ($request->hasSession()) {
+        // Ensure that the user is authenticated using Sanctum middleware
+        if (!Auth::guard('sanctum')->check()) {
+            throw new AccessDeniedHttpException('Unauthenticated.');
+        }elseif ($request->hasSession()) {
             $request->session()->reflash();
         }
 

@@ -28,9 +28,11 @@
                 
                 if (token) {
                   window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
+                  window.Echo.connector.options.bearerToken = `${token}`;
                   console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
                   
                   console.log('Echo Host:', window.Echo.host);
+
                   // Subscribe to the private channel
                   const privateChannel = window.Echo.private(channelName);
                   console.log('Channel name:', channelName);

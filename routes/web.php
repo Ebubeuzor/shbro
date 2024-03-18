@@ -57,7 +57,7 @@ Route::get('myjsfile', function () {
     $headers = [
         'Content-Type' => 'application/javascript',
         'Access-Control-Allow-Origin' => '*', // Adjust this according to your needs
-        'Access-Control-Allow-Methods' => 'GET', // Adjust this according to your needs
+        'Access-Control-Allow-Methods' => 'GET, POST', // Adjust this according to your needs
         'Access-Control-Allow-Headers' => 'Content-Type', // Adjust this according to your needs
     ];
 

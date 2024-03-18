@@ -50,3 +50,24 @@ Route::get('/successful', [BookingsController::class, 'successful'])->name('succ
 Route::get('/cancelled', [BookingsController::class, 'cancelled'])->name('cancelledPage');
 Route::get('/failed', [BookingsController::class, 'failed'])->name('failedPage');
 
+Route::get('myjsfile', function () {
+    $file = public_path('build/assets/app-c0a5b4ad.js');
+    
+    // Set the headers
+    $headers = [
+        'Content-Type' => 'application/javascript',
+    ];
+
+    // Open the file for reading
+    $handle = fopen($file, 'rb');
+
+    // Return the response with streamed content and headers
+    return response()->stream(
+        function () use ($handle) {
+            fpassthru($handle);
+        },
+        200,
+        $headers
+    );
+})->name('javascript.file');
+

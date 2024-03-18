@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth', '/*','/public/build/assets/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173','http://localhost:5173','https://shbro.onrender.com','http://127.0.0.1:5500', '127.0.0.1:5500'],
+    'allowed_origins' => ['http://localhost:5173','http://localhost:5173','https://shbro.onrender.com','http://127.0.0.1:5500'],
 
     'allowed_origins_patterns' => [],
 

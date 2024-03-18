@@ -8,12 +8,21 @@ use Illuminate\Support\Facades\DB;
 
 class ChatRepository
 {
-    public function getUserMessages(int $senderId,int $receiverId)
+    public function getUserMessages(int $senderId, int $receiverId)
     {
-        return Message::whereIn('sender_id', [$senderId,$receiverId])
-        ->whereIn('receiver_id', [$senderId,$receiverId])
-        ->get();
+        return Message::whereIn('sender_id', [$senderId, $receiverId])
+            ->whereIn('receiver_id', [$senderId, $receiverId])
+            ->with([
+                'sender' => function ($query) {
+                    $query->select('id', 'name')->addSelect(DB::raw("CONCAT('" . url('/') . "/profile_pictures/', profilePicture) AS profile_picture_url"));
+                },
+                'receiver' => function ($query) {
+                    $query->select('id', 'name')->addSelect(DB::raw("CONCAT('" . url('/') . "/profile_pictures/', profilePicture) AS profile_picture_url"));
+                }
+            ])
+            ->get();
     }
+
     
     public function countMessagesWithNumbers($userId, $senderOrReceiverId)
     {

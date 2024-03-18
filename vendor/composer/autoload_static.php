@@ -785,6 +785,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Mail\\VerifyUser' => __DIR__ . '/../..' . '/app/Mail/VerifyUser.php',
         'App\\Mail\\VerifyYourEmail' => __DIR__ . '/../..' . '/app/Mail/VerifyYourEmail.php',
         'App\\Mail\\WelcomeMail' => __DIR__ . '/../..' . '/app/Mail/WelcomeMail.php',
+        'App\\Models\\AcceptGuestRequest' => __DIR__ . '/../..' . '/app/Models/AcceptGuestRequest.php',
         'App\\Models\\Adminrole' => __DIR__ . '/../..' . '/app/Models/Adminrole.php',
         'App\\Models\\Amenity' => __DIR__ . '/../..' . '/app/Models/Amenity.php',
         'App\\Models\\Booking' => __DIR__ . '/../..' . '/app/Models/Booking.php',

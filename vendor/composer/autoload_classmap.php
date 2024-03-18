@@ -109,6 +109,7 @@ return array(
     'App\\Mail\\VerifyUser' => $baseDir . '/app/Mail/VerifyUser.php',
     'App\\Mail\\VerifyYourEmail' => $baseDir . '/app/Mail/VerifyYourEmail.php',
     'App\\Mail\\WelcomeMail' => $baseDir . '/app/Mail/WelcomeMail.php',
+    'App\\Models\\AcceptGuestRequest' => $baseDir . '/app/Models/AcceptGuestRequest.php',
     'App\\Models\\Adminrole' => $baseDir . '/app/Models/Adminrole.php',
     'App\\Models\\Amenity' => $baseDir . '/app/Models/Amenity.php',
     'App\\Models\\Booking' => $baseDir . '/app/Models/Booking.php',

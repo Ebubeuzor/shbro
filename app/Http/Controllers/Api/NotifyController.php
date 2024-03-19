@@ -49,9 +49,8 @@ class NotifyController extends Controller
         $notification->user_id = $user->id;  // Assuming you want to save the user ID
         $notification->Message = 'Test notification message';
         $notification->save();
-        Log::info('Notification saved: ' . $notification->id);
         // Broadcast the NewNotificationEvent to notify the WebSocket clients
-        broadcast(new NewNotificationEvent($notification, $notification->id));
+        event(new NewNotificationEvent($notification, $notification->id, $user->id));
 
         return response()->json(['message' => 'Notification sent successfully']);
     }

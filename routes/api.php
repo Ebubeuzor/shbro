@@ -213,8 +213,13 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
+
+
 });
 
+
+
+Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
 Route::get('homepage', [HomepageController::class, 'index']);
 
 Route::post('signup', [AuthController::class, 'signup']);

@@ -18,17 +18,19 @@ class NewNotificationEvent implements ShouldBroadcast
 
     public $notification;
     public $notificationId;
+    public $userId;
 
-    public function __construct($notification, $notificationId)
+    public function __construct($notification, $notificationId, $userId)
     {
         $this->notification = $notification;
         $this->notificationId = $notificationId;
+        $this->userId = $userId;
     }
 
     public function broadcastOn()
     {
-        info('testing');
-        return new PrivateChannel('App.Models.User.' . auth()->id());
+        info($this->userId);
+        return new PrivateChannel('App.Models.User.' . $this->userId);
 
     }
     

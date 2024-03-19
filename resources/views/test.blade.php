@@ -47,9 +47,73 @@
         }
     }
 
+        function initializeNotificationEcho(token) {
+            
+            const receiverId = 1;
+
+            if (typeof window.Echo !== 'undefined') {
+                console.log('Echo is defined. Proceeding with initialization.');
+
+                const channelName = `App.Models.User.${receiverId}`;
+                console.log('Channel name:', channelName);
+
+                window.Echo.connector.options.auth.headers.Authorization = 'Bearer 26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379';
+
+                
+                if (window.Echo.connector.options.auth.headers.Authorization) {
+                    
+                    console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+                    const privateChannel = window.Echo.private(channelName);
+    
+                    privateChannel.listen('NewNotificationEvent', (e) => {
+                        console.log('Received message:', e);
+                    });
+
+                }
+                else {
+                    console.log('Authentication token is not set.');
+                }
+                
+            } else {
+                // console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+            }
+        }
+        
+        function initializeTypingEcho(token) {
+            
+            const receiverId = 1;
+
+            if (typeof window.Echo !== 'undefined') {
+                console.log('Echo is defined. Proceeding with initialization.');
+
+                const channelName = `typing.${receiverId}`;
+                console.log('Channel name:', channelName);
+
+                window.Echo.connector.options.auth.headers.Authorization = 'Bearer 26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379';
+
+                
+                if (window.Echo.connector.options.auth.headers.Authorization) {
+                    
+                    console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+                    const privateChannel = window.Echo.private(channelName);
+    
+                    privateChannel.listen('Typing', (e) => {
+                        console.log('Received message:', e);
+                    });
+
+                }
+                else {
+                    console.log('Authentication token is not set.');
+                }
+                
+            } else {
+                // console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+            }
+        }
+        
     document.addEventListener('DOMContentLoaded', function() {
         
-        initializeEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
+        initializeTypingEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
 
     });
 

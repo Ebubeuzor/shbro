@@ -26,4 +26,8 @@ Broadcast::channel('messanger.{receiver}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+Broadcast::channel('typing.{receiver}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
+
 

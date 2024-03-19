@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MessageSent;
+use App\Events\Typing;
 use App\Http\Controllers\Controller;
 use App\Mail\NotificationMail;
 use App\Models\Message;
@@ -35,6 +36,18 @@ class ChatController extends Controller
             'recentMessages' => $this->chat->getRecentUserMessages($request->user()->id),
             'receiver' => User::find($receiverId)
         ]);
+    }
+    
+    /**
+     * @lrd:start
+     * this is fired when an auth user is typing
+     * channel is typing.{receiverid}
+     * event is Typing
+     * @lrd:end
+     */
+    public function typing(Request $request,$receiverId,$senderid)
+    {
+        event(new Typing($senderid,$receiverId));
     }
 
     
@@ -99,5 +112,7 @@ class ChatController extends Controller
             return response($th, 422);
         }
     }
+
+
 
 }

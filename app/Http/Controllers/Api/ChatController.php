@@ -30,13 +30,20 @@ class ChatController extends Controller
     public function index(Request $request, ?int $receiverId = null)
     {
         $messages = empty($receiverId) ? [] : $this->chat->getUserMessages((int) $request->user()->id, (int) $receiverId);
-        // $messages = Message::where('sender_id', $request->user()->id)->get();
+
+        // Load booking requests for each message if they exist
+        foreach ($messages as $message) {
+            $message->load('bookingRequest');
+        }
+
+        // Return the messages along with booking requests
         return response([
             'messagesWithAUser' => $messages,
             'recentMessages' => $this->chat->getRecentUserMessages($request->user()->id),
             'receiver' => User::find($receiverId)
         ]);
     }
+
     
     /**
      * @lrd:start

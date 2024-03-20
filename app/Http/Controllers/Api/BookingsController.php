@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
 use App\Mail\NotificationMail;
+use App\Models\AcceptGuestRequest;
 use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
@@ -16,6 +18,7 @@ use App\Models\ReservedPricesForCertainDay;
 use App\Models\Servicecharge;
 use App\Models\User;
 use App\Models\UserTrip;
+use App\Repository\ChatRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -445,6 +448,112 @@ class BookingsController extends Controller
 
         return response(['booking_dates' => $formattedDates]);
     }
+
+
+    /**
+     * @lrd:start
+     * This is the method for a guest to make a request to a host about booking your apartment
+     * The channel for broadcasting the message is "messenger.{receiver}", where "receiver" is the ID of the authenticated user
+     * After broadcasting the message, the system listens for the "MessageSent" event.
+     * @lrd:end
+     * 
+     */
+    public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
+    {
+        $user = User::find(auth()->id());
+        $message = $user->name . " has requested to book your apartment please approve or decline";
+        $chat = new ChatRepository();
+        $message = $chat->sendMessages([
+            'message' => $message,
+            'sender_id' => $user->id,
+            'receiver_id' => $receiverId,
+        ]);
+
+        $hosthome = HostHome::find($hostHomeId);
+
+        if (!$hosthome) {
+            abort(404, "Host home not found");
+        }
+
+        $acceptRequest = new AcceptGuestRequest();
+        $acceptRequest->message_id = $message->id;
+        $acceptRequest->user_id = $user->id;
+        $acceptRequest->host_id = $receiverId;
+        $acceptRequest->host_home_id = $hostHomeId;
+        $acceptRequest->save();
+
+
+        event(new MessageSent($message,auth()->id(), $receiverId));
+        $userToReceive = User::whereId($receiverId)->first();
+        Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, $message, "A Guest made a request"));
+    }
+
+    /**
+     * @lrd:start
+     * Accept or decline a booking request.
+     * 
+     * @param int $requestId The ID of the booking request to accept or decline.
+     * @param int $host_home_id The ID of the host home associated with the booking request.
+     * @param int $host_id The ID of the host user.
+     * @param int $guest_id The ID of the guest user.
+     * @param string $action The action to perform: 'accept' or 'decline'.
+     * 
+     * @throws \Exception If the booking request is not found or an invalid action is provided.
+     * 
+     * @lrd:end
+    */
+    public function handleBookingRequest(int $requestId, int $host_home_id, int $host_id, int $guest_id, string $action)
+    {
+        // Find the booking request
+        $request = AcceptGuestRequest::where('id',$requestId)
+        ->where('host_home_id', $host_home_id)
+        ->where('host_id', $host_id)
+        ->where('user_id', $guest_id)
+        ->first();
+
+        if(!$request){
+            abort(404,"Booking Request Not Found!");
+        }
+
+        if ($host_id != auth()->id()) {
+            abort(400,"Only the host of this apartment can approve or decline");
+        }
+        
+        // Validate the action
+        if (!in_array(strtolower($action), ['accept', 'decline'])) {
+            throw new \Exception('Invalid action. Action must be "accept" or "decline".');
+        }
+
+        // Update the booking status based on the action
+        if ($action === 'accept') {
+            $request->approved = 'approved';
+        } else {
+            $request->approved = 'declined';
+        }
+
+        // Save the changes
+        $request->save();
+
+        // Trigger appropriate notifications
+        $user = User::find($request->user_id);
+        $subject = ($action === 'accept') ? 'Booking Request Accepted' : 'Booking Request Declined';
+        $statusMessage = ($action === 'accept') ? 'Your booking request has been accepted.' : 'Your booking request has been declined.';
+        $this->sendNotification($user, $statusMessage, $subject);
+        return response()->json(['message'=> "The request has been successfully {$action}d."]);
+    }
+
+    /**
+     * Send notification to a user.
+     * 
+     * @param User $user The user to send the notification to.
+     * @param string $subject The subject of the notification.
+     * @param string $message The message content of the notification.
+     */
+    private function sendNotification(User $user, string $subject, string $message)
+    {
+        Mail::to($user->email)->queue(new NotificationMail($user, $subject, $message));
+    }
+
 
     /**
      * @lrd:start

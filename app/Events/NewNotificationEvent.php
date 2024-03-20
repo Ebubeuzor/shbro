@@ -15,7 +15,6 @@ class NewNotificationEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-
     public $notification;
     public $notificationId;
     public $userId;

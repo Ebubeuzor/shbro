@@ -33,6 +33,10 @@ class HostHome extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function acceptedRequest(){
+        return $this->hasMany(AcceptGuestRequest::class);
+    }
+
     public function reservedPricesForCertainDay(){
         return $this->hasMany(ReservedPricesForCertainDay::class);
     }

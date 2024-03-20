@@ -57,6 +57,16 @@ class HostHomeResource extends JsonResource
             return new HostHomeHostInfoResource(User::find($cohost->user_id));
         });
 
+        $bookingRequestStatus = null;
+
+        foreach($this->acceptedRequest as $bookrequest){
+
+            if ($bookrequest->user_id == auth()->id() && $bookrequest->approved == "approved" && $bookrequest->host_home_id == $this->id) {
+                $bookingRequestStatus = "approved";    
+            }
+
+        }
+
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
@@ -99,6 +109,7 @@ class HostHomeResource extends JsonResource
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,
             'vat' => $tax,
+            'bookingRequestStatus' => $bookingRequestStatus,
             'ratings' => $ratings,
             'guest_fee' => $guestServicesCharge,
             'adminStatus' => "Pending Approval",

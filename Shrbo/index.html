@@ -13,57 +13,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script type="module" src="https://shortletbooking.com/myjsfile"></script>
     
-    <script>
-        function initializeEcho(token) {
-            const receiverId = 1;
-        
-            console.log('Starting Echo initialization...');
-        
-            if (typeof window.Echo !== 'undefined') {
-                console.log('Echo is defined. Proceeding with initialization.');
-        
-                const channelName = `messanger.${receiverId}`;
-                
-                if (token) {
-                  window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
-                  window.Echo.connector.options.bearerToken = `${token}`;
-                  console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
-                  
-                  console.log('Echo Host:', window.Echo.host);
-
-                  // Subscribe to the private channel
-                  const privateChannel = window.Echo.private(channelName);
-                  console.log('Channel name:', channelName);
-                  console.log('Windows', window.Echo);
-                    privateChannel.listen('MessageSent', (e) => {
-                        console.log('Received message:', e);
-                    });
-                    console.log('Listening for messages on channel:', channelName);
-                } else {
-                    console.log('Authentication token is not available.');
-                }
-            } else {
-                console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const channelName = 'new-public-channel';
-
-            // Check if window.Echo is defined
-            if (typeof window.Echo !== 'undefined') {
-                window.Echo.channel(channelName)
-                    .listen('NewEvent', (event) => {
-                        document.getElementById('root').innerText = 'Received message: ' + event.message;
-                    });
-            } else {
-                console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
-            }
-
-            initializeEcho('56|HEmS4F4OunHnk7qqvo7G2ohESLD2Pt2DSFoW3Btfdc187db0');
-        })
-    </script>
   </body>
 </html>

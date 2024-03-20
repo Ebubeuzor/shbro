@@ -21,7 +21,55 @@ export default function Header() {
       setEmail(user.email);
     })
   }
-  
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://shortletbooking.com/myjsfile';
+    script.type = 'module';
+    script.async = true;
+
+    script.onload = () => {
+      initializeEcho('56|HEmS4F4OunHnk7qqvo7G2ohESLD2Pt2DSFoW3Btfdc187db0');
+    };
+  }, []);
+
+  function initializeEcho(token) {
+    const receiverId = 1;
+
+    console.log('Starting Echo initialization...');
+
+    if (typeof window.Echo !== 'undefined') {
+        console.log('Echo is defined. Proceeding with initialization.');
+
+        const channelName = `messanger.${receiverId}`;
+        
+        if (token) {
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer ${token}`;
+            console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+
+            // Log the URL of the broadcasting/auth endpoint
+            const broadcastingAuthUrl = window.Echo.connector.options.authEndpoint;
+            console.log('Broadcasting Auth URL:', broadcastingAuthUrl);
+            
+            // Subscribe to the private channel
+            const privateChannel = window.Echo.private(channelName);
+
+            console.log('Channel name:', channelName);
+            console.log('Windows', window.Echo);
+            
+            privateChannel.listen('MessageSent', (e) => {
+                console.log('Received message:', e);
+            });
+            console.log('Listening for messages on channel:', channelName);
+        } else {
+            console.log('Authentication token is not available.');
+        }
+    } else {
+        console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+    }
+  }
+
+
   useEffect(() => {
     getUserInfo();
   },[]);

@@ -15,7 +15,9 @@ return new class extends Migration
     {
         Schema::create('accept_guest_requests', function (Blueprint $table) {
             $table->id();
-            $table->string("approved");
+            $table->string("approved")->nullable();
+            $table->string("bookingstatus")->nullable();
+            $table->foreignId('message_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('host_id')->constrained('users', 'id')->onDelete('cascade');
             $table->foreignId('host_home_id')->constrained()->onDelete('cascade');

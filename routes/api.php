@@ -24,6 +24,7 @@ Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);
 
     Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById']);
 
@@ -44,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('sendNotificationToUser', [NotifyController::class, 'sendNotificationToUser']);
     
     Route::delete('notification/{notification}', [NotifyController::class, 'destroy']);
+    Route::post('makeRequestToBook/{receiverId}/{hostHomeId}', [BookingsController::class, 'makeRequestToBook']);
     
     Route::get('logout', [AuthController::class, 'logout']);
 

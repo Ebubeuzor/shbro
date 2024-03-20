@@ -3,6 +3,8 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Models\User;
+use App\Repository\ChatRepository;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -41,11 +43,19 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastWith()
     {
+        $messages = Message::where('sender_id', $this->sender)
+            ->where('receiver_id', $this->receiver)
+            ->get();
+
+        // Load booking requests for each message if they exist
+        $messages->load('bookingRequest');
+
+        $chatRepository = new ChatRepository();
         return [
-            'message' => [
-                'sender_id' => $this->sender,
-                'message' => $this->message,
-            ],
+            'messagesWithAUser' => $messages,
+            'recentMessages' => $chatRepository->getRecentUserMessages($this->receiver),
+            'receiver' => User::find($this->receiver)
         ];
     }
+    
 }

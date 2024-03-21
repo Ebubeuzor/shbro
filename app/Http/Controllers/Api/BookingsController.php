@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
+use App\Mail\AcceptOrDeclineGuestMail;
 use App\Mail\NotificationMail;
 use App\Models\AcceptGuestRequest;
 use App\Models\Booking;
@@ -538,7 +539,7 @@ class BookingsController extends Controller
         $user = User::find($request->user_id);
         $subject = ($action === 'accept') ? 'Booking Request Accepted' : 'Booking Request Declined';
         $statusMessage = ($action === 'accept') ? 'Your booking request has been accepted.' : 'Your booking request has been declined.';
-        $this->sendNotification($user, $statusMessage, $subject);
+        $this->sendNotification($user, $statusMessage, $subject, $action, $host_home_id);
         return response()->json(['message'=> "The request has been successfully {$action}d."]);
     }
 
@@ -549,9 +550,9 @@ class BookingsController extends Controller
      * @param string $subject The subject of the notification.
      * @param string $message The message content of the notification.
      */
-    private function sendNotification(User $user, string $subject, string $message)
+    private function sendNotification(User $user, string $message, string $subject, string $status, int $hosthomeid)
     {
-        Mail::to($user->email)->queue(new NotificationMail($user, $subject, $message));
+        Mail::to($user->email)->send(new AcceptOrDeclineGuestMail($user, $message, $subject,$status,$hosthomeid));
     }
 
 

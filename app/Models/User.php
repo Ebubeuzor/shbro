@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
@@ -46,6 +47,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'email' => 'string', 
         'id' => 'integer', 
     ];
+    
+    public function isAdminHandlingConversation()
+    {
+        return Cache::has('conversation_admin_id');
+    }
 
     public function getVerifiedAttriutes($value){
         return $value != 0 ? "Verified" : "Not verified";

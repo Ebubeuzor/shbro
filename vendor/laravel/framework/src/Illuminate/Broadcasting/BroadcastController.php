@@ -38,6 +38,7 @@ class BroadcastController extends Controller
      */
     public function authenticateUser(Request $request)
     {
+        
         // Ensure that the user is authenticated using Sanctum middleware
         if (!Auth::guard('sanctum')->check()) {
             throw new AccessDeniedHttpException('Unauthenticated.');

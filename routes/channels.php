@@ -25,3 +25,21 @@ Broadcast::channel('messanger.{receiver}', function ($user, $id) {
     // Check if the user is authenticated using Sanctum token
     return (int) $user->id === (int) $id;
 });
+
+Broadcast::channel('typing.{receiver}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('chat.user.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+
+Broadcast::channel('chat.admin.{adminId}', function ($user, $adminId) {
+    // Check if conversation is already being handled by another admin
+    if ($user->isAdminHandlingConversation()) {
+        // Conversation is already being handled by another admin
+        return false;
+    }
+    
+    return (int) $user->id === (int) $adminId;
+});

@@ -18,11 +18,13 @@ class NewEvent implements ShouldBroadcast
 
     public function __construct($message)
     {
+        info("Testing Event");
         $this->message = $message;
     }
-
+    
     public function broadcastOn()
     {
+        info("Testing Event works or not");
         return new Channel('new-public-channel');
         
     }

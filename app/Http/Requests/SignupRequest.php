@@ -44,7 +44,6 @@ class SignupRequest extends FormRequest
             'role' => 'nullable',
             'hostremtoken' => 'nullable',
             'hostid' => 'nullable',
-            'hosthomeid' => 'nullable',
             'encrptedCoHostemail' => 'nullable',
         ];
     }

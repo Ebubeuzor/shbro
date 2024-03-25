@@ -18,7 +18,6 @@ class CoHostInvitationForNonUsers extends Mailable
         protected $hostremToken,
         protected $cohostemail,
         protected $hostid,
-        protected $hosthomeid,
     )
     {
 
@@ -34,7 +33,6 @@ class CoHostInvitationForNonUsers extends Mailable
             'cohostemail' => $encryptedCohostemail,
             'hostremToken' => $encryptedHostremToken,
             'hostid' => $this->hostid,
-            'hosthomeid' => $this->hosthomeid,
         ])
         ;
     }

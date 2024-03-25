@@ -1255,13 +1255,12 @@ class HostHomeController extends Controller
      * If the provided email corresponds to an existing user, the invitation is sent directly.
      * If the email does not match any user, a new user is created, and welcome/verification emails are sent.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param int $homeId The ID of the host home to which the co-host is being invited.
+     * @param \Illuminate\Http\Request $request The HTTP request containing the email of the potential co-host.
      * @return \Illuminate\Http\JsonResponse A JSON response indicating the success of the invitation.
      * @lrd:end
-     * @LRDparam email use|required
-     */
-    public function addCoHost(Request $request, $homeId)
+     * @LRDparam email use|required The email address of the potential co-host.
+    */
+    public function addCoHost(Request $request)
     {
         try {
             // Validate the incoming request data
@@ -1271,37 +1270,32 @@ class HostHomeController extends Controller
 
             // Check if a user with the provided email already exists
             $user = User::where('email', $data['email'])
-            ->whereNull('banned')
-            ->whereNull('suspend')
-            ->first();
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->first();
             
-            // Find the host home by its ID
-            $hostHome = HostHome::find($homeId);
+            // Get the current authenticated host
+            $host = User::find(auth()->id());
 
             // If the user doesn't exist 
             if (!$user) {
-                $host = User::find($hostHome->user_id);
-                Mail::to($data['email'])->send(new CoHostInvitationForNonUsers($host->remember_token,$data['email'], $host->id ,$hostHome->id));
+                // Send invitation to join shortlet bookings
+                Mail::to($data['email'])->send(new CoHostInvitationForNonUsers($host->remember_token, $data['email'], $host->id));
                 return response()->json(['message' => 'Invitation to join shortlet bookings has been sent'], 200);
             }
 
             // Check if the user is eligible for co-host invitation
-            if (!$user || $user->banned || $user->suspend || $user->trashed()) {
+            if ($user->banned || $user->suspend || $user->trashed()) {
                 abort(400, "User not eligible for co-host invitation");
             }
 
+            // Update user's co-host status
             $user->update([
                 "co_host" => true,
             ]);
 
-
-            // If the host home doesn't exist, return a 404 response
-            if (!$hostHome) {
-                abort(404, "Host home not found");
-            }
-
             // Send the co-host invitation email with a link to join the host home
-            Mail::to($data['email'])->send(new CoHostInvitation($user, $hostHome));
+            Mail::to($data['email'])->send(new CoHostInvitation($user, $host->id));
 
             // Provide a success response
             return response()->json(['message' => 'Co-host invitation sent successfully'], 200);
@@ -1315,66 +1309,82 @@ class HostHomeController extends Controller
     }
 
 
-    public function becomeACoHost($userid,$hosthomeid)
+
+    public function becomeACoHost($userId,$hostid)
     {
-        $existingCoHost = Hosthomecohost::where('user_id',$userid)
-        ->where('host_home_id',$hosthomeid)
-        ->first();
 
-        $user = User::find($userid);
-
-        if ($existingCoHost) {
-            abort(404,"The User is already a Co host to this home");
-        }
+        $user = User::find($userId);
 
         if ($user->email_verified_at == null) {
             abort(400,"Please verify your account first");
         }
 
-        $hosthomeCoHost = new Hosthomecohost();
-        $hosthomeCoHost->user_id = $userid;
-        $hosthomeCoHost->host_home_id = $hosthomeid;
-        $hosthomeCoHost->save();
+        $hostHomes = HostHome::where('user_id', $hostid)->get();
 
-        
+        // Iterate through each host home
+        foreach ($hostHomes as $hostHome) {
+            // Check if the user is already a co-host for this home
+            $existingCoHost = Hosthomecohost::where('user_id', $userId)
+                ->where('host_home_id', $hostHome->id)
+                ->first();
+
+            // If the user is not already a co-host, create a co-host entry
+            if (!$existingCoHost) {
+                $hosthomeCoHost = new Hosthomecohost();
+                $hosthomeCoHost->user_id = $userId;
+                $hosthomeCoHost->host_home_id = $hostHome->id;
+                $hosthomeCoHost->save();
+            }
+        }
         
         return redirect()->away('http://localhost:5173');
 
-        
     }
 
+    
     /**
      * @lrd:start
-     * Remove a cohost from a host home.
+     * Remove a cohost from all host homes.
      *
-     * This method removes the specified user as a cohost from the given host home.
-     * If the user is not a cohost for the specified home, a 404 error is returned.
+     * This method removes the specified user as a cohost from all host homes.
+     * If the user is not a cohost for any host home, a 404 error is returned.
      *
-     * @param  int  $userid      The ID of the user to be removed as a cohost.
-     * @param  int  $hosthomeid  The ID of the host home from which the cohost should be removed.
+     * @param  int  $userId The ID of the user to be removed as a cohost.
      * @return \Illuminate\Http\Response
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException if the cohost relationship is not found.
      * @lrd:end
-     */
-    public function removeCoHost($userid, $hosthomeid)
+    */
+    public function removeCoHost($userId)
     {
-        // Check if the specified user is a cohost for the given host home
-        $coHost = Hosthomecohost::where('user_id', $userid)
-            ->where('host_home_id', $hosthomeid)
-            ->first();
+        try {
+            // Find the user
+            $user = User::findOrFail($userId);
 
-        // If the user is not a cohost, return a 404 error
-        if (!$coHost) {
-            abort(404, "The User is not a Co host to this home");
+            // Check if the user is a cohost for any host home
+            $coHosts = Hosthomecohost::where('user_id', $userId)->get();
+
+            // If the user is not a cohost for any host home, return a 404 error
+            if ($coHosts->isEmpty()) {
+                abort(404, "The User is not a cohost to any home");
+            }
+
+            // Delete cohost relationships for all host homes
+            foreach ($coHosts as $coHost) {
+                $coHost->delete();
+            }
+
+            // Return a success response
+            return response("Cohost removed from all homes successfully", 200);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while removing the cohost from all homes.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Delete the cohost relationship
-        $coHost->delete();
-
-        // Return a success response
-        return response("Cohost removed successfully", 200);
     }
+
 
     /**
      * Determine the category of the duration (week or month).

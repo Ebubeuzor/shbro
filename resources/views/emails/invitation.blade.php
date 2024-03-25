@@ -8,13 +8,14 @@
 <body>
     
     <div>Hello {{$user->name}}</div>
+    <div>{{$host->name}} has invited you to be a cohost of his apartments</div>
 
-    <div>Click this link to become co host of {{$hosthome->title}} </div>
+    <div>Click this link to become co host</div>
     
     <div>
         {{ route('becomeACoHost', [
-            'userid' => $user->id,
-            'hosthomeid' => $hosthome->id,
+            'userId' => $user->id,
+            'hostid' => $host->id,
         ]) }}
     </div>
     

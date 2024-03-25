@@ -87,7 +87,6 @@ class AuthController extends Controller
      * **Optional Parameters:**
      * - `hostremtoken`: A token used for host or co-host authorization (string).
      * - `hostid`: The ID of the user who invited you to be a co-host (integer).
-     * - `hosthomeid`: The ID of the apartment for which you're being invited as a co-host (integer).
      * - `encrptedCoHostemail`: The encrpted email of the cohost.
      *
      * **Behavior:**
@@ -115,37 +114,29 @@ class AuthController extends Controller
         
         $user = null;
 
-        if (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid'])) && !empty(isset($data['hosthomeid']))) {
+        if (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid']))) {
             $decryptedCohostemail = Crypt::decryptString($data['encrptedCoHostemail']); 
             $decryptedHostremToken = Crypt::decryptString($data['hostremtoken']);
 
             $oghost = User::where('remember_token', $decryptedHostremToken)->where('id', $data['hostid'])->first();
             if ($oghost) {
-                $oghostHome = HostHome::find($data['hosthomeid']);
-                if ($oghostHome) {
                         
-                    if ($oghostHome->user_id == $oghost->id || Hosthomecohost::find($oghost->id)){
 
-                        if ($decryptedCohostemail == $data['email']) {
-                            $user = User::create([
-                                'name' => $data['name'],
-                                'email' => $data['email'],
-                                'password' => Hash::make($data['password']),
-                                'remember_token' => Str::random(40),
-                                'co_host' => 1
-                            ]);
+                if ($decryptedCohostemail == $data['email']) {
+                    $user = User::create([
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'password' => Hash::make($data['password']),
+                        'remember_token' => Str::random(40),
+                        'co_host' => 1
+                    ]);
 
-                            Mail::to($user->email)->queue(new CoHostInvitation($user, $oghostHome));
-                        }else {
-                            abort(400, "Email did not match to make you a cohost");
-                        }
-                        
-                    }else {
-                        abort(400, "Host or Co Host has not authorised that you be a cohost of this apartment");
-                    }
-                } else {
-                    abort(400, "Host home not found");
+                    Mail::to($user->email)->queue(new CoHostInvitation($user, $oghost->id));
+                }else {
+                    abort(400, "Email did not match to make you a cohost");
                 }
+                    
+                
                 
             }else {
                 abort(400, "Invalid host or cohost authorization");

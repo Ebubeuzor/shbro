@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -12,11 +13,10 @@ use Illuminate\Queue\SerializesModels;
 class CoHostInvitation extends Mailable
 {
     use Queueable, SerializesModels;
-
     
     public function __construct(
         protected $user,
-        protected $hosthome
+        protected $hostid
     )
     {
         //
@@ -28,7 +28,7 @@ class CoHostInvitation extends Mailable
         ->view("emails.invitation")
         ->with([
             "user" => $this->user,
-            "hosthome" => $this->hosthome
+            "host" => User::find($this->hostid)
         ])
         ;
     }

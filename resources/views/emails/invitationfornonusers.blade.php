@@ -6,8 +6,9 @@
     <title>Document</title>
 </head>
 <body>
+    
     <div>
-    <a href="http://localhost:5173/SignUp?hostremtoken={{$hostremToken}}&hostid={{$hostid}}&hosthomeid={{$hosthomeid}}&cohostemail={{$cohostemail}}">Click the link to sign up and become a co host</a>
+        <a href="http://localhost:5173/SignUp?hostremtoken={{$hostremToken}}&hostid={{$hostid}}&cohostemail={{$cohostemail}}">Click the link to sign up and become a co host</a>
     </div>
 
 </body>

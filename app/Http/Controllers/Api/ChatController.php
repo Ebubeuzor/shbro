@@ -37,10 +37,12 @@ class ChatController extends Controller
         }
 
         // Return the messages along with booking requests
+        $user = User::find($receiverId);
+        $user->profilePicture = url($user->profilePicture);
         return response([
             'messagesWithAUser' => $messages,
             'recentMessages' => $this->chat->getRecentUserMessages($request->user()->id),
-            'receiver' => User::find($receiverId)
+            'receiver' => $user
         ]);
     }
 

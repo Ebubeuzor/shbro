@@ -7,10 +7,12 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Console\\Kernel' => $baseDir . '/app/Console/Kernel.php',
+    'App\\Events\\AdminUserChatEvent' => $baseDir . '/app/Events/AdminUserChatEvent.php',
     'App\\Events\\EmailVerified' => $baseDir . '/app/Events/EmailVerified.php',
     'App\\Events\\MessageSent' => $baseDir . '/app/Events/MessageSent.php',
     'App\\Events\\NewEvent' => $baseDir . '/app/Events/NewEvent.php',
     'App\\Events\\NewNotificationEvent' => $baseDir . '/app/Events/NewNotificationEvent.php',
+    'App\\Events\\Typing' => $baseDir . '/app/Events/Typing.php',
     'App\\Exceptions\\Handler' => $baseDir . '/app/Exceptions/Handler.php',
     'App\\Http\\Controllers\\Api\\AdminController' => $baseDir . '/app/Http/Controllers/Api/AdminController.php',
     'App\\Http\\Controllers\\Api\\AuthController' => $baseDir . '/app/Http/Controllers/Api/AuthController.php',
@@ -102,6 +104,7 @@ return array(
     'App\\Jobs\\UpdateHostHomePrices' => $baseDir . '/app/Jobs/UpdateHostHomePrices.php',
     'App\\Listeners\\GenerateTokenOnEmailVerification' => $baseDir . '/app/Listeners/GenerateTokenOnEmailVerification.php',
     'App\\Listeners\\SendEmailVerificationNotification' => $baseDir . '/app/Listeners/SendEmailVerificationNotification.php',
+    'App\\Mail\\AcceptOrDeclineGuestMail' => $baseDir . '/app/Mail/AcceptOrDeclineGuestMail.php',
     'App\\Mail\\ActivateAccount' => $baseDir . '/app/Mail/ActivateAccount.php',
     'App\\Mail\\CoHostInvitation' => $baseDir . '/app/Mail/CoHostInvitation.php',
     'App\\Mail\\CoHostInvitationForNonUsers' => $baseDir . '/app/Mail/CoHostInvitationForNonUsers.php',
@@ -110,6 +113,7 @@ return array(
     'App\\Mail\\VerifyYourEmail' => $baseDir . '/app/Mail/VerifyYourEmail.php',
     'App\\Mail\\WelcomeMail' => $baseDir . '/app/Mail/WelcomeMail.php',
     'App\\Models\\AcceptGuestRequest' => $baseDir . '/app/Models/AcceptGuestRequest.php',
+    'App\\Models\\AdminGuestChat' => $baseDir . '/app/Models/AdminGuestChat.php',
     'App\\Models\\Adminrole' => $baseDir . '/app/Models/Adminrole.php',
     'App\\Models\\Amenity' => $baseDir . '/app/Models/Amenity.php',
     'App\\Models\\Booking' => $baseDir . '/app/Models/Booking.php',

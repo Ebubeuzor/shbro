@@ -402,7 +402,7 @@ class AdminController extends Controller
         return response()->json(['data' => $responseData]);
     }
     
-    
+
     /**
      * @lrd:start
      * Admin Analytical Dashboard.

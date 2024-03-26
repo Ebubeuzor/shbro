@@ -17,6 +17,10 @@ Broadcast::channel('new-public-channel', function ($user) {
     return true; 
 });
 
+Broadcast::channel('start-convo', function ($user) {
+    return true; 
+});
+
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
@@ -34,12 +38,15 @@ Broadcast::channel('chat.user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
 
-Broadcast::channel('chat.admin.{adminId}', function ($user, $adminId) {
-    // Check if conversation is already being handled by another admin
-    if ($user->isAdminHandlingConversation()) {
-        // Conversation is already being handled by another admin
-        return false;
-    }
-    
+Broadcast::channel('join.chat.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+
+Broadcast::channel('left.chat.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+
+Broadcast::channel('chat.admin.{adminId}', function ($user, $adminId) {    
     return (int) $user->id === (int) $adminId;
 });
+

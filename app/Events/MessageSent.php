@@ -51,10 +51,12 @@ class MessageSent implements ShouldBroadcast
         $messages->load('bookingRequest');
 
         $chatRepository = new ChatRepository();
+        $user = User::find($this->receiver);
+        $user->profilePicture = url($user->profilePicture);
         return [
             'messagesWithAUser' => $messages,
             'recentMessages' => $chatRepository->getRecentUserMessages($this->receiver),
-            'receiver' => User::find($this->receiver)
+            'receiver' => $user
         ];
     }
     

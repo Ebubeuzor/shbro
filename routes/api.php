@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminGuestChatController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingsController;
 use App\Http\Controllers\Api\ChatController;
@@ -108,6 +109,12 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('hosthomes', [HostHomeController::class, 'store']);
     Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
     Route::get('addCoHost', [HostHomeController::class, 'addCoHost']);
+    Route::get('leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
+    Route::get('joinChat/{chatid}/{guestid}', [AdminGuestChatController::class, 'joinChat']);
+    Route::get('getChatMessages/{adminId}/{userId}', [AdminGuestChatController::class, 'getChatMessages']);
+    Route::get('getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
+    Route::get('getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);
+    Route::post('startConversation', [AdminGuestChatController::class, 'startConversation']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
     Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
     Route::delete('removeCoHost/{userid}', [HostHomeController::class, 'removeCoHost']);

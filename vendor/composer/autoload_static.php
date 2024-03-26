@@ -683,10 +683,12 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
 
     public static $classMap = array (
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
+        'App\\Events\\AdminUserChatEvent' => __DIR__ . '/../..' . '/app/Events/AdminUserChatEvent.php',
         'App\\Events\\EmailVerified' => __DIR__ . '/../..' . '/app/Events/EmailVerified.php',
         'App\\Events\\MessageSent' => __DIR__ . '/../..' . '/app/Events/MessageSent.php',
         'App\\Events\\NewEvent' => __DIR__ . '/../..' . '/app/Events/NewEvent.php',
         'App\\Events\\NewNotificationEvent' => __DIR__ . '/../..' . '/app/Events/NewNotificationEvent.php',
+        'App\\Events\\Typing' => __DIR__ . '/../..' . '/app/Events/Typing.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Api\\AdminController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AdminController.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
@@ -778,6 +780,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Jobs\\UpdateHostHomePrices' => __DIR__ . '/../..' . '/app/Jobs/UpdateHostHomePrices.php',
         'App\\Listeners\\GenerateTokenOnEmailVerification' => __DIR__ . '/../..' . '/app/Listeners/GenerateTokenOnEmailVerification.php',
         'App\\Listeners\\SendEmailVerificationNotification' => __DIR__ . '/../..' . '/app/Listeners/SendEmailVerificationNotification.php',
+        'App\\Mail\\AcceptOrDeclineGuestMail' => __DIR__ . '/../..' . '/app/Mail/AcceptOrDeclineGuestMail.php',
         'App\\Mail\\ActivateAccount' => __DIR__ . '/../..' . '/app/Mail/ActivateAccount.php',
         'App\\Mail\\CoHostInvitation' => __DIR__ . '/../..' . '/app/Mail/CoHostInvitation.php',
         'App\\Mail\\CoHostInvitationForNonUsers' => __DIR__ . '/../..' . '/app/Mail/CoHostInvitationForNonUsers.php',
@@ -786,6 +789,7 @@ class ComposerStaticInit877f643d0675fe6999b2af60cd5c4a7e
         'App\\Mail\\VerifyYourEmail' => __DIR__ . '/../..' . '/app/Mail/VerifyYourEmail.php',
         'App\\Mail\\WelcomeMail' => __DIR__ . '/../..' . '/app/Mail/WelcomeMail.php',
         'App\\Models\\AcceptGuestRequest' => __DIR__ . '/../..' . '/app/Models/AcceptGuestRequest.php',
+        'App\\Models\\AdminGuestChat' => __DIR__ . '/../..' . '/app/Models/AdminGuestChat.php',
         'App\\Models\\Adminrole' => __DIR__ . '/../..' . '/app/Models/Adminrole.php',
         'App\\Models\\Amenity' => __DIR__ . '/../..' . '/app/Models/Amenity.php',
         'App\\Models\\Booking' => __DIR__ . '/../..' . '/app/Models/Booking.php',

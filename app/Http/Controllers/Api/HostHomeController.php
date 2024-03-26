@@ -1332,6 +1332,7 @@ class HostHomeController extends Controller
             if (!$existingCoHost) {
                 $hosthomeCoHost = new Hosthomecohost();
                 $hosthomeCoHost->user_id = $userId;
+                $hosthomeCoHost->host_id = $hostid;
                 $hosthomeCoHost->host_home_id = $hostHome->id;
                 $hosthomeCoHost->save();
             }

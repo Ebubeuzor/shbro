@@ -37,6 +37,8 @@ Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 
 Route::get('/becomeACoHost/{userId}/{hostid}', [HostHomeController::class, 'becomeACoHost'])->name('becomeACoHost');
+Route::get('/approveHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'approveHomeForHost'])->name('approveHomeForHost');
+Route::get('/disapproveHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'disapproveHomeForHost'])->name('disapproveHomeForHost');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

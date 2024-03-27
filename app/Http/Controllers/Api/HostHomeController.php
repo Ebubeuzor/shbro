@@ -8,6 +8,7 @@ use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
+use App\Mail\ApartmentCreationApprovalRequest;
 use App\Mail\CoHostInvitation;
 use App\Mail\CoHostInvitationForNonUsers;
 use App\Mail\NotificationMail;
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -170,7 +172,15 @@ class HostHomeController extends Controller
     public function notVerified()
     {
         return HostHomeResource::collection(
-            HostHome::where('verified',0)
+            HostHome::where(function($query) {
+                $query->where('approveByHost', true)
+                      ->where('needApproval', false);
+            })
+            ->orWhere(function($query) {
+                $query->whereNull('approveByHost')
+                      ->orWhereNull('needApproval');
+            })
+            ->where('verified',0)
             ->where('disapproved',null)
             ->whereNull('banned')
             ->whereNull('suspend')->get()
@@ -394,9 +404,18 @@ class HostHomeController extends Controller
         }
 
         $host = User::find($hostHome->user_id);
+        if ($user->co_host == true) {
+            
+            $hostHome->update([
+                'approvedByHost' => false,
+                'needApproval' => false
+            ]);
+            Mail::to($host->email)->send(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
+        }
+
         if ($host->cohosts()->exists()) {
             $coHosts = $host->cohosts;
-            
+
             foreach ($coHosts as $coHost) {
                 Hosthomecohost::create([
                     'user_id' => $coHost->user_id,
@@ -1702,6 +1721,39 @@ class HostHomeController extends Controller
             $this->createDiscounts($hosthomediscountData);
         }
     }
+    
+    public function approveHomeForHost($hostid, $hosthomeid)
+    {
+        // Find the host home
+        $hostHome = HostHome::findOrFail($hosthomeid);
+        
+        // Update the approval status
+        $hostHome->approveByHost = true;
+        $hostHome->needApproval = false;
+        $hostHome->save();
+    
+        // Set flash message for approval
+        Session::flash('status', 'Apartment has been approved successfully.');
+    
+        // Return the view
+        return view('approveordecline', ['message' => 'Apartment has been approved successfully.']);
+    }
+    
+    public function disapproveHomeForHost($hostid, $hosthomeid)
+    {
+        // Find the host home
+        $hostHome = HostHome::findOrFail($hosthomeid);
+        
+        // Delete the host home
+        $hostHome->delete();
+    
+        // Set flash message for disapproval
+        Session::flash('status', 'Apartment has been declined.');
+    
+        // Return the view
+        return view('approveordecline', ['message' => 'Apartment has been declined.']);
+    }
+
 
 
 

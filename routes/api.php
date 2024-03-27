@@ -224,6 +224,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
 
 
+    Route::get('showGuestHomeForAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 });
 
 
@@ -243,7 +244,7 @@ Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
 Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
 Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
-Route::get('showGuestHome/{id}', [HostHomeController::class, 'showGuestHome']);
+Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
 Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
 Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);

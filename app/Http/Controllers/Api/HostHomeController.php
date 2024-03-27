@@ -299,11 +299,11 @@ class HostHomeController extends Controller
     {
         $data = $request->validated();
 
-        $user = Auth::user();
+        $user = User::find(auth()->id());
 
         $hostHome = new HostHome();
 
-        $hostHome->user_id = $user->id;
+        $hostHome->user_id = $user->cohosts()->exists() ? $user->cohosts()->first()->host_id : $user->id;
         $hostHome->property_type = $data['property_type'];
         $hostHome->guest_choice = $data['guest_choice'];
         $hostHome->address = $data['address'];
@@ -391,6 +391,19 @@ class HostHomeController extends Controller
         foreach ($notices as $notice) {
             $noticeData = ['notice' => $notice, 'host_home_id' => $hostHome->id];
             $this->createNotices($noticeData);
+        }
+
+        $host = User::find($hostHome->user_id);
+        if ($host->cohosts()->exists()) {
+            $coHosts = $host->cohosts;
+            
+            foreach ($coHosts as $coHost) {
+                Hosthomecohost::create([
+                    'user_id' => $coHost->user_id,
+                    'host_id' => $coHost->host_id,
+                    'host_home_id' => $hostHome->id
+                ]);
+            }
         }
 
         return response([
@@ -1282,20 +1295,9 @@ class HostHomeController extends Controller
                 // Send invitation to join shortlet bookings
                 Mail::to($data['email'])->send(new CoHostInvitationForNonUsers($host->remember_token, $data['email'], $host->id));
                 return response()->json(['message' => 'Invitation to join shortlet bookings has been sent'], 200);
+            }else {
+                abort(400,"Existing Users can't be a cohost");
             }
-
-            // Check if the user is eligible for co-host invitation
-            if ($user->banned || $user->suspend || $user->trashed()) {
-                abort(400, "User not eligible for co-host invitation");
-            }
-
-            // Update user's co-host status
-            $user->update([
-                "co_host" => true,
-            ]);
-
-            // Send the co-host invitation email with a link to join the host home
-            Mail::to($data['email'])->send(new CoHostInvitation($user, $host->id));
 
             // Provide a success response
             return response()->json(['message' => 'Co-host invitation sent successfully'], 200);
@@ -1537,18 +1539,12 @@ class HostHomeController extends Controller
      */
     public function update(UpdateHostHomeRequest $request, $hostHomeId)
     {
-        // $securityDeposit = $data['securityDeposit'];
 
-        // $service_fee_percentage = 0.10;
-        // $tax_percentage = 0.05;
-
-        // $service_fee = $price * $service_fee_percentage;
-        // $tax = $price * $tax_percentage;
         $data = $request->validated();
-
+        
         $hostHome = HostHome::find($hostHomeId);
         $price = $data['price'];
-
+        
         // Assuming $service_fee_percentage and $tax_percentage are set to 0
         $service_fee_percentage = 0;
         $tax_percentage = 0;

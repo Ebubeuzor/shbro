@@ -39,6 +39,7 @@ class ProcessImage implements ShouldQueue
     public function handle()
     {
         $imageData = ['image' => $this->image, 'host_home_id' => $this->hostHomeId];
+        info($imageData);
         $this->createImages($imageData);
     }
 
@@ -57,6 +58,7 @@ class ProcessImage implements ShouldQueue
         }
 
         $data2 = $validator->validated();
+        info($data2);
         $data2['image'] = $this->saveImage($data2['image'], $data2['host_home_id']);
 
         return Hosthomephoto::create($data2);

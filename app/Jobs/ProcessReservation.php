@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Hosthomereservation;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Validator;
+
+class ProcessReservation implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct(
+        private $reservation,
+        private $hostHomeId
+    )
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $reservationData = ['reservation' => $this->reservation, 'host_home_id' => $this->hostHomeId];
+        $this->createReservations($reservationData);
+    }
+
+    public function createReservations($data)
+    {
+        // Validate the input data
+        $validator = Validator::make($data, [
+            'reservation' => 'string',
+            'host_home_id' => 'exists:App\Models\HostHome,id'
+        ]);
+
+        // Check for validation errors
+        if ($validator->fails()) {
+            // Handle validation errors, you can return a response or throw an exception
+            return response(['error' => $validator->errors()], 422);
+        }
+
+        $data2 = $validator->validated();
+
+        return Hosthomereservation::create($data2);
+        
+    }
+}

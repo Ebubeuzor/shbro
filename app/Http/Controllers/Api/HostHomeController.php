@@ -8,6 +8,13 @@ use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
+use App\Jobs\ProcessDescription;
+use App\Jobs\ProcessDiscount;
+use App\Jobs\ProcessImage;
+use App\Jobs\ProcessNotice;
+use App\Jobs\ProcessOffer;
+use App\Jobs\ProcessReservation;
+use App\Jobs\ProcessRule;
 use App\Mail\ApartmentCreationApprovalRequest;
 use App\Mail\CoHostInvitation;
 use App\Mail\CoHostInvitationForNonUsers;
@@ -369,38 +376,31 @@ class HostHomeController extends Controller
         }
 
         foreach ($images as $base64Image) {
-            $imageData = ['image' => $base64Image, 'host_home_id' => $hostHome->id];
-            $this->createImages($imageData);
+            ProcessImage::dispatch($base64Image, $hostHome->id);
         }
         
-        foreach ($amenities as $amenitie) {
-            $offerData = ['offer' => $amenitie, 'host_home_id' => $hostHome->id];
-            $this->createOffers($offerData);
+        foreach ($amenities as $amenity) {
+            ProcessOffer::dispatch($amenity, $hostHome->id);
         }
         
         foreach ($hosthomedescriptions as $hosthomedescription) {
-            $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hostHome->id];
-            $this->createDescriptions($descriptionData);
+            ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
         }
         
         foreach ($reservations as $reservation) {
-            $reservationData = ['reservation' => $reservation, 'host_home_id' => $hostHome->id];
-            $this->createReservations($reservationData);
+            ProcessReservation::dispatch($reservation,$hostHome->id);
         }
         
         foreach ($discounts as $discount) {
-            $discountData = ['discount' => $discount, 'host_home_id' => $hostHome->id];
-            $this->createDiscounts($discountData);
+            ProcessDiscount::dispatch($discount,$hostHome->id);
         }
         
         foreach ($rules as $rule) {
-            $ruleData = ['rule' => $rule, 'host_home_id' => $hostHome->id];
-            $this->createRules($ruleData);
+            ProcessRule::dispatch($rule,$hostHome->id);
         }
         
         foreach ($notices as $notice) {
-            $noticeData = ['notice' => $notice, 'host_home_id' => $hostHome->id];
-            $this->createNotices($noticeData);
+            ProcessNotice::dispatch($notice, $hostHome->id);
         }
 
         $host = User::find($hostHome->user_id);

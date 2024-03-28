@@ -14,8 +14,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('host_homes', function (Blueprint $table) {
-            $table->boolean('needApproval')->default(true);
-            $table->boolean('approvedByHost')->default(false);
+            $table->boolean('needApproval')->nullable();
+            $table->boolean('approvedByHost')->nullable();
         });
     }
 

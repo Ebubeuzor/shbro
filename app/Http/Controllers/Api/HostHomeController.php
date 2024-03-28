@@ -45,6 +45,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
 
 class HostHomeController extends Controller
 {
@@ -375,32 +377,37 @@ class HostHomeController extends Controller
             ]);
         }
 
+        $batch = Bus::batch([])
+        ->then(function (Batch $batch) {
+            info('All jobs processed successfully');
+        })->dispatch();
+
         foreach ($images as $base64Image) {
-            ProcessImage::dispatch($base64Image, $hostHome->id);
+            ProcessImage::dispatch($base64Image, $hostHome->id)->onBatch($batch);
         }
         
         foreach ($amenities as $amenity) {
-            ProcessOffer::dispatch($amenity, $hostHome->id);
+            ProcessOffer::dispatch($amenity, $hostHome->id)->onBatch($batch);
         }
         
         foreach ($hosthomedescriptions as $hosthomedescription) {
-            ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
+            ProcessDescription::dispatch($hosthomedescription,$hostHome->id)->onBatch($batch);
         }
         
         foreach ($reservations as $reservation) {
-            ProcessReservation::dispatch($reservation,$hostHome->id);
+            ProcessReservation::dispatch($reservation,$hostHome->id)->onBatch($batch);
         }
         
         foreach ($discounts as $discount) {
-            ProcessDiscount::dispatch($discount,$hostHome->id);
+            ProcessDiscount::dispatch($discount,$hostHome->id)->onBatch($batch);
         }
         
         foreach ($rules as $rule) {
-            ProcessRule::dispatch($rule,$hostHome->id);
+            ProcessRule::dispatch($rule,$hostHome->id)->onBatch($batch);
         }
         
         foreach ($notices as $notice) {
-            ProcessNotice::dispatch($notice, $hostHome->id);
+            ProcessNotice::dispatch($notice, $hostHome->id)->onBatch($batch);
         }
 
         $host = User::find($hostHome->user_id);

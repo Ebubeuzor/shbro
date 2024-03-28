@@ -45,8 +45,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 class HostHomeController extends Controller
 {
@@ -359,79 +358,75 @@ class HostHomeController extends Controller
         $hostHome->tax = 0;
         $hostHome->total = 0;
 
-        $hostHome->save();
+        DB::transaction(function () use ($hostHome, $data,$user) {
+            $hostHome->save();
 
 
-        $amenities = $data['amenities'];
-        $images = $data['hosthomephotos'];
-        $hosthomedescriptions = $data['hosthomedescriptions'];
-        $reservations = $data['reservations'];
-        $discounts = $data['discounts'];
-        $rules = $data['rules'];
-        $notices = $data['notice'];
-        
-        if(trim(isset($data['additionalRules']))){
-            Hosthomerule::create([
-                'rule' => $data['additionalRules'],
-                'host_home_id' => $hostHome->id
-            ]);
-        }
-
-        $batch = Bus::batch([])
-        ->then(function (Batch $batch) {
-            info('All jobs processed successfully');
-        })->dispatch();
-
-        foreach ($images as $base64Image) {
-            ProcessImage::dispatch($base64Image, $hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($amenities as $amenity) {
-            ProcessOffer::dispatch($amenity, $hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($hosthomedescriptions as $hosthomedescription) {
-            ProcessDescription::dispatch($hosthomedescription,$hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($reservations as $reservation) {
-            ProcessReservation::dispatch($reservation,$hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($discounts as $discount) {
-            ProcessDiscount::dispatch($discount,$hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($rules as $rule) {
-            ProcessRule::dispatch($rule,$hostHome->id)->onBatch($batch);
-        }
-        
-        foreach ($notices as $notice) {
-            ProcessNotice::dispatch($notice, $hostHome->id)->onBatch($batch);
-        }
-
-        $host = User::find($hostHome->user_id);
-        if ($user->co_host == true) {
+            $amenities = $data['amenities'];
+            $images = $data['hosthomephotos'];
+            $hosthomedescriptions = $data['hosthomedescriptions'];
+            $reservations = $data['reservations'];
+            $discounts = $data['discounts'];
+            $rules = $data['rules'];
+            $notices = $data['notice'];
             
-            $hostHome->update([
-                'approvedByHost' => false,
-                'needApproval' => false
-            ]);
-            Mail::to($host->email)->send(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
-        }
-
-        if ($host->cohosts()->exists()) {
-            $coHosts = $host->cohosts;
-
-            foreach ($coHosts as $coHost) {
-                Hosthomecohost::create([
-                    'user_id' => $coHost->user_id,
-                    'host_id' => $coHost->host_id,
+            if(trim(isset($data['additionalRules']))){
+                Hosthomerule::create([
+                    'rule' => $data['additionalRules'],
                     'host_home_id' => $hostHome->id
                 ]);
             }
-        }
 
+            foreach ($images as $base64Image) {
+                ProcessImage::dispatch($base64Image, $hostHome->id);
+            }
+            
+            foreach ($amenities as $amenity) {
+                ProcessOffer::dispatch($amenity, $hostHome->id);
+            }
+            
+            foreach ($hosthomedescriptions as $hosthomedescription) {
+                ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
+            }
+            
+            foreach ($reservations as $reservation) {
+                ProcessReservation::dispatch($reservation,$hostHome->id);
+            }
+            
+            foreach ($discounts as $discount) {
+                ProcessDiscount::dispatch($discount,$hostHome->id);
+            }
+            
+            foreach ($rules as $rule) {
+                ProcessRule::dispatch($rule,$hostHome->id);
+            }
+            
+            foreach ($notices as $notice) {
+                ProcessNotice::dispatch($notice, $hostHome->id);
+            }
+
+            $host = User::find($hostHome->user_id);
+            if ($user->co_host == true) {
+                
+                $hostHome->update([
+                    'approvedByHost' => false,
+                    'needApproval' => false
+                ]);
+                Mail::to($host->email)->send(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
+            }
+
+            if ($host->cohosts()->exists()) {
+                $coHosts = $host->cohosts;
+
+                foreach ($coHosts as $coHost) {
+                    Hosthomecohost::create([
+                        'user_id' => $coHost->user_id,
+                        'host_id' => $coHost->host_id,
+                        'host_home_id' => $hostHome->id
+                    ]);
+                }
+            }
+        });
         return response([
             "ok" => "Created"
         ],201);

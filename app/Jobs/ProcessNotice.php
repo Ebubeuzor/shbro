@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ProcessNotice implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.

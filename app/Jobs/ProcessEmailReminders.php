@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessEmailReminders implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     
     public function handle()

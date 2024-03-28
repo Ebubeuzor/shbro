@@ -400,23 +400,22 @@ class BookingsController extends Controller
     {
         $discountAmount = 0;
 
-        if ($discount) {
-            switch ($discount->discount) {
-                case '20% New listing promotion':
-                    $discountAmount += $bookingCount < 3 ? ($price * 0.2) : 0;
-                    break;
-                case '5% Weekly discount':
-                    if ($durationOfStay >= 7 && $durationOfStay < 28) {
-                        $discountAmount += $price * 0.05;
-                    }
-                    break;
-                case '10% Monthly discount':
-                    if ($durationOfStay >= 28) {
-                        $discountAmount += $price * 0.1;
-                    }
-                    break;
-            }
+        switch ($discount->discount) {
+            case '20% New listing promotion':
+                $discountAmount += $bookingCount < 3 ? ($price * 0.2) : 0;
+                break;
+            case '5% Weekly discount':
+                if ($durationOfStay >= 7 && $durationOfStay < 28) {
+                    $discountAmount += $price * 0.05;
+                }
+                break;
+            case '10% Monthly discount':
+                if ($durationOfStay >= 28) {
+                    $discountAmount += $price * 0.1;
+                }
+                break;
         }
+        
 
         // If both weekly and monthly discounts are applicable, prioritize monthly discount
         if ($durationOfStay >= 28) {

@@ -406,10 +406,6 @@ class BookingsController extends Controller
                 break;
             case '5% Weekly discount':
                 $discountAmount += $price * 0.05;
-                // If both weekly and monthly discounts are applicable, prioritize monthly discount
-                if ($durationOfStay >= 28) {
-                    $discountAmount -= $price * 0.05; // Subtract weekly discount
-                }
                 break;
             case '10% Monthly discount':
                 $discountAmount += $price * 0.1;

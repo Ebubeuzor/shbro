@@ -409,7 +409,7 @@ class BookingsController extends Controller
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * 0.05) : $price;
                     break; // 5% off for stays of 7 nights or more
                 case '10% Monthly discount':
-                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * 0.1) : $price;
+                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * 0.1) : $returnPrice;
                     break; // 10% off for stays of 28 nights or more
                 default:
                     $returnPrice = $price;

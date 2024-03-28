@@ -351,15 +351,14 @@ class BookingsController extends Controller
         $discountedPrice = $actualPrice;
 
         // Apply standard discounts
-        foreach ($standardDiscounts as $discount) {
-            $discountedPrice = $this->applyDiscount($discountedPrice, $discount, $durationOfStay,$bookingCount);
+
+        if (!empty($standardDiscounts)) {
+            $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
+        }else{
+            $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
         }
 
-        info($discountedPrice . " p2");
-
-        // Apply custom discounts
-        $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
-
+        info($discountedPrice);
         return $discountedPrice;
     }
 
@@ -396,19 +395,34 @@ class BookingsController extends Controller
     }
 
 
-    private function applyDiscount($price, $discount, $durationOfStay = 0, $bookingCount)
+    private function applyDiscount($price, $discounts, $durationOfStay = 0, $bookingCount)
     {
         
-        switch ($discount->discount) {
-            case '20% New listing promotion':
-                return $bookingCount < 3 ? $price - ($price * 0.2) : $price;
-            case '5% Weekly discount':
-                return $durationOfStay >= 7 ? $price - ($price * 0.05) : $price; // 5% off for stays of 7 nights or more
-            case '10% Monthly discount':
-                return $durationOfStay >= 28 ? $price - ($price * 0.1) : $price; // 10% off for stays of 28 nights or more
-            default:
-                return $price;
+        $returnPrice = 0;
+        
+        foreach ($discounts as $discount) {
+            switch ($discount->discount) {
+                case '20% New listing promotion':
+                    $returnPrice = $bookingCount < 3 ? $price - ($price * 0.2) : $price;
+                    break;
+                case '5% Weekly discount':
+                    $returnPrice = $durationOfStay >= 7 ? $price - ($price * 0.05) : $price;
+                    break; // 5% off for stays of 7 nights or more
+                case '10% Monthly discount':
+                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * 0.1) : $price;
+                    break; // 10% off for stays of 28 nights or more
+                default:
+                    $returnPrice = $price;
+                    break;
+            }
         }
+
+        $newListingPromotion = collect($discounts)->contains('discount', '20% New listing promotion');
+        if ($newListingPromotion){
+            $returnPrice -= $bookingCount < 3 ? ($price * 0.2) : 0;
+        }
+        return $returnPrice;
+
     }
 
 

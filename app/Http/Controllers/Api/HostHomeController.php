@@ -180,11 +180,11 @@ class HostHomeController extends Controller
     {
         return HostHomeResource::collection(
             HostHome::where(function($query) {
-                $query->where('approveByHost', true)
+                $query->where('approvedByHost', true)
                       ->where('needApproval', false);
             })
             ->orWhere(function($query) {
-                $query->whereNull('approveByHost')
+                $query->whereNull('approvedByHost')
                       ->orWhereNull('needApproval');
             })
             ->where('verified',0)

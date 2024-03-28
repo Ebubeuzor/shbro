@@ -350,9 +350,7 @@ class BookingsController extends Controller
     {
         $discountedPrice = $actualPrice;
 
-        // Apply standard discounts
-
-        if (!empty($standardDiscounts)) {
+        if (!count($standardDiscounts) == 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{
             $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
@@ -371,22 +369,22 @@ class BookingsController extends Controller
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '2 weeks':
-                    $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
                 case '3 weeks':
-                    $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
                 case '4 weeks':
-                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
                 case '1 month':
-                    $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
                 case '2 months':
-                    $returnPrice = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
                 case '3 months':
-                    $returnPrice = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    $returnPrice = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
                     break;
             }
         }

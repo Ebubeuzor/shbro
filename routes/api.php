@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::put('schdulerUpdatePricesForDateRange/{id}', [HostHomeController::class, 'schdulerUpdatePricesForDateRange']);
 
     Route::get('/user', [UserController::class, 'getUserInfo']); 
+    Route::get('/hostcohosts', [UserController::class, 'hostcohosts']); 
 
     Route::apiResource('/userDetail', UserController::class);
     

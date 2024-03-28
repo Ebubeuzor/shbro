@@ -966,6 +966,41 @@ class UserController extends Controller
         }
     }
 
+
+    /**
+     * @lrd:start
+     * Retrieve co-hosts associated with the authenticated host.
+     *
+     * This method retrieves co-hosts associated with the authenticated host and returns their unique details
+     * including user ID, name, email, and profile picture.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response containing details of co-hosts.
+     * @lrd:end
+     */
+    public function hostcohosts()
+    {
+        // Get the authenticated host
+        $host = User::find(auth()->id());
+
+        $cohosts = $host->cohosts()->with('user')->get();
+
+        // Filter out duplicate co-hosts based on email
+        $uniqueCohosts = $cohosts->unique('user.email');
+
+        // Transform the co-hosts data to the desired format
+        $cohostData = $uniqueCohosts->map(function ($cohost) {
+            return [
+                'id' => $cohost->user->id,
+                'name' => $cohost->user->name,
+                'email' => $cohost->user->email,
+                'profilePicture' => $cohost->user->profilePicture != null ? url($cohost->user->profilePicture) : null, // Assuming profile picture is stored in database
+            ];
+        });
+
+        // Return the co-host data
+        return response()->json(['cohosts' => $cohostData ?? []], 200);
+    }
+
     /**
      * @lrd:start
      * Delete a user's bank account information.

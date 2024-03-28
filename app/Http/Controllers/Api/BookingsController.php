@@ -398,24 +398,17 @@ class BookingsController extends Controller
 
     private function applyDiscount($price, $discount, $durationOfStay = 0, $bookingCount)
     {
-        $discountAmount = 0;
-
+        
         switch ($discount->discount) {
             case '20% New listing promotion':
-                $discountAmount += $bookingCount < 3 ? ($price * 0.2) : 0;
-                break;
+                return $bookingCount < 3 ? $price - ($price * 0.2) : $price;
             case '5% Weekly discount':
-                $discountAmount += $price * 0.05;
-                break;
+                return $durationOfStay >= 7 ? $price - ($price * 0.05) : $price; // 5% off for stays of 7 nights or more
             case '10% Monthly discount':
-                $discountAmount += $price * 0.1;
-                break;
+                return $durationOfStay >= 28 ? $price - ($price * 0.1) : $price; // 10% off for stays of 28 nights or more
+            default:
+                return $price;
         }
-        
-
-
-        $discountedPrice = $price - $discountAmount;
-        return $discountedPrice;
     }
 
 

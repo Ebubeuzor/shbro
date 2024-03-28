@@ -65,7 +65,7 @@ class ProcessImage implements ShouldQueue
     }
 
     
-    private function saveImage($image,$hosthomeid)
+    private function saveImage($image, $hosthomeid)
     {
         // Check if image is base64 string
         if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
@@ -73,7 +73,7 @@ class ProcessImage implements ShouldQueue
             $imageType = strtolower($matches[1]);
 
             // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png','webp'])) {
+            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
                 throw new \Exception('Invalid image type');
             }
 
@@ -91,9 +91,9 @@ class ProcessImage implements ShouldQueue
             throw new \Exception('Invalid image format');
         }
 
-        $dir = 'images/';
+        $dir = 'images/'; // Change this to the desired subdirectory in your public folder, if necessary
         $file = Str::random() . '.' . $imageType;
-        $absolutePath = public_path($dir);
+        $absolutePath = public_path($dir); // Adjust the path to the public folder
         $relativePath = $dir . $file;
 
         if (!File::exists($absolutePath)) {
@@ -101,7 +101,7 @@ class ProcessImage implements ShouldQueue
         }
 
         // Save the decoded image to the file
-        if (!file_put_contents($relativePath, $decodedImage)) {
+        if (!file_put_contents(public_path($relativePath), $decodedImage)) { // Adjust the path to the public folder
             throw new \Exception('Failed to save image');
         }
 

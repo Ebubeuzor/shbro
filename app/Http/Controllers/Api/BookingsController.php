@@ -416,9 +416,10 @@ class BookingsController extends Controller
         }
 
         $newListingPromotion = collect($discounts)->contains('discount', '20% New listing promotion');
-        if ($newListingPromotion){
-            $returnPrice -= $bookingCount < 3 ? ($price * 0.2) : 0;
+        if ($newListingPromotion && $bookingCount < 3){
+            $returnPrice -=  ($price * 0.2);
         }
+        
         return $returnPrice;
 
     }

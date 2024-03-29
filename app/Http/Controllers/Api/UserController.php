@@ -419,7 +419,18 @@ class UserController extends Controller
      */
     public function hostAnalytics()
     {   
-        $hostId = auth()->id();
+        
+        $hostId = null;
+
+        $user = User::find(auth()->id());
+
+        // If the authenticated user is a cohost, find the corresponding host
+        if ($user->co_host == 1) {
+            $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+            $hostId = $cohostOgHost->host_id;
+        } else {
+            $hostId = $user->id;
+        }
 
         // Get the current date
         $now = Carbon::now();
@@ -467,7 +478,17 @@ class UserController extends Controller
      */
     public function hostAnalyticsByMonthYear($month, $year)
     {   
-        $hostId = auth()->id();
+        $hostId = null;
+
+        $user = User::find(auth()->id());
+
+        // If the authenticated user is a cohost, find the corresponding host
+        if ($user->co_host) {
+            $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+            $hostId = $cohostOgHost->host_id;
+        } else {
+            $hostId = $user->id;
+        }
 
         // Validate the month input
         $validMonths = [

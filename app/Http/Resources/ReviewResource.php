@@ -24,7 +24,7 @@ class ReviewResource extends JsonResource
             'ratings' => $this->ratings,
             'comment' => $this->comment,
             'guestName' => $user->name,
-            'guestProfilePic' => URL::to($user->profilePicture),
+            'guestProfilePic' => $user->profilePicture != null ? URL::to($user->profilePicture) : null,
             'created_at' => Carbon::parse($this->created_at)->format('M j, Y')
         ];
     }

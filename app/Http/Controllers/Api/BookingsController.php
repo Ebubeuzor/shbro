@@ -369,22 +369,25 @@ class BookingsController extends Controller
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '2 weeks':
-                    $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '3 weeks':
-                    $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '4 weeks':
-                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '1 month':
-                    $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '2 months':
-                    $returnPrice = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
                 case '3 months':
-                    $returnPrice = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $returnPrice;
+                    $returnPrice = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    break;
+                default:
+                    $returnPrice = $price;
                     break;
             }
         }
@@ -461,6 +464,15 @@ class BookingsController extends Controller
     public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
     {
         $user = User::find(auth()->id());
+        // Check if the user has already made a request today
+        $lastRequest = AcceptGuestRequest::where('user_id', $user->id)
+        ->whereDate('created_at', Carbon::today())
+        ->first();
+
+        if ($lastRequest) {
+            // If a request was made today, return an error response indicating that the user has already made a request today
+            return response()->json(['error' => 'You have already made a request today'], 400);
+        }
         $message = $user->name . " has requested to book your apartment please approve or decline";
         $chat = new ChatRepository();
         $message = $chat->sendMessages([

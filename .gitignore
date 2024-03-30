@@ -1,4 +1,5 @@
 /node_modules
+/public
 .env.backup
 .env.production
 .phpunit.result.cache

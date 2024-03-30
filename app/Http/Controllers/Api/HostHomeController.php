@@ -321,7 +321,10 @@ class HostHomeController extends Controller
 
         $hostHome = new HostHome();
 
-        $hostHome->user_id = $user->cohosts()->exists() ? $user->cohosts()->first()->host_id : $user->id;
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+
+        info($cohost);
+        $hostHome->user_id = $cohost ? $cohost->host_id : $user->id;
         $hostHome->property_type = $data['property_type'];
         $hostHome->guest_choice = $data['guest_choice'];
         $hostHome->address = $data['address'];
@@ -412,7 +415,7 @@ class HostHomeController extends Controller
                     'approvedByHost' => false,
                     'needApproval' => false
                 ]);
-                Mail::to($host->email)->send(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
+                Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
             }
 
             if ($host->cohosts()->exists()) {
@@ -1730,7 +1733,7 @@ class HostHomeController extends Controller
         $hostHome = HostHome::findOrFail($hosthomeid);
         
         // Update the approval status
-        $hostHome->approveByHost = true;
+        $hostHome->approvedByHost = true;
         $hostHome->needApproval = false;
         $hostHome->save();
     

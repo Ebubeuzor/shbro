@@ -29,8 +29,8 @@ class ApartmentCreationApprovalRequest extends Mailable
         ->view('emails.apartmentcreationapproval')
         ->with([
             'hosthome' => $this->hosthome,
-            'host' => $this->host->name,
-            'cohost' => $this->cohost->name,
+            'host' => $this->host,
+            'cohost' => $this->cohost,
         ]);
     }
 

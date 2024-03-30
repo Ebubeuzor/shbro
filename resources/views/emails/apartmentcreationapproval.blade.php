@@ -6,9 +6,9 @@
     <title>Document</title>
 </head>
 <body>
-    <div>Hello {{$host}}</div>
-    <div>Your {{$cohost}} is trying to create an apartment please approve or decline</div>
-    <div><a href="http://localhost:5173/EditHostHomes/{{$hosthome->id])">Click to view apartment</a></div>
+    <div>Hello {{$host->name}}</div>
+    <div>Your {{$cohost->name}} is trying to create an apartment please approve or decline</div>
+    <div><a href="http://localhost:5173/EditHostHomes/{{$hosthome->id}}">Click to view apartment</a></div>
     <div>
         <a href="{{ route('approveHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to approve</a>
         <a href="{{ route('disapproveHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to decline</a>

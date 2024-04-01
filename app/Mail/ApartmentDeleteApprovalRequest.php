@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ApartmentCreationApprovalRequest extends Mailable
+class ApartmentDeleteApprovalRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -25,13 +25,13 @@ class ApartmentCreationApprovalRequest extends Mailable
     
     public function build()
     {
-        return $this->subject("Approval on creation of an apartment")
+        return $this->subject("Approval on deletion of an apartment")
         ->view('emails.apartmentcreationapproval')
         ->with([
             'hosthome' => $this->hosthome,
             'host' => $this->host,
             'cohost' => $this->cohost,
-            'cohostRequest' => "create"
+            'cohostRequest' => "delete"
         ]);
     }
 

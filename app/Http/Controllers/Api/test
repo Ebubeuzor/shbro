@@ -1,0 +1,24 @@
+if ($sender->co_host && $receiverHost && $receiverHost->cohosts()->exists()) {
+            $senderId = $receiverHost->id;
+        }
+
+        // Check if the receiver is a host and has cohosts
+        if ($receiverHost && $receiverHost->cohosts()->exists()) {
+
+            $this->sendMessage($request->message, $senderId, $receiverId);
+            // Get all cohosts of the receiver host
+            $cohosts = $receiverHost->cohosts()->with('user')->get();
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+
+            // Add sender user to cohosts collection if they are not already a cohost
+            if (!$cohosts->contains($sender)) {
+                $cohosts->push($sender);
+            }
+
+            
+            // Send the message to all cohosts
+            foreach ($uniqueCohosts as $cohost) {
+                SendMailForChatToCohosts::dispatch($request->message,$senderId, $cohost->user_id);
+            }
+        }

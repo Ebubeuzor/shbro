@@ -10,14 +10,25 @@ use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Jobs\ProcessDescription;
 use App\Jobs\ProcessDiscount;
+use App\Jobs\ProcessHostHomeCreation;
+use App\Jobs\ProcessHostHomeUpdate;
 use App\Jobs\ProcessImage;
 use App\Jobs\ProcessNotice;
 use App\Jobs\ProcessOffer;
 use App\Jobs\ProcessReservation;
 use App\Jobs\ProcessRule;
+use App\Jobs\UpdateDescription;
+use App\Jobs\UpdateDiscount;
+use App\Jobs\UpdateImage;
+use App\Jobs\UpdateNotice;
+use App\Jobs\UpdateOffer;
+use App\Jobs\UpdateReservation;
+use App\Jobs\UpdateRule;
 use App\Mail\ApartmentCreationApprovalRequest;
+use App\Mail\ApartmentDeleteApprovalRequest;
 use App\Mail\CoHostInvitation;
 use App\Mail\CoHostInvitationForNonUsers;
+use App\Mail\CohostUpdateForHost;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
@@ -319,117 +330,8 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
 
-        $hostHome = new HostHome();
-
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
-
-        info($cohost);
-        $hostHome->user_id = $cohost ? $cohost->host_id : $user->id;
-        $hostHome->property_type = $data['property_type'];
-        $hostHome->guest_choice = $data['guest_choice'];
-        $hostHome->address = $data['address'];
-        $hostHome->guests = $data['guest'];
-        $hostHome->bedroom = $data['bedrooms'];
-        $hostHome->beds = $data['beds'];
-        $hostHome->bathrooms = $data['bathrooms'];
-        $hostHome->video = $this->saveVideo($data['hosthomevideo']);
-        $hostHome->title = $data['title'];
-        $hostHome->description = $data['description'];
-        $hostHome->reservation = $data['reservation'];
-        $hostHome->actualPrice = $data['price'];
-        $hostHome->price = 0;
-        $hostHome->check_out_time = $data['check_out_time'];
-        $hostHome->host_type = $data['host_type'];
-        $hostHome->check_in_time = $data['checkin'];
-        $hostHome->cancellation_policy = $data['cancelPolicy'];
-        $hostHome->security_deposit = $data['securityDeposit'];
-
-        $price = $data['price'];
-        // $service_fee_percentage = 0.10;
-        // $tax_percentage = 0.05;
-
-        // $service_fee = $price * $service_fee_percentage;
-        // $tax = $price * $tax_percentage;
-
-        $service_fee = 0;
-        $tax = 0;
-
-
-        $total = $price + $service_fee + $tax;
-
-        $hostHome->service_fee = 0;
-        $hostHome->tax = 0;
-        $hostHome->total = 0;
-
-        DB::transaction(function () use ($hostHome, $data,$user) {
-            $hostHome->save();
-
-
-            $amenities = $data['amenities'];
-            $images = $data['hosthomephotos'];
-            $hosthomedescriptions = $data['hosthomedescriptions'];
-            $reservations = $data['reservations'];
-            $discounts = $data['discounts'];
-            $rules = $data['rules'];
-            $notices = $data['notice'];
-            
-            if(trim(isset($data['additionalRules']))){
-                Hosthomerule::create([
-                    'rule' => $data['additionalRules'],
-                    'host_home_id' => $hostHome->id
-                ]);
-            }
-
-            foreach ($images as $base64Image) {
-                ProcessImage::dispatch($base64Image, $hostHome->id);
-            }
-            
-            foreach ($amenities as $amenity) {
-                ProcessOffer::dispatch($amenity, $hostHome->id);
-            }
-            
-            foreach ($hosthomedescriptions as $hosthomedescription) {
-                ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
-            }
-            
-            foreach ($reservations as $reservation) {
-                ProcessReservation::dispatch($reservation,$hostHome->id);
-            }
-            
-            foreach ($discounts as $discount) {
-                ProcessDiscount::dispatch($discount,$hostHome->id);
-            }
-            
-            foreach ($rules as $rule) {
-                ProcessRule::dispatch($rule,$hostHome->id);
-            }
-            
-            foreach ($notices as $notice) {
-                ProcessNotice::dispatch($notice, $hostHome->id);
-            }
-
-            $host = User::find($hostHome->user_id);
-            if ($user->co_host == true) {
-                
-                $hostHome->update([
-                    'approvedByHost' => false,
-                    'needApproval' => false
-                ]);
-                Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
-            }
-
-            if ($host->cohosts()->exists()) {
-                $coHosts = $host->cohosts;
-
-                foreach ($coHosts as $coHost) {
-                    Hosthomecohost::create([
-                        'user_id' => $coHost->user_id,
-                        'host_id' => $coHost->host_id,
-                        'host_home_id' => $hostHome->id
-                    ]);
-                }
-            }
-        });
+        ProcessHostHomeCreation::dispatch($data, $user->id);
+        
         return response([
             "ok" => "Created"
         ],201);
@@ -894,6 +796,13 @@ class HostHomeController extends Controller
             $reservedDate->save();
         }
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
         return response("Prices updated successfully", 200);
     }
 
@@ -949,6 +858,13 @@ class HostHomeController extends Controller
             ->whereBetween('date', [$startDate, $endDate])
             ->update(['price' => $newPrice]);
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
         return response("Prices updated for the specified date range", 200);
     }
 
@@ -981,6 +897,14 @@ class HostHomeController extends Controller
             'weekendPrice' => $price,
         ]);
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
+
         return response("Done", 200);
         
     }
@@ -1010,6 +934,14 @@ class HostHomeController extends Controller
             'min_nights' => $night,
         ]);
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
+
         return response("Done", 200);
     }
 
@@ -1036,6 +968,14 @@ class HostHomeController extends Controller
         $hostHome->update([
             'max_nights' => $night,
         ]);
+
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
 
         return response("Done", 200);
     }
@@ -1064,6 +1004,14 @@ class HostHomeController extends Controller
             'advance_notice' => $notice,
         ]);
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
+
         return response("Done", 200);
     }
 
@@ -1091,6 +1039,14 @@ class HostHomeController extends Controller
             'preparation_time' => $preparation_time,
         ]);
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
+
         return response("Done", 200);
     }
 
@@ -1117,6 +1073,14 @@ class HostHomeController extends Controller
         $hostHome->update([
             'availability_window' => $availability_window,
         ]);
+
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
 
         return response("Done", 200);
     }
@@ -1165,6 +1129,14 @@ class HostHomeController extends Controller
             $hostHomeBlockDate->save();
         }
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
+
         return response("Dates blocked successfully", 200);
     }
 
@@ -1195,6 +1167,7 @@ class HostHomeController extends Controller
 
         $this->unblockDateRange($id, $startDate, $endDate);
         // Respond with success message
+        
         return response("Dates unblocked successfully", 200);
     }
     
@@ -1211,6 +1184,14 @@ class HostHomeController extends Controller
         HostHomeBlockedDate::where('host_home_id', $hostHomeId)
             ->whereBetween('date', [$startDate, $endDate])
             ->delete();
+
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        if ($cohost) {
+            $destination = "http://localhost:5173/Scheduler";
+            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+        }
 
         return response("Prices updated for the specified date range", 200);
     }
@@ -1263,7 +1244,14 @@ class HostHomeController extends Controller
                 $ostHomeCustomDiscount->save();
             }
 
-            // Provide a success response
+            $user = User::find(auth()->id());
+            $host = User::find($hostHome->user_id);
+            $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+            if ($cohost) {
+                $destination = "http://localhost:5173/Scheduler";
+                Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            }
+            
             return response()->json([
                 'message' => 'Discount updated successfully.',
                 'data' => $existingDiscount ?? $ostHomeCustomDiscount,
@@ -1305,14 +1293,23 @@ class HostHomeController extends Controller
                 'email' => 'required|email',
             ]);
 
+            // Get the current authenticated host
+            $host = User::find(auth()->id());
+
+            if ($host->co_host == true) {
+                abort(400,"Cohosts are not allowed to add cohost");
+            }
+
+            if ($host->hosthomes()->count() === 0) {
+                abort(400,"You must have at least one home before you add a cohost");
+            }
+
             // Check if a user with the provided email already exists
             $user = User::where('email', $data['email'])
                 ->whereNull('banned')
                 ->whereNull('suspend')
                 ->first();
             
-            // Get the current authenticated host
-            $host = User::find(auth()->id());
 
             // If the user doesn't exist 
             if (!$user) {
@@ -1555,7 +1552,6 @@ class HostHomeController extends Controller
         return response()->json(['message'=>'disapproved'],200);
     }
 
-    
     /**
      * @lrd:start
      * this is used to update the host home details the {hosthome} is the hosthome id the values are the same with the post except you dont have to include the arrays but if you want to update it overide all the other data
@@ -1566,110 +1562,10 @@ class HostHomeController extends Controller
 
         $data = $request->validated();
         
-        $hostHome = HostHome::find($hostHomeId);
-        $price = $data['price'];
-        
-        // Assuming $service_fee_percentage and $tax_percentage are set to 0
-        $service_fee_percentage = 0;
-        $tax_percentage = 0;
+        $user = User::find(auth()->id());
 
-        $service_fee = $price * $service_fee_percentage;
-        $tax = $price * $tax_percentage;
-
-        $total = $price + $service_fee + $tax;
-
-        $hostHomeData = [
-            'property_type' => $data['property_type'],
-            'guest_choice' => $data['guest_choice'],
-            'address' => $data['address'],
-            'guests' => $data['guest'],
-            'bedroom' => $data['bedrooms'],
-            'beds' => $data['beds'],
-            'bathrooms' => $data['bathrooms'],
-            'video' => $this->saveVideo($data['hosthomevideo']),
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'reservation' => $data['reservation'],
-            'actualPrice' => $data['price'],
-            'check_out_time' => $data['check_out_time'],
-            'host_type' => $data['host_type'],
-            'check_in_time' => $data['checkin'],
-            'service_fee' => $service_fee,
-            'tax' => $tax,
-            'total' => $total,
-            'verified' => 0,
-            'actualPrice' => $price,
-            'cancellation_policy' => $data['cancelPolicy'],
-            'security_deposit' => $data['securityDeposit']
-        ];
-
-        // Update only if new discounts are selected
-        if (isset($data['discounts']) && !empty($data['discounts'])) {
-            // Handle the updates, creations, and deletions of discounts
-            $this->updateDiscounts($hostHome, $data['discounts']);
-        } 
+        ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId);
         
-        
-        $hostHome->update($hostHomeData);
-        
-
-        $amenities = $data['amenities'];
-        $images = $data['hosthomephotos'];
-        $hosthomedescriptions = $data['hosthomedescriptions'];
-        $reservations = $data['reservations'];
-        $discounts = $data['discounts'];
-        $rules = $data['rules'];
-        $notices = $data['notice'];
-        
-        $this->updateDescriptions($hostHome->id, $hosthomedescriptions);
-
-        if(isset($data['price'])){
-            if ($hostHome->bookingCount < 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
-                $priceDiscount = intval($hostHome->actualPrice) * 0.2;
-                $newPrice = intval($hostHome->actualPrice) - $priceDiscount;
-                $hostHome->update([
-                    'price' => $newPrice
-                ]);
-            }else{
-                $hostHome->update([
-                    'price' => $price
-                ]);
-            }
-        }
-        
-        if(trim(isset($data['additionalRules']))){
-            $hosthomerule = Hosthomerule::where('host_home_id',$hostHome->id);
-            $hosthomerule->update([
-                'rule' => $data['additionalRules'],
-            ]);
-        }
-
-        if (isset($images) && !empty($images)) {
-            $this->updateImages($hostHome->id, $images);
-        } 
-        
-
-        if(isset($amenities) && !empty($amenities)) {
-            $this->updateOffers($hostHome->id, $amenities);
-        }
-        
-        
-        if(isset($reservations) && !empty($reservations)) {
-            $this->updateReservations($hostHome->id, $reservations);
-        }
-        
-        if(isset($discounts) && !empty($discounts)) {
-            $this->updateDiscounts($hostHome->id, $discounts);
-        }
-        
-        if(isset($rules) && !empty($rules)) {
-            $this->updateRules($hostHome->id, $rules);
-        }
-        
-        if(isset($notices) && !empty($notices)) {
-            $this->updateNotices($hostHome->id, $notices);
-        }
-
         return response([
             "ok" => "Updated"
         ]);
@@ -1750,13 +1646,37 @@ class HostHomeController extends Controller
         $hostHome = HostHome::findOrFail($hosthomeid);
         
         // Delete the host home
-        $hostHome->delete();
+        $hostHome->forceDelete();
     
         // Set flash message for disapproval
         Session::flash('status', 'Apartment has been declined.');
     
         // Return the view
         return view('approveordecline', ['message' => 'Apartment has been declined.']);
+    }
+    
+    public function approveDeleteHomeForHost($hostid, $hosthomeid)
+    {
+        // Find the host home
+        $hostHome = HostHome::findOrFail($hosthomeid);
+        
+        $hostHome->forceDelete();
+    
+        // Set flash message for approval
+        Session::flash('status', 'Apartment has been deleted successfully.');
+    
+        // Return the view
+        return view('approveordecline', ['message' => 'Apartment has been deleted successfully.']);
+    }
+    
+    public function disapproveDeleteHomeForHost()
+    {
+    
+        // Set flash message for disapproval
+        Session::flash('status', 'Apartment deletion has been declined.');
+    
+        // Return the view
+        return view('approveordecline', ['message' => 'Apartment deletion has been declined.']);
     }
 
 
@@ -1876,16 +1796,31 @@ class HostHomeController extends Controller
      */
     public function destroy($id)
     {
+        
+        $user = User::find(auth()->id());
+
+        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         $hostHome = HostHome::find($id); 
-        $hostHome->hosthomedescriptions()->delete();
-        $hostHome->hosthomediscounts()->delete();
-        $hostHome->hosthomenotices()->delete();
-        $hostHome->hosthomeoffers()->delete();
-        $hostHome->hosthomephotos()->delete();
-        $hostHome->hosthomereservations()->delete();
-        $hostHome->hosthomerules()->delete();
-        $hostHome->forceDelete();
-        return response('This home has been deleted',200);
+        $host = User::find($hostHome->user_id);
+        if ($user->co_host == true) {
+            
+            $hostHome->update([
+                'approvedByHost' => false,
+                'needApproval' => true
+            ]);
+            Mail::to($host->email)->queue(new ApartmentDeleteApprovalRequest($hostHome,$host,$user));
+            return response('Request has been sent to host',200);
+        }else{
+            $hostHome->hosthomedescriptions()->delete();
+            $hostHome->hosthomediscounts()->delete();
+            $hostHome->hosthomenotices()->delete();
+            $hostHome->hosthomeoffers()->delete();
+            $hostHome->hosthomephotos()->delete();
+            $hostHome->hosthomereservations()->delete();
+            $hostHome->hosthomerules()->delete();
+            $hostHome->forceDelete();
+            return response('This home has been deleted',200);
+        }
     }
     
 

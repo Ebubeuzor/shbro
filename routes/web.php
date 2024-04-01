@@ -40,6 +40,9 @@ Route::get('/becomeACoHost/{userId}/{hostid}', [HostHomeController::class, 'beco
 Route::get('/approveHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'approveHomeForHost'])->name('approveHomeForHost');
 Route::get('/disapproveHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'disapproveHomeForHost'])->name('disapproveHomeForHost');
 
+Route::get('/approveDeleteHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'approveDeleteHomeForHost'])->name('approveDeleteHomeForHost');
+Route::get('/disapproveDeleteHomeForHost', [HostHomeController::class, 'disapproveDeleteHomeForHost'])->name('disapproveDeleteHomeForHost');
+
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->name('verification.notice');

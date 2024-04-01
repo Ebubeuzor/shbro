@@ -7,11 +7,17 @@
 </head>
 <body>
     <div>Hello {{$host->name}}</div>
-    <div>Your {{$cohost->name}} is trying to create an apartment please approve or decline</div>
+    <div>Your cohost {{$cohost->name}} is trying to {{$cohostRequest}} an apartment please approve or decline</div>
     <div><a href="http://localhost:5173/EditHostHomes/{{$hosthome->id}}">Click to view apartment</a></div>
     <div>
+        @if ($cohostRequest == "create")
         <a href="{{ route('approveHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to approve</a>
         <a href="{{ route('disapproveHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to decline</a>
+        
+        @else
+            <a href="{{ route('approveDeleteHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to approve deletion</a>
+            <a href="{{ route('disapproveDeleteHomeForHost') }}">Click to decline deletion</a>
+        @endif
     </div>
 </body>
 </html>

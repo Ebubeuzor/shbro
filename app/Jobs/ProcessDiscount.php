@@ -17,6 +17,10 @@ class ProcessDiscount implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+
+    public $retryAfter = 5;
+    
     /**
      * Create a new job instance.
      *

@@ -84,6 +84,7 @@ class ChatRepository
         }
 
         foreach ($recentUserWithMessage as $key => $userMessage) {
+            info($userMessage['user_id']);
             $user = User::whereId($userMessage['user_id'])->first();
             $recentUserWithMessage[$key]['name'] = $user->name;
             $recentUserWithMessage[$key]['profilePic'] = $user->profilePicture != null ? url($user->profilePicture) : null;

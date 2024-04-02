@@ -52,6 +52,8 @@ class ChatRepository
     {
         DB::statement("SET SESSION sql_mode=''");
 
+        $user = User::find($senderId);
+        
         // Subquery to get the latest message for each conversation
         $latestMessagesSubquery = Message::selectRaw('MAX(id) as id')
             ->where('sender_id', $senderId)
@@ -67,18 +69,20 @@ class ChatRepository
         return $this->getfilterRecentMessages($recentMessages, $senderId);
     }
 
-
     public function getfilterRecentMessages($recentMessages, $senderId){
         $recentUserWithMessage = [];
         $usedUserIds = [];
         foreach ($recentMessages as $message) {
             $userId = $message->sender_id == $senderId ? $message->receiver_id : $message->sender_id;
-            if (!in_array($userId, $usedUserIds)) {
-                $recentUserWithMessage[] = [
-                    'user_id' => $userId,
-                    'message' => $message
-                ];
-                $usedUserIds[] = $userId;
+            $user = User::find($userId);
+            if ($user->co_host == false) {
+                if (!in_array($userId, $usedUserIds)) {
+                    $recentUserWithMessage[] = [
+                        'user_id' => $userId,
+                        'message' => $message
+                    ];
+                    $usedUserIds[] = $userId;
+                }
             }
             
         }

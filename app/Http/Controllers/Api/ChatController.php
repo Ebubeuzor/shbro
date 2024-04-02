@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Events\MessageSent;
 use App\Events\Typing;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\NotificationMail;
+use App\Models\Hosthomecohost;
 use App\Models\Message;
 use App\Models\User;
 use App\Repository\ChatRepository;
@@ -83,42 +85,85 @@ class ChatController extends Controller
             'message' => 'required|string'
         ]);
 
+        // If receiverId is empty, return early
         if (empty($receiverId)) {
             return;
         }
-        
-        // Check if the message contains five numbers
+
+        // Check if the message contains more than three numbers
         if (preg_match_all('/\d/', $request->message) > 3) {
-            throw new \Exception('Message cannot contain three numbers.');
+            throw new \Exception('Message cannot contain more than three numbers.');
         }
 
-        // Check if the user has already sent three messages containing numbers
-        $user = $request->user();
-        $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id,$receiverId);
+        $user = User::find(auth()->id());
 
+        // If the user is a cohost, get the host user
+        if ($user->co_host == true) {
+            $cohost = Hosthomecohost::where('user_id', $user->id)->first();
+            $user = User::find($cohost->host_id);
+        }
+
+        // Check if the user has already sent three messages containing numbers to the receiver
+        $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id, $receiverId);
         if (preg_match_all('/\d/', $request->message) && $messageCountWithNumbers >= 3) {
             throw new \Exception('You cannot send more than three messages containing numbers to a guest or host.');
         }
 
         try {
-            $message = $this->chat->sendMessages([
-                'message' => $request->message,
-                'sender_id' => $user->id,
-                'receiver_id' => $receiverId,
-            ]);
+            // Send message to the main receiver
+            $this->sendChatMessage($request->message, $user->id, $receiverId);
 
-            // If the message is sent successfully, increment the count
+            // Send message to cohosts, if any
+            $this->sendMessagesToCohosts($request->message, $user->id, $receiverId);
+
+            // Increment the count if the message contains numbers
             if (preg_match('/\d/', $request->message)) {
-                Message::where('sender_id',$user->id)->increment('messages_with_numbers_count');
+                Message::where('sender_id', $user->id)->increment('messages_with_numbers_count');
             }
 
-            event(new MessageSent($request->message,auth()->id(), $receiverId));
-            $userToReceive = User::whereId($receiverId)->first();
-            Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, Auth::user()->name . ' sent an message', 'Sent a message'));
+            // Trigger event for message sent
+            event(new MessageSent($request->message, $user->id, $receiverId));
+
+            // Send notification email to the receiver
+            $receiver = User::find($receiverId);
+            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $user->name . ' sent a message', 'Sent a message'));
+
             return response("ok", 200);
         } catch (\Throwable $th) {
-            Log::info($th->getMessage());
+            Log::error($th->getMessage());
             return response($th, 422);
+        }
+    }
+
+    private function sendChatMessage($message, $senderId, $receiverId)
+    {
+        $this->chat->sendMessages([
+            'message' => $message,
+            'sender_id' => $senderId,
+            'receiver_id' => $receiverId,
+        ]);
+    }
+
+    private function sendMessagesToCohosts($message, $senderId, $receiverId)
+    {
+        $receiver = User::find($receiverId);
+        $sender = User::find($senderId);
+
+        if ($receiver->cohosts()->exists()) {
+            $cohosts = $receiver->cohosts()->with('user')->get();
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            // Queue messages to cohosts in batch for efficiency
+            foreach ($uniqueCohosts as $cohost) {
+                SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false);
+            }
+        }elseif ($sender->cohosts()->exists()) {
+            $cohosts = $sender->cohosts()->with('user')->get();
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            foreach ($uniqueCohosts as $cohost) {
+                SendMailForChatToCohosts::dispatch($message,$cohost->user_id, $senderId, true);
+            }
         }
     }
 

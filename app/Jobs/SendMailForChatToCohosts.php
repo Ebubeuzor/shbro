@@ -27,7 +27,8 @@ class SendMailForChatToCohosts implements ShouldQueue
     public function __construct(
         private $message,
         private $senderId,
-        private $cohostId,
+        private $receiverId,
+        private $sender,
         )
         {
             //
@@ -40,7 +41,11 @@ class SendMailForChatToCohosts implements ShouldQueue
          */
     public function handle()
     {
-        $this->sendMessage($this->message, $this->senderId, $this->cohostId);
+        if (!$this->sender) {
+            $this->sendMessage($this->message, $this->senderId, $this->receiverId);
+        }else {
+            $this->shareMessageWithCohost($this->message, $this->senderId, $this->receiverId);
+        }
     }
     
     private function sendMessage($message, $senderId, $receiverId)
@@ -60,9 +65,31 @@ class SendMailForChatToCohosts implements ShouldQueue
             
             // Send notification email to the receiver
             $receiver = User::find($receiverId);
-            Mail::to($receiver->email)->queue(new NotificationMail($receiver, Auth::user()->name . ' sent a message', 'Sent a message'));
+            $sender = User::find($senderId);
+
+            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $sender->name . ' sent a message', 'Sent a message'));
         } catch (\Throwable $th) {
-            throw new \Exception('Failed to send the message.');
+            throw new \Exception($th->getMessage());
+        }
+    }
+    
+    private function shareMessageWithCohost($message, $senderId, $receiverId)
+    {
+        $chat = new ChatRepository();
+
+        try {
+            // Send the message
+            $message = $chat->sendMessages([
+                'message' => $message,
+                'sender_id' => $senderId,
+                'receiver_id' => $receiverId,
+            ]);
+            
+            // Trigger message event
+            event(new MessageSent($message, $senderId, $receiverId));
+            
+        } catch (\Throwable $th) {
+            throw new \Exception($th->getMessage());
         }
     }
 }

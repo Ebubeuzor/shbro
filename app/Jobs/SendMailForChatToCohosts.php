@@ -29,6 +29,7 @@ class SendMailForChatToCohosts implements ShouldQueue
         private $senderId,
         private $receiverId,
         private $sender,
+        private $requestToBook = null,
         )
         {
             //
@@ -41,8 +42,10 @@ class SendMailForChatToCohosts implements ShouldQueue
          */
     public function handle()
     {
-        if (!$this->sender) {
+        if (!$this->sender && $this->requestToBook == null) {
             $this->sendMessage($this->message, $this->senderId, $this->receiverId);
+        }elseif ($this->requestToBook != null) {
+            $this->sendMessageForBookingRequest($this->message, $this->senderId, $this->receiverId);
         }else {
             $this->shareMessageWithCohost($this->message, $this->senderId, $this->receiverId);
         }
@@ -68,6 +71,31 @@ class SendMailForChatToCohosts implements ShouldQueue
             $sender = User::find($senderId);
 
             Mail::to($receiver->email)->queue(new NotificationMail($receiver, $sender->name . ' sent a message', 'Sent a message'));
+        } catch (\Throwable $th) {
+            throw new \Exception($th->getMessage());
+        }
+    }
+    
+    private function sendMessageForBookingRequest($message, $senderId, $receiverId)
+    {
+        $chat = new ChatRepository();
+
+        try {
+            // Send the message
+            $message = $chat->sendMessages([
+                'message' => $message,
+                'sender_id' => $senderId,
+                'receiver_id' => $receiverId,
+            ]);
+            
+            // Trigger message event
+            event(new MessageSent($message, $senderId, $receiverId));
+            
+            // Send notification email to the receiver
+            $receiver = User::find($receiverId);
+            $sender = User::find($senderId);
+
+            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $this->message, "A Guest made a request"));
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }

@@ -7,12 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
+use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\AcceptOrDeclineGuestMail;
 use App\Mail\NotificationMail;
 use App\Models\AcceptGuestRequest;
 use App\Models\Booking;
 use App\Models\Canceltrip;
 use App\Models\HostHome;
+use App\Models\Hosthomecohost;
 use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomediscount;
 use App\Models\ReservedPricesForCertainDay;
@@ -312,28 +314,6 @@ class BookingsController extends Controller
         return $reservedPrices->contains('date', $date);
     }
 
-    private function countWeekends($startDate, $endDate, $reservedPrices)
-    {
-        // Convert the start and end dates to DateTime objects if not already
-        $startDate = $startDate instanceof \DateTime ? $startDate : \DateTime::createFromFormat('Y-m-d', $startDate);
-        $endDate = $endDate instanceof \DateTime ? $endDate : \DateTime::createFromFormat('Y-m-d', $endDate);
-
-        $totalWeekends = 0;
-
-        // Iterate over each day and count the weekends
-        while ($startDate <= $endDate) {
-            $currentDateFormatted = $startDate->format('Y-m-d');
-
-            // Check if the current date is a weekend and not reserved
-            if ($this->isWeekend($currentDateFormatted) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
-                $totalWeekends++;
-            }
-
-            $startDate->modify('+1 day');
-        }
-
-        return $totalWeekends;
-    }
 
     private function isWeekend($date)
     {
@@ -473,10 +453,10 @@ class BookingsController extends Controller
             // If a request was made today, return an error response indicating that the user has already made a request today
             return response()->json(['error' => 'You have already made a request today'], 400);
         }
-        $message = $user->name . " has requested to book your apartment please approve or decline";
+        $messageToHost = $user->name . " has requested to book your apartment please approve or decline";
         $chat = new ChatRepository();
         $message = $chat->sendMessages([
-            'message' => $message,
+            'message' => $messageToHost,
             'sender_id' => $user->id,
             'receiver_id' => $receiverId,
         ]);
@@ -495,9 +475,32 @@ class BookingsController extends Controller
         $acceptRequest->save();
 
 
-        event(new MessageSent($message,auth()->id(), $receiverId));
+        event(new MessageSent($messageToHost, $user->id, $receiverId));
+        $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId);
         $userToReceive = User::whereId($receiverId)->first();
-        Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, $message, "A Guest made a request"));
+        Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, $messageToHost, "A Guest made a request"));
+    }
+
+    private function sendMessagesToCohosts($message, $senderId, $receiverId)
+    {
+        $receiver = User::find($receiverId);
+        $sender = User::find($senderId);
+
+        if ($receiver->cohosts()->exists()) {
+            $cohosts = $receiver->cohosts()->with('user')->get();
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            foreach ($uniqueCohosts as $cohost) {
+                SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true);
+            }
+        }elseif ($sender->cohosts()->exists()) {
+            $cohosts = $sender->cohosts()->with('user')->get();
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            foreach ($uniqueCohosts as $cohost) {
+                SendMailForChatToCohosts::dispatch($message,$cohost->user_id, $senderId, true);
+            }
+        }
     }
 
     /**
@@ -516,6 +519,13 @@ class BookingsController extends Controller
     */
     public function handleBookingRequest(int $requestId, int $host_home_id, int $host_id, int $guest_id, string $action)
     {
+
+        $cohost = Hosthomecohost::where('user_id',$host_id)->first();
+
+        if ($cohost) {
+            $host_id = $cohost->host_id;
+        }
+        
         // Find the booking request
         $request = AcceptGuestRequest::where('id',$requestId)
         ->where('host_home_id', $host_home_id)
@@ -527,7 +537,9 @@ class BookingsController extends Controller
             abort(404,"Booking Request Not Found!");
         }
 
-        if ($host_id != auth()->id()) {
+        $hosthome = HostHome::find($host_home_id);
+
+        if ($host_id != $hosthome->user_id ) {
             abort(400,"Only the host of this apartment can approve or decline");
         }
         
@@ -563,7 +575,7 @@ class BookingsController extends Controller
      */
     private function sendNotification(User $user, string $message, string $subject, string $status, int $hosthomeid)
     {
-        Mail::to($user->email)->send(new AcceptOrDeclineGuestMail($user, $message, $subject,$status,$hosthomeid));
+        Mail::to($user->email)->queue(new AcceptOrDeclineGuestMail($user, $message, $subject,$status,$hosthomeid));
     }
 
 

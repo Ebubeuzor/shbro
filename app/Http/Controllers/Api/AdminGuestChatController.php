@@ -122,6 +122,7 @@ class AdminGuestChatController extends Controller
      * Request Body:
      * - `message` (string, optional): The initial message sent by the guest.
      * - `image` (file, optional): An image attached by the guest.
+     *  - 'status' just use guest for those that wants to make an inquiry and admin for admins
      * - `recipient_id` (integer, optional): The ID of the admin to whom the guest wants to send the message.
      *
      * Response:
@@ -131,6 +132,7 @@ class AdminGuestChatController extends Controller
      * - MessageBroadcasted: Broadcasts the message to the targeted admin.
      *
      * Channels:
+     * - start-convo: Listens when a user (guest) starts a convo.
      * - chat.admin.{recipient_id}: Listens for admin-related chat events.
      * - chat.user.{recipient_id}: Listens for user-related chat events.
      * @lrd:end
@@ -158,11 +160,12 @@ class AdminGuestChatController extends Controller
             foreach ($users as $user) {
                 if ($user->adminStatus != null) {
                     $message = $authUser->name . " has reqested assistant for a certain matter";
-                    Mail::to($user->email)->send(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
+                    Mail::to($user->email)->queue(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
                 }
             }
-            
-            event(new MessageBroadcasted($authUser, $data['message'], url($chat->image), $data['status'], null, $chat->id));
+            $imageUrl = !empty($chat->image) ? url($chat->image) : null;
+            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id));
+
             return response()->json(['message' => 'Conversation started successfully']);
         }
         else {

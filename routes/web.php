@@ -32,6 +32,14 @@ Route::get('/test', function () {
     return view('test');
 });
 
+Route::get('/admin', function () {
+    return view('admin');
+});
+
+Route::get('/guest', function () {
+    return view('guest');
+});
+
 Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 
 Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');

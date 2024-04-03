@@ -77,11 +77,6 @@ class ProcessImage implements ShouldQueue
             $imageData = substr($image, strpos($image, ',') + 1);
             $imageType = strtolower($matches[1]);
 
-            // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
-                throw new \Exception('Invalid image type');
-            }
-
             // Decode base64 image data
             $decodedImage = base64_decode($imageData);
 

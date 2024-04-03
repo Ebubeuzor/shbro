@@ -18,52 +18,37 @@
         console.log('Starting Echo initialization...');
 
         if (typeof window.Echo !== 'undefined') {
-            console.log('Echo is defined. Proceeding with initialization.');
-
-            const channelName = `start-convo`;
-
-            const privateChannel = window.Echo.channel(channelName);
-
-            privateChannel.listen('MessageBroadcasted', (e) => {
-                console.log(e);
-            });
-
             
-        } else {
-            console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
-        }
-    }
-    
-    function joinChat() {
-        const receiverId = 90;
+            const channelName = `messanger.${receiverId}`;
 
-        console.log('Starting Echo initialization...');
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer 26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379`;
 
-        if (typeof window.Echo !== 'undefined') {
-            
-            const channelName = `join.chat.${receiverId}`;
-
-            window.Echo.connector.options.auth.headers.Authorization = `Bearer 29|hGPfp7ukrhleZGQDRzQKK7LyrNoXPoD6QmWqAfYG5a5b396d`;
-
+            // Log the URL of the broadcasting/auth endpoint
+            const broadcastingAuthUrl = window.Echo.connector.options.authEndpoint;
+            console.log('Broadcasting Auth URL:', broadcastingAuthUrl);
             if (window.Echo.connector.options.auth.headers.Authorization) {
+                console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
                 const privateChannel = window.Echo.private(channelName);
 
-                privateChannel.listen('JoinChatEvent', (e) => {
+                privateChannel.listen('MessageSent', (e) => {
                     console.log(e);
                 });
 
+                console.log('Listening for messages on channel:', channelName);
             } else {
                 console.log('Authentication token is not set.');
             }
 
+            
         } else {
             console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
         }
     }
-
         
     document.addEventListener('DOMContentLoaded', function() {
-        joinChat();
+        
+        initializeEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
+
     });
 
 </script>

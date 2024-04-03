@@ -9,10 +9,12 @@ use App\Http\Resources\HostPendingReviewForGuestResource;
 use App\Http\Resources\HostPendingReviewResource;
 use App\Http\Resources\PendingReviewResource;
 use App\Http\Resources\ReviewResource;
+use App\Models\Hosthomecohost;
 use App\Models\Hostpendingreviewforguest;
 use App\Models\Hostreviewforguest;
 use App\Models\Pendingreview;
 use App\Models\Review;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -72,7 +74,7 @@ class ReviewController extends Controller
     /**
      * @lrd:start
      * 
-     * THis is for the host to make a review about aguest that has stayed in his apartment.
+     * THis is for the host to make a review about a guest that has stayed in his apartment.
      * 
      * @lrd:end
     */
@@ -112,7 +114,16 @@ class ReviewController extends Controller
      */
     public function getHostReviews()
     {
-        $hostId = Auth::id();
+
+        $user = User::find(auth()->id());
+
+        $hostId = $user->id;
+
+        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+
+        if ($cohost) {
+            $hostId = $cohost->host_id;
+        }
 
         // Fetch reviews where the host_id matches the authenticated user's ID
         $hostReviews = Review::where('host_id', $hostId)->get();
@@ -130,7 +141,15 @@ class ReviewController extends Controller
      */
     public function getHostPendingReviews()
     {
-        $hostId = Auth::id();
+        $user = User::find(auth()->id());
+
+        $hostId = $user->id;
+
+        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+
+        if ($cohost) {
+            $hostId = $cohost->host_id;
+        }
 
         // Fetch reviews where the host_id matches the authenticated user's ID
         $hostReviews = Pendingreview::where('host_id', $hostId)
@@ -149,7 +168,15 @@ class ReviewController extends Controller
      */
     public function getHostPendingReviewsForGuest()
     {
-        $hostId = Auth::id();
+        $user = User::find(auth()->id());
+
+        $hostId = $user->id;
+
+        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+
+        if ($cohost) {
+            $hostId = $cohost->host_id;
+        }
 
         // Fetch reviews where the host_id matches the authenticated user's ID
         $hostReviews = Hostpendingreviewforguest::where('user_id', $hostId)

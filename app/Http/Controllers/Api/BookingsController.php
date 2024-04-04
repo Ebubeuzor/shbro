@@ -335,7 +335,9 @@ class BookingsController extends Controller
         }else{
             $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
         }
-        
+
+        info($discountedPrice);
+
         return $discountedPrice;
     }
 
@@ -377,36 +379,30 @@ class BookingsController extends Controller
 
     private function applyDiscount($price, $discounts, $durationOfStay = 0, $bookingCount)
     {
-        $finalPrice = $price;
-    
+        
+        $returnPrice = $price;
+        
         foreach ($discounts as $discount) {
             switch ($discount->discount) {
                 case '20% New listing promotion':
-                    if ($bookingCount < 3) {
-                        $finalPrice *= 0.8; // Apply 20% discount
-                    }
+                    $returnPrice = $bookingCount < 3 ? $returnPrice - ($returnPrice * 0.2) : $returnPrice;
                     break;
                 case '5% Weekly discount':
                     $newListingPromotion = collect($discounts)->contains('discount', '10% Monthly discount');
         
-                    if ($durationOfStay >= 7 && !$newListingPromotion) {
-                        $finalPrice *= 0.95; // Apply 5% discount
-                    }
-                    break;
+                    $returnPrice = $durationOfStay >= 7 && !$newListingPromotion ? $returnPrice - ($returnPrice * 0.05) : $returnPrice;
+                    break; // 5% off for stays of 7 nights or more
                 case '10% Monthly discount':
-                    if ($durationOfStay >= 28) {
-                        $finalPrice *= 0.9; // Apply 10% discount
-                    }
-                    break;
+                    $returnPrice = $durationOfStay >= 28 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
+                    break; // 10% off for stays of 28 nights or more
                 default:
-                    // Do nothing for unrecognized discounts
                     break;
             }
         }
-    
-        return $finalPrice;
+
+        return $returnPrice;
+
     }
-    
 
 
 

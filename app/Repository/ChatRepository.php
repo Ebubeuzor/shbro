@@ -75,7 +75,7 @@ class ChatRepository
         foreach ($recentMessages as $message) {
             $userId = $message->sender_id == $senderId ? $message->receiver_id : $message->sender_id;
             $user = User::find($userId);
-            if ($user->co_host == false) {
+            if ($user->co_host == false || $user->co_host == null) {
                 if (!in_array($userId, $usedUserIds)) {
                     $recentUserWithMessage[] = [
                         'user_id' => $userId,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use SadiqSalau\LaravelOtp\Facades\Otp;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateOrUpdateAboutUserRequest;
 use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\FilterHostHomesDatesRequest;
@@ -29,6 +30,7 @@ use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
 use App\Mail\VerifyUser;
+use App\Models\AboutUser;
 use App\Models\Adminrole;
 use App\Models\Booking;
 use App\Models\HostHome;
@@ -67,6 +69,37 @@ class UserController extends Controller
         return UserResource::collection(
             User::Where('verified' , "Not Verified")->distinct()->get()
         );
+    }
+    
+    /**
+     * @lrd:start
+     * Create or update the about user details for the authenticated user.
+     * @lrd:end
+     */
+    public function createOrUpdateAboutUser(CreateOrUpdateAboutUserRequest $request)
+    {
+        // Retrieve the authenticated user
+        $user = $request->user();
+        
+        // Validate the incoming request data
+        $data = $request->validated();
+
+        // Retrieve the user's about user record, or create a new one if it doesn't exist
+        $aboutUser = $user->aboutUser->first();
+        
+        if (!$aboutUser) {
+            $aboutUser = new AboutUser();
+            $user->aboutUser()->save($aboutUser);
+        }
+
+        // Fill the about user record with the validated data
+        $aboutUser->fill($data);
+
+        // Save the about user record to the database
+        $aboutUser->save();
+
+        // Return a JSON response indicating success
+        return response()->json(['message' => 'Details saved successfully']);
     }
     
     /**

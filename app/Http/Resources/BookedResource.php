@@ -31,7 +31,7 @@ class BookedResource extends JsonResource
             'name' => $user->name,
             'dateUserJoined' => $user->created_at->format('M j, Y'),
             'aboutGuest' => new GuestReviewsResource($user),
-            'profilepic' => URL::to($user->profilePicture),
+            'profilepic' => $user->profilePicture != null ? URL::to($user->profilePicture) : null,
             'check_in_date' => $this->formattedCheckIn,
             'check_out_date' => $this->formattedCheckOut,
             'check_in_time' => $this->check_in_time,

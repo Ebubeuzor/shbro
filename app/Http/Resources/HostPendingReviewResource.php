@@ -25,7 +25,7 @@ class HostPendingReviewResource extends JsonResource
             'id' => $this->id,
             'username' => $user->name,
             'userprofilepic' => $user->name,
-            'guestProfilePic' => URL::to($user->profilePicture),
+            'guestProfilePic' => $user->profilePicture != null ? URL::to($user->profilePicture) : null,
             'check_in' => Carbon::parse($booking->check_in)->format('M j, Y')
         ];
     }

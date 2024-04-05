@@ -22,7 +22,7 @@ class GuestsResource extends JsonResource
             'banned' => $this->banned,
             'suspend' => $this->suspend,
             'verified' => $this->verified,
-            'image' => URL::to($this->profilePicture),
+            'image' => $this->profilePicture != null ? URL::to($this->profilePicture) : null,
             'created_at' => $this->created_at->format('Y-m-d'),
             'last_login_at' => $this->last_login_at ? \Carbon\Carbon::parse($this->last_login_at)->format('Y-m-d') : $this->created_at->format('Y-m-d'),
         ];

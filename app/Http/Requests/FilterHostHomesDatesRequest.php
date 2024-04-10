@@ -28,7 +28,8 @@ class FilterHostHomesDatesRequest extends FormRequest
             'start_date' => 'nullable|date_format:Y-m-d',
             'end_date' => 'nullable|date_format:Y-m-d',
             'guests' => 'nullable|integer|min:0',
-            'allow_pets' => 'nullable|string|in:allow_pets,no_pets', // Update this line
+            'allow_pets' => 'nullable|string|in:allow_pets,no_pets', 
+            'per_page' => 'nullable'
         ];
     }
 }

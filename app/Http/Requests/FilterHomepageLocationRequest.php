@@ -30,6 +30,7 @@ class FilterHomepageLocationRequest extends FormRequest
             'pets' => 'nullable',
             'infants' => 'nullable',
             'amenities' => 'nullable',
+            'per_page' => 'nullable',
         ];
     }
 }

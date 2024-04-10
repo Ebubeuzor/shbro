@@ -26,7 +26,27 @@ class HostHomeHostInfoResource extends JsonResource
         $reviews = Review::where('host_id', $hostId)
             ->join('users', 'reviews.user_id', '=', 'users.id')
             ->select('reviews.*', 'users.name as user_name')
+            ->with('hosthome')
             ->get();
+
+        // Map the reviews data and include photo URLs
+        $mappedReviews = $reviews->map(function ($review) {
+            
+            $hosthome = HostHome::find($review->host_home_id);
+
+            $photoUrl = $hosthome->hosthomephotos->isNotEmpty()
+                ? url($hosthome->hosthomephotos->first()->image)
+                : null;
+
+            return [
+                'review_id' => $review->id,
+                'ratings' => $review->ratings,
+                'title' => $review->title,
+                'comment' => $review->comment,
+                'photo_url' => $photoUrl,
+                'created_at' => $review->created_at,
+            ];
+        });
     
         $successfulCheckOut = Booking::where('hostId',$this->id)
         ->where('checkOutNotification','!=',null)
@@ -34,10 +54,7 @@ class HostHomeHostInfoResource extends JsonResource
         $successfulCheckOutNumber = $successfulCheckOut->isEmpty() ? 0 : count($successfulCheckOut);
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
         $firstHome = $this->hosthomes->first();
-        Log::info($firstHome);
         $createdAt = $firstHome ? $firstHome->created_at->diffForHumans() : null;
-
-        Log::info($createdAt);
 
         return [
             'id' =>$this->id,
@@ -47,7 +64,7 @@ class HostHomeHostInfoResource extends JsonResource
             'aboutUser' => $this->aboutUser ?? null,
             'profilePicture' => $this->profilePicture != null ? URL::to($this->profilePicture) : null,
             'reviews' => count($reviews) ?? 0,
-            'actualReviews' => $reviews ?? [],
+            'actualReviews' => $mappedReviews ?? [],
             'successfulCheckOut' => $successfulCheckOutNumber ?? [],
             'rating' => $ratings ?? [],
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
@@ -88,37 +105,6 @@ class HostHomeHostInfoResource extends JsonResource
             return null;
         })->filter();
     }
-
-    // protected function cohosthomeDetails()
-    // {
-    //     $user = User::find($this->id);
-    //     $hosthomes = $user->cohosthomes()->with('hosthome')->get()
-    //     ->map(function ($cohost) {
-    //         $cohostUser = HostHome::where('id', $cohost->host_home_id)
-    //         ->where('verified', 1)
-    //         ->where('disapproved', null)
-    //         ->whereNull('banned')
-    //         ->whereNull('suspend')->first();
-    //         return $cohostUser; // Return an empty collection if user not found
-    //     })
-    //     ->flatten();
-
-    //     return $hosthomes->map(function ($hosthome) {
-    //         $firstPhoto = $hosthome->hosthomephotos->first() != null ? $hosthome->hosthomephotos->first() : null;
-    
-    //         if ($firstPhoto != null) {
-    //             $photoData = json_decode($firstPhoto, true);
-    
-    //             return [
-    //                 "hosthome_id" => $hosthome->id,
-    //                 "hosthome_title" => $hosthome->title,
-    //                 "photo_image" => url($photoData['image'])
-    //             ];
-    //         }
-        
-    //         return [];
-    //     })->filter();
-    // }
     
     protected function bookedhosthomeDetails()
     {

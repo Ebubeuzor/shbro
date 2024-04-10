@@ -24,9 +24,10 @@ class MessageBroadcasted implements ShouldBroadcast
         public $user,
         public $message,
         public $image,
-        public $userType,
+        public $userStatus,
         public $receiverId,
-        public $chatId
+        public $chatId,
+        public $sessionId,
     )
     {
         
@@ -40,10 +41,10 @@ class MessageBroadcasted implements ShouldBroadcast
     public function broadcastOn()
     {
         if ($this->receiverId != null) {
-            if ($this->userType == "guest" || $this->userType == "cohost" || $this->userType == "host") {
-                return new PrivateChannel('chat.user.' .  $this->receiverId);
-            }else {
+            if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
                 return new PrivateChannel('chat.admin.' .  $this->receiverId);
+            }else {
+                return new PrivateChannel('chat.user.' .  $this->receiverId);
             }
         }else {
             return new Channel('start-convo');
@@ -52,28 +53,32 @@ class MessageBroadcasted implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        if ($this->receiverId != null) {
+        if ($this->receiverId == null) {
             $unattendedChats = AdminGuestChat::whereNull('admin_id')
             ->whereNull('start_convo')
             ->get();
 
-            return response()->json(['unattended_chats' => $unattendedChats]);
+            return ['unattended_chats' => $unattendedChats];
         }else {
-            if ($this->userType == "guest" || $this->userType == "cohost" || $this->userType == "host") {
+            if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
                 return [
-                    'user_id' => auth()->id(),
+                    'user_id' => 90,
                     'message' => $this->message,
-                    'image' => $this->image != null ? url($this->image) : null,
+                    'image' => $this->image != null ? $this->image : null,
                     'admin_id' => $this->receiverId,
-                    'chatId' => $this->chatId
+                    'id' => $this->chatId,
+                    'sessionId' => $this->sessionId,
+                    'status' => $this->userStatus
                 ];
             }else {
                 return [
                     'user_id' => $this->receiverId,
                     'message' => $this->message,
-                    'image' => $this->image != null ? url($this->image) : null,
-                    'admin_id' => auth()->id,
-                    'chatId' => $this->chatId
+                    'image' => $this->image != null ? $this->image : null,
+                    'admin_id' => 1,
+                    'id' => $this->chatId,
+                    'sessionId' => $this->sessionId,
+                    'status' => $this->userStatus
                 ];
                 
             }

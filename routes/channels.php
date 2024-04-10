@@ -50,3 +50,6 @@ Broadcast::channel('chat.admin.{adminId}', function ($user, $adminId) {
     return (int) $user->id === (int) $adminId;
 });
 
+Broadcast::channel('chat.endsession.{userId}', function ($user, $userId) {    
+    return (int) $user->id === (int) $userId;
+});

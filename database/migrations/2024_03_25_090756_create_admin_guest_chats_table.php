@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->nullable();
             $table->text('message')->nullable();
             $table->string('image')->nullable();
+            $table->uuid('session_id')->nullable();
+            $table->string('status')->nullable();
             $table->timestamp('start_convo')->nullable();
             $table->timestamp('end_convo')->nullable();
             $table->timestamps();

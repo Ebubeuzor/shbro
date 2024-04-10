@@ -31,6 +31,7 @@ class FilterHomepageRequest extends FormRequest
             'bathrooms' => 'nullable',
             'property_type' => 'nullable | array',
             'amenities' => 'nullable | array',
+            'per_page' => 'nullable',
         ];
     }
 }

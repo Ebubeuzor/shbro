@@ -817,6 +817,7 @@ class UserController extends Controller
         $endDate = $data['end_date'];
         $guests = $data['guests'];
         $allowPets = $data['allow_pets'];
+        $per_page = $data['per_page'] ?? 10;
 
         $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
             ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
@@ -842,7 +843,7 @@ class UserController extends Controller
             });
         }
 
-        $result = $filteredHostHomes->distinct()->get();
+        $result = $filteredHostHomes->distinct()->paginate($per_page);
 
         return HostHomeResource::collection($result);
     }
@@ -1305,6 +1306,7 @@ class UserController extends Controller
             $minPrice = $data['min_price'];
             $maxPrice = $data['max_price'];
             $amenities = $data['amenities'];
+            $per_page = $data['per_page'] ?? 10;
     
             // Start with a base query for filtering host homes
             $query = HostHome::where('verified', 1)
@@ -1349,7 +1351,7 @@ class UserController extends Controller
             }
     
             // Fetch the filtered results along with associated host home photos
-            $result = $query->with('hosthomephotos')->distinct()->get();
+            $result = $query->with('hosthomephotos')->distinct()->paginate($per_page);
     
             // Return the filtered data as JSON response
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
@@ -1374,6 +1376,7 @@ class UserController extends Controller
             $minPrice = $data['min_price'];
             $maxPrice = $data['max_price'];
             $amenities = $data['amenities'];
+            $per_page = $data['per_page'] ?? 10;
 
             $query = HostHome::where('verified', 1)
                             ->whereNull('disapproved')
@@ -1410,7 +1413,7 @@ class UserController extends Controller
                 });
             }
 
-            $result = $query->with('hosthomephotos')->distinct()->get();
+            $result = $query->with('hosthomephotos')->distinct()->paginate($per_page);
 
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
         } catch (QueryException $e) {
@@ -2080,7 +2083,18 @@ class UserController extends Controller
     public function hostReview($id)
     {
         $user = User::find($id);
-        return new HostHomeHostInfoResource($user);
+
+        $hostId = $user->id;
+
+        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+
+        if ($cohost) {
+            $hostId = $cohost->host_id;
+        }
+
+        $host = User::find(intval($hostId));
+
+        return new HostHomeHostInfoResource($host);
     }
 
     /**

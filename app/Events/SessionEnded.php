@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class LeaveChatEvent implements ShouldBroadcast
+class SessionEnded implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -20,10 +20,8 @@ class LeaveChatEvent implements ShouldBroadcast
      * @return void
      */
     public function __construct(
-        private int $guestid,
-        private int $adminId,
-        private string $message,
-        private string $status
+        private string $adminId,
+        private string $userId
     )
     {
         //
@@ -36,19 +34,18 @@ class LeaveChatEvent implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        if ($this->status == 'admin') {
-            return new PrivateChannel('left.chat.'. $this->guestid);
-        } else {
-            return new PrivateChannel('left.chat.'. $this->adminId);
-        }
-        
+
+        return [
+            new PrivateChannel('chat.endsession.' . $this->adminId),
+            new PrivateChannel('chat.endsession.' . $this->userId),
+        ];
     }
     
     public function broadcastWith()
     {
         return [
-            'message' => $this->message
+            'notification' => "Session has ended please start a new one",
         ];
     }
-    
+
 }

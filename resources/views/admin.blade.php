@@ -12,6 +12,7 @@
     <p id="message"></p>
 </div>
 <script>
+    
     function initializeEcho(token) {
         const receiverId = 1;
 
@@ -19,7 +20,7 @@
 
         if (typeof window.Echo !== 'undefined') {
             
-            const channelName = `messanger.${receiverId}`;
+            const channelName = `chat.admin.${receiverId}`;
 
             window.Echo.connector.options.auth.headers.Authorization = `Bearer 26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379`;
 
@@ -30,7 +31,7 @@
                 console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
                 const privateChannel = window.Echo.private(channelName);
 
-                privateChannel.listen('MessageSent', (e) => {
+                privateChannel.listen('MessageBroadcasted', (e) => {
                     console.log(e);
                 });
 
@@ -45,10 +46,38 @@
         }
     }
         
+    function endSession() {
+        const receiverId = 1;
+
+        console.log('Starting Echo initialization...');
+
+        if (typeof window.Echo !== 'undefined') {
+            
+            const channelName = `chat.endsession.${receiverId}`;
+
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer 26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379`;
+
+            if (window.Echo.connector.options.auth.headers.Authorization) {
+                const privateChannel = window.Echo.private(channelName);
+
+                privateChannel.listen('SessionEnded', (e) => {
+                    console.log(e);
+                });
+
+            } else {
+                console.log('Authentication token is not set.');
+            }
+
+        } else {
+            console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         
         initializeEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
-
+        endSession();
+        
     });
 
 </script>

@@ -20,8 +20,10 @@ class JoinChatEvent implements ShouldBroadcast
      * @return void
      */
     public function __construct(
+        private $adminId,
         private $guestId,
         private $message,
+        private $sessionId,
     )
     {
         //
@@ -36,7 +38,8 @@ class JoinChatEvent implements ShouldBroadcast
     public function broadcastWith()
     {
         return [
-            'adminid' => auth()->id(),
+            'adminid' => $this->adminId,
+            'sessionId' => $this->sessionId,
             'message' => $this->message
         ];
     }

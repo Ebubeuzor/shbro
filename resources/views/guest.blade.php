@@ -12,27 +12,39 @@
     <p id="message"></p>
 </div>
 <script>
-    function initializeEcho(token) {
-        const receiverId = 1;
+    function initializeEcho() {
+        const receiverId = 90;
 
         console.log('Starting Echo initialization...');
 
         if (typeof window.Echo !== 'undefined') {
-            console.log('Echo is defined. Proceeding with initialization.');
+            
+            const channelName = `chat.user.${receiverId}`;
 
-            const channelName = `start-convo`;
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer 29|hGPfp7ukrhleZGQDRzQKK7LyrNoXPoD6QmWqAfYG5a5b396d`;
 
-            const privateChannel = window.Echo.channel(channelName);
+            // Log the URL of the broadcasting/auth endpoint
+            const broadcastingAuthUrl = window.Echo.connector.options.authEndpoint;
+            console.log('Broadcasting Auth URL:', broadcastingAuthUrl);
+            if (window.Echo.connector.options.auth.headers.Authorization) {
+                console.log('Authentication token is set:', window.Echo.connector.options.auth.headers.Authorization);
+                const privateChannel = window.Echo.private(channelName);
 
-            privateChannel.listen('MessageBroadcasted', (e) => {
-                console.log(e);
-            });
+                privateChannel.listen('MessageBroadcasted', (e) => {
+                    console.log(e);
+                });
+
+                console.log('Listening for messages on channel:', channelName);
+            } else {
+                console.log('Authentication token is not set.');
+            }
 
             
         } else {
             console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
         }
     }
+        
     
     function joinChat() {
         const receiverId = 90;
@@ -60,10 +72,67 @@
             console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
         }
     }
+    
+    function leaveChat() {
+        const receiverId = 90;
+
+        console.log('Starting Echo initialization...');
+
+        if (typeof window.Echo !== 'undefined') {
+            
+            const channelName = `left.chat.${receiverId}`;
+
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer 29|hGPfp7ukrhleZGQDRzQKK7LyrNoXPoD6QmWqAfYG5a5b396d`;
+
+            if (window.Echo.connector.options.auth.headers.Authorization) {
+                const privateChannel = window.Echo.private(channelName);
+
+                privateChannel.listen('LeaveChatEvent', (e) => {
+                    console.log(e);
+                });
+
+            } else {
+                console.log('Authentication token is not set.');
+            }
+
+        } else {
+            console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+        }
+    }
+    
+    function endSession() {
+        const receiverId = 90;
+
+        console.log('Starting Echo initialization...');
+
+        if (typeof window.Echo !== 'undefined') {
+            
+            const channelName = `chat.endsession.${receiverId}`;
+
+            window.Echo.connector.options.auth.headers.Authorization = `Bearer 29|hGPfp7ukrhleZGQDRzQKK7LyrNoXPoD6QmWqAfYG5a5b396d`;
+
+            if (window.Echo.connector.options.auth.headers.Authorization) {
+                const privateChannel = window.Echo.private(channelName);
+
+                privateChannel.listen('SessionEnded', (e) => {
+                    console.log(e);
+                });
+
+            } else {
+                console.log('Authentication token is not set.');
+            }
+
+        } else {
+            console.error('Echo is not defined. Make sure Laravel Echo is properly configured.');
+        }
+    }
 
         
     document.addEventListener('DOMContentLoaded', function() {
+        initializeEcho();
         joinChat();
+        leaveChat();
+        endSession();
     });
 
 </script>

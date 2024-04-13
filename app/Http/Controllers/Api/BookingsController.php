@@ -797,6 +797,10 @@ class BookingsController extends Controller
         ->where('bookings.paymentStatus', 'success')
         ->first();
 
+        if (!$booking) {
+            abort(400, "Record  Not Found");
+        }
+
         // Find the associated host home
         $hostHome = HostHome::findOrFail($booking->host_home_id);
 

@@ -249,7 +249,8 @@ class AdminGuestChatController extends Controller
         if (empty(isset($data['recipient_id']))) {
             $users = User::all();
             foreach ($users as $user) {
-                if ($user->adminStatus != null) {
+
+                if ($user->adminStatus != null && $user->id != 1) {
                     $message = $authUser->name . " has reqested assistant for a certain matter";
                     Mail::to($user->email)->queue(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
                 }

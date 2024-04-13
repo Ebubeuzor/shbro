@@ -58,7 +58,9 @@ class AdminGuestChatController extends Controller
     /**
      * @lrd:start
      * Marks the end of a chat session between an admin and a guest
-     * Once admin or guest leaves a chat session ensure to remove the receipient id so that a new session can start
+     * Once admin or guest leaves a chat session ensure to remove the receipient id so that a new session can start and broadcast the channels and event below so thta the admin or guest may know when the other left 
+     * the chat session
+     * 
      * - `adminId` (integer, required): The ID of the admin who is leaving the chat.
      * - `guestId` (integer, required): The ID of the guest with whom the admin was chatting.
      * - `status` (string, required): Status of the user just guest or admin
@@ -113,7 +115,15 @@ class AdminGuestChatController extends Controller
     /**
      * @lrd:start
      * Initiates a conversation between a guest and an admin. After an admin joins, use this method to continue the conversation.
-     *
+     * Now when you dont have a recipient_id it means that you (guests) are just starting the conservation you are sending message to all admins 
+     * if this is the case then use the public channel to send all messages real time to all admins who are online real time with start-convo look at the joinchat route for the continuation.
+     * 
+     * Now that you the recipient_id which is the adminId and chat_session_id store them and use the when sending the next request for the guest and use the 
+     * chat.admin.{recipient_id}: to listens for when a guest sends a message to an admin.
+     * 
+     * Now for the admin use this api endpoind too to send message to a guest the recipient_id which is the guestId and chat_session_id store them also in the admin side and use them for the session.
+     * now use the below event for the above channels.
+     * 
      * Request Body:
      * - `message` (string, optional): The initial message sent by the guest.
      * - `image` (file, optional): An image attached by the guest.
@@ -132,7 +142,9 @@ class AdminGuestChatController extends Controller
      * - chat.admin.{recipient_id}: Listens for admin-related chat events.
      * - chat.user.{recipient_id}: Listens for user-related chat events.
      *
-     * After 7 minutes of inactivity, both the admin and guest will receive a notification saying the session has ended.
+     * After 7 minutes of inactivity, both the admin and guest will receive a notification saying the session has ended so once its three mintues you should create a timer on bothe sides
+     * And once the time ends , it will automatically close the chat so empty the recipient_id and chat_session_id if they are online or you tell them to leave if they try to send a message after a seesion has ended 
+     * either way my response will guide you on that.
      *
      *  Events:
      * - SessionEnded: Broadcasts a notification to both the admin and guest when the session ends due to inactivity.
@@ -277,7 +289,9 @@ class AdminGuestChatController extends Controller
     /**
      * @lrd:start
      * Allows an admin to join an ongoing chat session with a guest.
-     *
+     * Now when an admin joins listen to the private channel below and get the message admin name has joined along with adminId and the chat sessionid which you will use for the chat session
+     * Move back to the startconversation route.
+     * 
      * Request Parameters:
      * - `guestId` (integer, required): The ID of the guest with whom the admin is going to chat.
      * - `sessionId` (string, required): The ID of the chat session to join.

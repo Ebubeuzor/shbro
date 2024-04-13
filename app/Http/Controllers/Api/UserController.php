@@ -2231,6 +2231,36 @@ class UserController extends Controller
         }
     }
 
+
+    /**
+     * View user's wallet and total balance.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function viewUserWallet()
+    {
+        try {
+            // Retrieve the authenticated user's wallet
+            $userId = auth()->id();
+            $userWallet = UserWallet::where('user_id', $userId)->first();
+
+            if (!$userWallet) {
+                return response()->json(['message' => 'Wallet not found for the user.'], 404);
+            }
+
+            return response()->json([
+                'total_balance' => $userWallet->totalbalance,
+            ]);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving user wallet.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     /**
      * @lrd:start
      * Get payment records for the authenticated user.

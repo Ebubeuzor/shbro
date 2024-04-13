@@ -228,6 +228,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/requestPay', [UserController::class, 'requestPay']);
     Route::get('/cancelPayRequest/{requestId}', [UserController::class, 'cancelPayRequest']);
     Route::get('/getUserPaymentRecords', [UserController::class, 'getUserPaymentRecords']);
+    Route::get('/viewUserWallet', [UserController::class, 'viewUserWallet']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);

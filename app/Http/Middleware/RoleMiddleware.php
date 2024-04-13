@@ -14,12 +14,14 @@ class RoleMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!$request->user()->userHasRole($role)) {
-            abort(403,'You are not an admin');
+        foreach ($roles as $role) {
+            if ($request->user()->userHasRole($role)) {
+                return $next($request);
+            }
         }
-
-        return $next($request);
+        
+        abort(403, 'You are not authorized to access this resource.');
     }
 }

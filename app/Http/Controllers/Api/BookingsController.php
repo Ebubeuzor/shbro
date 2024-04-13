@@ -86,8 +86,29 @@ class BookingsController extends Controller
     public function bookApartment(BookingApartmentRequest $request, $hostHomeId, $userId)
     {
         $data = $request->validated();
+
+        $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+
+        if ($cohost) {
+            abort(400, "Cohost arent allowed to book");
+        }
+
         $user = User::find($userId);
         $hostHome = HostHome::find($hostHomeId);
+
+        $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
+                    ->where('host_home_id',$hostHomeId)
+                    ->first();
+
+        if ($hostHome->reservation == "Approve or decline requests" && !$acceptRequest) {
+            abort(400, "Please make a booking request before making a reservation.");
+        }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->approved == null) {
+            abort(400, "Please wait for the host to approve.");
+        }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->approved != "approved") {
+            abort(400, "Your request wasn't approved please make another request");
+        }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->bookingstatus != null) {
+            abort(400, "You have already booked please make another request");
+        }
 
         // Convert check_in and check_out to DateTime objects
         $checkIn = \DateTime::createFromFormat('d/m/Y', $data['check_in']);
@@ -440,14 +461,16 @@ class BookingsController extends Controller
      */
     public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
     {
-        $user = User::find(auth()->id());
+        $user = User::findOrFail(auth()->id());
+        $hosthome = HostHome::findOrFail($hostHomeId);
+
         // Check if the user has already made a request today
         $lastRequest = AcceptGuestRequest::where('user_id', $user->id)
+        ->where('host_home_id', $hosthome->id)
         ->whereDate('created_at', Carbon::today())
         ->first();
 
         if ($lastRequest) {
-            // If a request was made today, return an error response indicating that the user has already made a request today
             return response()->json(['error' => 'You have already made a request today'], 400);
         }
         $messageToHost = $user->name . " has requested to book your apartment please approve or decline";
@@ -458,7 +481,6 @@ class BookingsController extends Controller
             'receiver_id' => $receiverId,
         ]);
 
-        $hosthome = HostHome::find($hostHomeId);
 
         if (!$hosthome) {
             abort(404, "Host home not found");
@@ -686,6 +708,18 @@ class BookingsController extends Controller
                     $guestMessage .= "Your checkout date and time is " . $checkOutDate . " " . $booking->check_out_time . "\n";
 
                     Mail::to($user->email)->send(new NotificationMail($user, $guestMessage, "Your check-in and checkout time"));
+
+                    $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
+                    ->where('host_home_id',$hostHomeId)
+                    ->where('approved','approved')
+                    ->first();
+
+                    if ($acceptRequest) {
+                        $acceptRequest->update([
+                            'bookingstatus' => 'booked'
+                        ]);
+                    }
+
                     return redirect()->route('successPage');
                 } else {
                     return redirect()->route('failedPage');

@@ -22,6 +22,8 @@ return new class extends Migration
             $table->integer("host_refund");
             $table->string("status")->default("Cancel");
             $table->string("reasonforcancel");
+            $table->string('addedToHostWallet')->nullable();
+            $table->string('addedToGuestWallet')->nullable();
             $table->timestamps();
         });
     }

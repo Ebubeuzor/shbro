@@ -8,7 +8,7 @@ use App\Http\Requests\CreateOrUpdateAboutUserRequest;
 use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\FilterHostHomesDatesRequest;
-
+use App\Http\Requests\RequestPayRequest;
 use Illuminate\Support\Facades\Notification as UserNotification;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
@@ -29,6 +29,7 @@ use App\Http\Resources\UserTransactionResource;
 use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Mail\ActivateAccount;
+use App\Mail\NotificationMail;
 use App\Mail\VerifyUser;
 use App\Models\AboutUser;
 use App\Models\Adminrole;
@@ -41,7 +42,9 @@ use App\Models\Tip;
 use App\Models\User;
 use App\Models\Userbankinfo;
 use App\Models\UserCard;
+use App\Models\UserRequestPay;
 use App\Models\UserTrip;
+use App\Models\UserWallet;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
@@ -1260,6 +1263,8 @@ class UserController extends Controller
                 'is_active' => false,
             ]);
 
+            $user->hosthomes()->delete();
+
             return response('', 204);
         }
 
@@ -2117,5 +2122,136 @@ class UserController extends Controller
         $user->hosthomes()->forceDelete();
     }
 
-    
+    /**
+     * @lrd:start
+     * 
+     * Create a new payment request.
+     * 
+     * @lrd:end
+     */
+    public function requestPay(RequestPayRequest $request)
+    {
+        try {
+            $data = $request->validated();
+
+            // Convert the amount to an integer
+            $amount = (int)$data['amount'];
+
+            $user = User::findOrFail(auth()->id());
+
+            if ($user->co_host) {
+                abort(400, "Cohosts cant make pay requests");
+            }
+
+            // Check if the requested amount is negative
+            if ($amount < 0) {
+                return response()->json(['message' => 'Requested amount cannot be negative.'], 400);
+            }
+            
+            // Check if the user has a pending payment request
+            $existingRequest = UserRequestPay::where('user_id', auth()->id())
+                ->whereNull('approvedStatus')
+                ->first();
+
+            if ($existingRequest) {
+                return response()->json(['message' => 'You already have a pending payment request.'], 400);
+            }
+
+            // Check if the requested amount exceeds the user's total balance
+            $userBalance = UserWallet::where('user_id', auth()->id())->value('totalbalance');
+
+            if ($amount > $userBalance) {
+                return response()->json(['message' => 'Requested amount exceeds your total balance.'], 400);
+            }
+
+            // Create a new payment request
+            $paymentRequest = new UserRequestPay();
+            $paymentRequest->user_id = auth()->id();
+            $paymentRequest->account_number = $data['account_number'];
+            $paymentRequest->account_name = $data['account_name'];
+            $paymentRequest->amount = $amount;
+            $paymentRequest->bank_name = $data['bank_name'];
+            $paymentRequest->save();
+
+            
+            $title = "Withdrawal Requested";
+            $message = "You have requested a pay of " . $amount . " from your account";
+            Mail::to($user->email)->send(new NotificationMail($user,$message,$title));
+
+            return response()->json(['message' => 'Payment request submitted successfully.']);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while processing the payment request.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * 
+     * Cancels and deletes payment request if it hasnt been approved and within 24 hrs.
+     * 
+     * @lrd:end
+     */
+    public function cancelPayRequest($requestId)
+    {
+        try {
+            $request = UserRequestPay::findOrFail($requestId);
+
+            // Check if the request belongs to the authenticated user
+            if ($request->user_id !== auth()->id()) {
+                return response()->json(['message' => 'You are not authorized to cancel this request.'], 403);
+            }
+
+            // Check if the request has already been approved
+            if ($request->approvedStatus === 'approved') {
+                return response()->json(['message' => 'This payment request has already been approved and cannot be canceled.'], 400);
+            }
+
+            // Check if the request is older than 24 hours
+            $createdAt = Carbon::parse($request->created_at);
+            $now = Carbon::now();
+
+            if ($now->diffInHours($createdAt) >= 24) {
+                return response()->json(['message' => 'This payment request cannot be canceled as it has exceeded 24 hours since it was created.'], 400);
+            }
+
+            // If all conditions are met, delete the request
+            $request->delete();
+
+            return response()->json(['message' => 'Payment request canceled successfully.']);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while canceling the payment request.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Get payment records for the authenticated user.
+     *
+     * @lrd:end
+     */
+    public function getUserPaymentRecords()
+    {
+        try {
+            $userId = auth()->id();
+
+            // Retrieve payment records for the user
+            $paymentRecords = UserRequestPay::where('user_id', $userId)->get();
+
+            return response()->json(['payment_records' => $paymentRecords]);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving payment records.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

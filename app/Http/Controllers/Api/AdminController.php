@@ -17,6 +17,8 @@ use App\Models\HostHome;
 use App\Models\Review;
 use App\Models\Servicecharge;
 use App\Models\User;
+use App\Models\UserRequestPay;
+use App\Models\UserWallet;
 use App\Models\Visitor;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,6 +30,70 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
+
+    /**
+     * @lrd:start
+     * View all payment requests awaiting approval.
+     * @lrd:end
+     */
+    public function viewRequestsToApprove()
+    {
+        try {
+            $paymentRequests = UserRequestPay::whereNull('approvedStatus')
+                ->with('user:id,name,email')
+                ->get(['id', 'user_id', 'account_number', 'account_name', 'amount', 'bank_name']);
+
+            return response()->json(['payment_requests' => $paymentRequests]);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving payment requests.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    /**
+     * @lrd:start
+     * Approve a payment request.
+     *
+     * @param  int  $requestId
+     * @lrd:end
+     */
+    public function approvePaymentRequest($requestId)
+    {
+        try {
+            // Find the payment request
+            $paymentRequest = UserRequestPay::findOrFail($requestId);
+
+            // Update the approved status
+            $paymentRequest->approvedStatus = 'approved';
+            $paymentRequest->save();
+
+            // Deduct the approved amount from the user's total balance
+            $userId = $paymentRequest->user_id;
+            $deductedAmount = $paymentRequest->amount;
+
+            $userWallet = UserWallet::where('user_id', $userId)->first();
+            $userWallet->totalbalance -= $deductedAmount;
+            $userWallet->save();
+
+            $user = User::find($userId);
+
+            $title = "Payment successful";
+            $message = "Your requested a pay of " . $deductedAmount . " from your account has been successfully sent to your bank account ";
+            Mail::to($user->email)->send(new NotificationMail($user,$message,$title));
+
+            return response()->json(['message' => 'Payment request approved successfully.']);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while approving the payment request.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     
     /**

@@ -26,6 +26,13 @@ class VerificationController extends Controller
 
                 return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
 
+                if ($user->host) {
+                    $softDeletedHostHomes = $user->hosthomes()->onlyTrashed()->get();
+
+                    foreach ($softDeletedHostHomes as $hostHome) {
+                        $hostHome->restore();
+                    }
+                }
 
             }    
             else{

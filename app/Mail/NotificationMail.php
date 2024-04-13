@@ -22,7 +22,6 @@ class NotificationMail extends Mailable
         $this->user = $user;
         $this->message = $message;
         $this->title = $title;
-        info("trying");
     }
     
     public function build(){
@@ -33,6 +32,5 @@ class NotificationMail extends Mailable
             'title' => $this->title,
             'usermessage' => $this->message
         ]);
-        ;
     }
 }

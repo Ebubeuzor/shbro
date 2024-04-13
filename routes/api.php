@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 
-Route::middleware('auth:sanctum')->group(function(){
+Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
     Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);
 
@@ -120,7 +120,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
     Route::delete('removeCoHost/{userid}', [HostHomeController::class, 'removeCoHost']);
     
-    Route::middleware('role:admin')->group(function(){
+    Route::middleware('role:admin,super admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
         Route::post("createAdmin", [AdminController::class, 'createAdmin']);
@@ -132,6 +132,8 @@ Route::middleware('auth:sanctum')->group(function(){
         Route::post("updateServiceCharges", [AdminController::class, 'updateServiceCharges']);
         
         Route::get('filterAnalyticalData/{range?}', [AdminController::class, 'filterAnalyticalData']);
+        Route::get('approvePaymentRequest/{requestId}', [AdminController::class, 'approvePaymentRequest']);
+        Route::get('viewRequestsToApprove', [AdminController::class, 'viewRequestsToApprove']);
         
         Route::get('notVerified', [HostHomeController::class, 'notVerified']);
         
@@ -162,6 +164,8 @@ Route::middleware('auth:sanctum')->group(function(){
         
         Route::get('/reporthosthome', [ReportController::class, 'index']);
         Route::get('/getReportDamagesForAdmin', [ReportController::class, 'getReportDamagesForAdmin']);
+        Route::get('/assignSecurityDepositToGuest/{bookingNumber}/{id}', [ReportController::class, 'assignSecurityDepositToGuest']);
+        Route::get('/assignSecurityDepositToHost/{bookingNumber}/{id}', [ReportController::class, 'assignSecurityDepositToHost']);
         Route::get('/getUsersReports', [ReportController::class, 'getUsersReports']);
         Route::delete('/reporthosthome/{id}', [ReportController::class, 'destroy']);
         Route::delete('/markDamageReportResolved/{id}', [ReportController::class, 'markDamageReportResolved']);
@@ -221,10 +225,12 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/hostAnalyticsEarningsByMonthYear/{month}/{year}', [UserController::class, 'hostAnalyticsEarningsByMonthYear']);
     Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
     Route::post('/filterHostHomesDatesForAuthUser', [UserController::class, 'filterHostHomesDates']);
+    Route::post('/requestPay', [UserController::class, 'requestPay']);
+    Route::get('/cancelPayRequest/{requestId}', [UserController::class, 'cancelPayRequest']);
+    Route::get('/getUserPaymentRecords', [UserController::class, 'getUserPaymentRecords']);
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
-
 
     Route::get('showGuestHomeForAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 });

@@ -25,6 +25,7 @@ class AdminDamageResource extends JsonResource
         $hostHome = HostHome::find($booking->host_home_id);
         return [
             'id' => $this->id,
+            'booking_number' => $this->booking_number,
             'damage_description' => $this->damage_description,
             'reportDate' => Carbon::parse($this->created_at)->format('M j, Y'),
             'host' => [

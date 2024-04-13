@@ -1536,7 +1536,7 @@ class HostHomeController extends Controller
         $tip = new Tip();
         $tip->user_id = $user;
         $tip->message = $data['message'];
-        $tip->url = "/hosthome/?hosthomeid=" . $hosthomeid;
+        $tip->url = "/EditHostHomes" . $hosthomeid;
         $tip->save();
 
         $useremail = User::find($user);

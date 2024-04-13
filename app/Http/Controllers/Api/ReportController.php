@@ -12,6 +12,7 @@ use App\Http\Resources\AdminDamageResource;
 use App\Http\Resources\HostHomeReportsResource;
 use App\Http\Resources\UserReportsResource;
 use App\Models\Booking;
+use App\Models\Hosthomecohost;
 use App\Models\ReportPropertyDamage;
 use App\Models\ReportPropertyDamagePhotos;
 use App\Models\ReportUser;
@@ -154,37 +155,65 @@ class ReportController extends Controller
             // Validate the incoming request data
             $data = $request->validated();
 
+            $hostid = null;
+
+            $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+
+            if ($cohost) {
+                $hostid = $cohost->host_id;
+            } else {
+                $hostid = auth()->id();
+            }
+            
             // Find the booking based on the paymentId
-            $booking = Booking::where("paymentId", $data['booking_number'])->first();
+            $booking = Booking::where("paymentId", $data['booking_number'])
+            ->where('hostId', $hostid)
+            ->first();
 
             // If the booking is not found, throw a 404 error
             if (!$booking) {
-                abort(404, "Booking Number incorrect");
+                abort(404, "Booking Details incorrect");
+            }
+            
+            $reportDamageData = ReportPropertyDamage::where('booking_number',$data['booking_number'])->first();
+            
+            if ($reportDamageData) {
+                abort(400, "You can't report for a booking more than once");
             }
 
-            // Create a new ReportPropertyDamage record
-            $reportDamage = new ReportPropertyDamage();
-            $reportDamage->booking_number = $data['booking_number'];
-            $reportDamage->host_id = auth()->id();
-            $reportDamage->damage_description = $data['description'];
-            $reportDamage->video = $this->saveVideo($data['video']);
-            $reportDamage->save();
+            // Check if the booking is eligible for damage report
+            if (!$this->isEligibleForDamageReport($booking)) {
+                // Create a new ReportPropertyDamage record
+                $reportDamage = new ReportPropertyDamage();
+                $reportDamage->booking_number = $data['booking_number'];
+                $reportDamage->host_id = auth()->id();
+                $reportDamage->damage_description = $data['description'];
+                $reportDamage->video = $this->saveVideo($data['video']);
+                $reportDamage->save();
 
-            // Iterate through each photo and create an Image record
-            $images = $data['photos'];
-            foreach ($images as $base64Image) {
-                $imageData = [
-                    'photos' => $base64Image,
-                    'report_property_damage_id' => $reportDamage->id,
-                ];
-                $this->createImages($imageData);
+                // Iterate through each photo and create an Image record
+                $images = $data['photos'];
+                foreach ($images as $base64Image) {
+                    $imageData = [
+                        'photos' => $base64Image,
+                        'report_property_damage_id' => $reportDamage->id,
+                    ];
+                    $this->createImages($imageData);
+                }
+
+                // Update the booking's pauseSecurityDepositToGuest
+                $booking->pauseSecurityDepositToGuest = now();
+                $booking->save();
+
+                // Provide a success response
+                return response()->json([
+                    'message' => 'Damage reported successfully.',
+                    'data' => $reportDamage,
+                ], 200);
+            } else {
+                // Provide a response when the booking is not eligible for damage report
+                abort(400, 'Damage report not allowed after 24 hours of check-out.');
             }
-
-            // Provide a success response
-            return response()->json([
-                'message' => 'Damage reported successfully.',
-                'data' => $reportDamage,
-            ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Provide a response for validation failure
             return response()->json([
@@ -199,6 +228,26 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Check if the booking is eligible for damage report.
+     *
+     * @param \App\Models\Booking $booking
+     * @return bool
+     */
+    private function isEligibleForDamageReport($booking)
+    {
+        $checkoutNotification = $booking->checkOutNotification;
+        $twentyFourHoursAgo = now()->subHours(24);
+
+        info($checkoutNotification);
+        info($twentyFourHoursAgo);
+        info($checkoutNotification <= $twentyFourHoursAgo);
+
+        // Return true if the current time is within 24 hours of check-out notification
+        return $checkoutNotification <= $twentyFourHoursAgo;
+    }
+
     
 
     /**
@@ -228,6 +277,93 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @lrd:start
+     * Assign the security deposit to the guest based on the booking number.
+     *
+     * @param  string $bookingNumber The booking number to identify the booking.
+     * @param  $id The ReportPropertyDamage id to identify the property.
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+    */
+    public function assignSecurityDepositToGuest($bookingNumber,$id)
+    {
+        try {
+            // Find the booking based on the booking number
+            $booking = Booking::where("paymentId", $bookingNumber)->first();
+
+            $reportDamage = ReportPropertyDamage::findOrFail($id);
+
+            // Update the status to 'resolved'
+            $reportDamage->update(['status' => 'resolved']);
+
+            // If the booking is not found, throw a 404 error
+            if (!$booking) {
+                abort(404, "Booking Number incorrect");
+            }
+
+            // Update the booking's pauseSecurityDepositToGuest
+            $booking->pauseSecurityDepositToGuest = null;
+            $booking->save();
+
+
+            return response()->json([
+                'message' => 'Security deposit assigned to guest successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while assigning security deposit to guest.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @lrd:start
+     * Assign the security deposit to the host based on the booking number.
+     *
+     * @param  string $bookingNumber The booking number to identify the booking.
+     * @param  $id The ReportPropertyDamage id to identify the property.
+     * @return \Illuminate\Http\JsonResponse
+     * @lrd:end
+    */
+    public function assignSecurityDepositToHost($bookingNumber,$id)
+    {
+        try {
+
+
+            // Find the booking based on the booking number
+            $booking = Booking::where("paymentId", $bookingNumber)->first();
+
+            $reportDamage = ReportPropertyDamage::findOrFail($id);
+
+            // Update the status to 'resolved'
+            $reportDamage->update(['status' => 'resolved']);
+
+            // If the booking is not found, throw a 404 error
+            if (!$booking) {
+                abort(404, "Booking Number incorrect");
+            }
+
+            // Assign the security deposit to the host
+            $booking->securityDepositToHost = now();
+            $booking->save();
+
+
+            return response()->json([
+                'message' => 'Security deposit assigned to host successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while assigning security deposit to host.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     /**
      * @lrd:start

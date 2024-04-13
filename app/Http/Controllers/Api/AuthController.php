@@ -13,6 +13,7 @@ use App\Mail\WelcomeMail;
 use App\Models\HostHome;
 use App\Models\Hosthomecohost;
 use App\Models\User;
+use App\Models\UserWallet;
 use App\Models\Visitor;
 use App\Rules\PasswordRequirements;
 use Carbon\Carbon;
@@ -93,19 +94,19 @@ class AuthController extends Controller
      * - Validates required data (`name`, `email`, `password`) using the `SignupRequest` class.
      * - If all required data is valid, creates a new user and sends a welcome email as well as a verification email.
      * - Additionally, handles the optional co-host invitation scenario:
-         - Checks if the provided `hostremtoken`, `hostid`, and `hosthomeid` are valid.
-        - If valid, verifies the host or co-host authorization and creates the user as a co-host for the specified apartment.
-        - Sends an invitation email to the new co-host.
+     *    - Checks if the provided `hostremtoken`, `hostid`, and `hosthomeid` are valid.
+     *   - If valid, verifies the host or co-host authorization and creates the user as a co-host for the specified apartment.
+     *   - Sends an invitation email to the new co-host.
      * - Returns a response containing a link to the verification page.
      *
      * **Error Handling:**
      * - Returns a 400 Bad Request response with an appropriate error message if:
-         - Required data is missing or invalid.
-         - Host or co-host authorization fails.
-         - The provided apartment ID is not found.
-         - Email did not match to make you a cohost
+     *    - Required data is missing or invalid.
+     *    - Host or co-host authorization fails.
+     *    - The provided apartment ID is not found.
+     *    - Email did not match to make you a cohost
      * - Returns a 500 with an appropriate error message if:
-         - A user tries to manipulate the encrptrd data 
+     *    - A user tries to manipulate the encrptrd data 
      * 
      * @lrd:end
     */
@@ -131,13 +132,11 @@ class AuthController extends Controller
                         'co_host' => 1
                     ]);
 
-                    Mail::to($user->email)->queue(new CoHostInvitation($user, $oghost->id));
+                    $this->becomeACoHost($user->id, $oghost->id);
                 }else {
                     abort(400, "Email did not match to make you a cohost");
                 }
-                    
-                
-                
+
             }else {
                 abort(400, "Invalid host or cohost authorization");
             }
@@ -147,6 +146,11 @@ class AuthController extends Controller
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
                 'remember_token' => Str::random(40)
+            ]);
+    
+            UserWallet::create([
+                'user_id' => $user->id,
+                'totalbalance' => 0,
             ]);
         }
 
@@ -158,6 +162,39 @@ class AuthController extends Controller
         return response([
             'link' => $routeLink
         ]);
+    }
+
+    
+    public function becomeACoHost($userId,$hostid)
+    {
+
+        $user = User::find($userId);
+
+        if ($user->email_verified_at == null) {
+            abort(400,"Please verify your account first");
+        }
+
+        $hostHomes = HostHome::where('user_id', $hostid)->get();
+
+        // Iterate through each host home
+        foreach ($hostHomes as $hostHome) {
+            // Check if the user is already a co-host for this home
+            $existingCoHost = Hosthomecohost::where('user_id', $userId)
+                ->where('host_home_id', $hostHome->id)
+                ->first();
+
+            // If the user is not already a co-host, create a co-host entry
+            if (!$existingCoHost) {
+                $hosthomeCoHost = new Hosthomecohost();
+                $hosthomeCoHost->user_id = $userId;
+                $hosthomeCoHost->host_id = $hostid;
+                $hosthomeCoHost->host_home_id = $hostHome->id;
+                $hosthomeCoHost->save();
+            }
+        }
+        
+        return redirect()->away('http://localhost:5173');
+
     }
 
     /**
@@ -213,6 +250,8 @@ class AuthController extends Controller
             if ($user->google_id == null) {
                 if(!$user->is_active){
                     return response("Your account has been deactivated",422);
+                }if(!$user->suspend){
+                    return response("Your account has been suspended",422);
                 }elseif($user->email_verified_at != null){
                     $user->update(['last_login_at' => Carbon::now()]);
                     /** @var User $user  */
@@ -227,6 +266,8 @@ class AuthController extends Controller
             }
             elseif(!$user->is_active){
                 return response("Your account has been deactivated",422);
+            }elseif(!$user->suspend){
+                return response("Your account has been suspended",422);
             }
         }else{
             return response([

@@ -2,12 +2,16 @@
 
 namespace App\Console;
 
+use App\Jobs\CalculateHostTotalBalance;
 use App\Jobs\CheckInNotificationJob;
 use App\Jobs\CheckOutNotificationJob;
 use App\Jobs\ClearRouteCacheJob;
+use App\Jobs\DeleteExpiredBookings;
 use App\Jobs\EndSessionJob;
 use App\Jobs\FewHoursReminderJob;
+use App\Jobs\ProcessCancelTrips;
 use App\Jobs\ProcessEmailReminders;
+use App\Jobs\ProcessSecurityDeposit;
 use App\Jobs\TwoDayReminderJob;
 use App\Models\Booking;
 use Illuminate\Console\Scheduling\Schedule;
@@ -24,6 +28,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->job(new ProcessCancelTrips)->hourly();
+        $schedule->job(new CalculateHostTotalBalance)->hourly();
+        $schedule->job(new ProcessSecurityDeposit)->hourly();
+
+        $schedule->job(new DeleteExpiredBookings)->everyMinute();
+        
         $schedule->job(new EndSessionJob)->everyTwoMinutes();
 
         $schedule->job(new ProcessEmailReminders)->daily(); // Change to everyFiveMinutes

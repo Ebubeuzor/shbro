@@ -50,6 +50,12 @@ return new class extends Migration
             $table->string('paidHostPaymentId')->nullable();
             $table->string('guestPaidStatus')->nullable();
             $table->string('guestPaidDate')->nullable();
+            $table->string('addedToHostWallet')->nullable();
+            $table->string('addedToGuestWallet')->nullable();
+            $table->string('pauseSecurityDepositToGuest')->nullable();
+            $table->string('securityDepositToGuest')->nullable();
+            $table->string('securityDepositToHost')->nullable();
+            $table->string('securityDepositToHostWallet')->nullable();
             $table->integer('hostId')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('host_home_id')->constrained()->onDelete('cascade');

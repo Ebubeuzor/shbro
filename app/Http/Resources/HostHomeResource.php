@@ -61,7 +61,7 @@ class HostHomeResource extends JsonResource
 
         foreach($this->acceptedRequest as $bookrequest){
 
-            if ($bookrequest->user_id == auth()->id() && $bookrequest->approved == "approved" && $bookrequest->host_home_id == $this->id) {
+            if ($bookrequest->user_id == auth()->id() && $bookrequest->approved == "approved" && $bookrequest->host_home_id == $this->id && $bookrequest->bookingstatus == null) {
                 $bookingRequestStatus = "approved";    
             }
 

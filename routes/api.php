@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
+Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
 
 Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
@@ -115,7 +116,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
     Route::get('admin-guest-chat/getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
     Route::get('admin-guest-chat/getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);
-    Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
     Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
     Route::delete('removeCoHost/{userid}', [HostHomeController::class, 'removeCoHost']);

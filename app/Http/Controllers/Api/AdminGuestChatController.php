@@ -171,6 +171,35 @@ class AdminGuestChatController extends Controller
     {
         $data = $request->validated();
 
+        $user = null;
+
+        if (Auth::guard('sanctum')->check()) {
+            $user = Auth::guard('sanctum')->user(); // Authenticated user via API token
+        } else {
+            if (empty($data['name']) || empty($data['email'])) {
+                return response("Please enter your name and email",422);
+            }else {
+                
+                // User is not authenticated, check if email exists in the database
+                $existingUser = User::where('email', $data['email'])->first();
+        
+                // If email does not exist, create a temporary guest account
+                if (!$existingUser) {
+                    $user = new User();
+                    $user->name = $data['name'];
+                    $user->email = $data['email'];
+                    $user->is_guest = true; 
+                    $user->save();
+    
+                }else {
+                    $user = $existingUser;
+                }
+
+            }
+        }
+
+        info($user);
+
         $recipient_id = intval($data['recipient_id']);
         $endedConvo = null;
 
@@ -198,7 +227,7 @@ class AdminGuestChatController extends Controller
 
 
         if ($data['status'] == "guest" && !empty(isset($data['chat_session_id']))) {
-            $existingSession = AdminGuestChat::where('user_id', Auth::id())
+            $existingSession = AdminGuestChat::where('user_id', $user->id)
             ->whereNull('end_convo')
             ->orderBy('session_id', 'desc')
             ->first();
@@ -208,7 +237,7 @@ class AdminGuestChatController extends Controller
             }
         }
         
-        $authUser = User::find(auth()->id());
+        $authUser = User::find($user->id);
 
 
 
@@ -216,12 +245,12 @@ class AdminGuestChatController extends Controller
         $sessionId = Str::uuid();
         $chat = new AdminGuestChat();
 
-        $existingChat = AdminGuestChat::where('user_id', Auth::id())
+        $existingChat = AdminGuestChat::where('user_id', $user->id)
         ->whereNull('admin_id')
         ->where('created_at', '>=', now()->subMinutes(5))
         ->first();
 
-        $chat->user_id = Auth::id();
+        $chat->user_id = $user->id;
         $chat->status = $data['status'];
 
 
@@ -247,6 +276,7 @@ class AdminGuestChatController extends Controller
         $imageUrl = !empty($chat->image) ? url($chat->image) : null;
 
         if (empty(isset($data['recipient_id']))) {
+            info("Hi");
             $users = User::all();
             foreach ($users as $user) {
 
@@ -269,7 +299,7 @@ class AdminGuestChatController extends Controller
                 ]);
             }else {
                 $updateChat->update([
-                    'admin_id' => auth()->id(),
+                    'admin_id' => $user->id,
                     'user_id' => $data['recipient_id']
                 ]);
             }

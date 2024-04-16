@@ -985,8 +985,10 @@ class AdminController extends Controller
         elseif($userType == "Guest" || $userType == "All") {
             $users = User::all();
             foreach($users as $user){
-                $title = "A message for every one";
-                Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+                if ($user->is_guest == null) {
+                    $title = "A message for every one";
+                    Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+                }
             }
             return response("Ok",200);
         }

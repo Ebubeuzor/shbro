@@ -27,13 +27,11 @@ class SendEmailToUnverifiedUser implements ShouldQueue
     
     public function handle()
     {
-        
-        Log::info("ebubestart8");
         Mail::to($this->user->email)->send(new VerifyYourEmail($this->user));
 
         try {
             
-            if ($this->user->email_verified_at == null) {
+            if ($this->user->email_verified_at == null && $this->user->is_guest == null) {
                 $deleteAttempts = $this->user->delete_attempts ?? 0;
                 
                 if ($deleteAttempts < 50000000) {

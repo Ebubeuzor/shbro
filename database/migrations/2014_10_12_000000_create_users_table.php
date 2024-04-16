@@ -38,6 +38,7 @@ return new class extends Migration
                 $table->timestamp('last_login_at')->nullable();
                 $table->boolean('email_verified_at')->default(0);
                 $table->boolean('co_host')->nullable();
+                $table->boolean('is_guest')->nullable();
                 $table->string('emergency_no')->nullable();
                 $table->string('google_id')->nullable();
                 $table->rememberToken();

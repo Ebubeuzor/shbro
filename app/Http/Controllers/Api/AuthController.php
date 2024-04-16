@@ -115,7 +115,24 @@ class AuthController extends Controller
         
         $user = null;
 
-        if (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid']))) {
+        $existingUser = User::where('email', $data['email'])->whereNotNull('is_guest')->first();
+
+        if ($existingUser) {
+            // Update the existing guest account to nullify the is_guest flag
+            $existingUser->update([
+                'name' => $data['name'],
+                'is_guest' => null,
+                'password' => Hash::make($data['password']),
+                'remember_token' => Str::random(40)
+            ]);
+    
+            $user = $existingUser;
+            
+            UserWallet::create([
+                'user_id' => $user->id,
+                'totalbalance' => 0,
+            ]);
+        }elseif (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid']))) {
             $decryptedCohostemail = Crypt::decryptString($data['encrptedCoHostemail']); 
             $decryptedHostremToken = Crypt::decryptString($data['hostremtoken']);
 
@@ -250,7 +267,7 @@ class AuthController extends Controller
             if ($user->google_id == null) {
                 if(!$user->is_active){
                     return response("Your account has been deactivated",422);
-                }if(!$user->suspend){
+                }if($user->suspend != null){
                     return response("Your account has been suspended",422);
                 }elseif($user->email_verified_at != null){
                     $user->update(['last_login_at' => Carbon::now()]);
@@ -266,7 +283,7 @@ class AuthController extends Controller
             }
             elseif(!$user->is_active){
                 return response("Your account has been deactivated",422);
-            }elseif(!$user->suspend){
+            }elseif($user->suspend != null){
                 return response("Your account has been suspended",422);
             }
         }else{

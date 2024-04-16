@@ -29,6 +29,8 @@ class StartConversationRequest extends FormRequest
             'status' => 'nullable',
             'recipient_id' => 'nullable',
             'chat_session_id' => 'nullable',
+            'email' => 'nullable',
+            'name' => 'nullable',
         ];
     }
 }

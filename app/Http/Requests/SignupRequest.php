@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\BannedEmail;
+use App\Rules\EmailExistsAsGuest;
 use App\Rules\PasswordRequirements;
 use App\Rules\SoftDeletedUser;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,7 +40,7 @@ class SignupRequest extends FormRequest
                     }
                 },
             ],
-            'email' => ['required ',' unique:users,email', new BannedEmail],
+            'email' => ['required', 'email', new BannedEmail, new EmailExistsAsGuest],
             'password' => ['required','min:6','max:255', new PasswordRequirements],
             'role' => 'nullable',
             'hostremtoken' => 'nullable',

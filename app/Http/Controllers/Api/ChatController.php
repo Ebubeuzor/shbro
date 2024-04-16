@@ -56,7 +56,7 @@ class ChatController extends Controller
      * event is Typing
      * @lrd:end
      */
-    public function typing(Request $request,$receiverId,$senderid)
+    public function typing($receiverId,$senderid)
     {
         event(new Typing($senderid,$receiverId));
     }

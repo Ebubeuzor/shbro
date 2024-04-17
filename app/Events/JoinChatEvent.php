@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use Carbon\Carbon;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -40,7 +41,8 @@ class JoinChatEvent implements ShouldBroadcast
         return [
             'adminid' => $this->adminId,
             'sessionId' => $this->sessionId,
-            'message' => $this->message
+            'message' => $this->message,
+            'timejoined' => Carbon::now(),
         ];
     }
 

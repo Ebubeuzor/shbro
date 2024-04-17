@@ -165,11 +165,11 @@
 
         
     document.addEventListener('DOMContentLoaded', function() {
-        initializeCohostEcho();
-        // initializeEcho();
-        // joinChat();
-        // leaveChat();
-        // endSession();
+        // initializeCohostEcho();
+        initializeEcho();
+        joinChat();
+        leaveChat();
+        endSession();
     });
 
 </script>

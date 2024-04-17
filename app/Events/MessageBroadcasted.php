@@ -28,6 +28,7 @@ class MessageBroadcasted implements ShouldBroadcast
         public $receiverId,
         public $chatId,
         public $sessionId,
+        public $created_at
     )
     {
         
@@ -68,7 +69,8 @@ class MessageBroadcasted implements ShouldBroadcast
                     'admin_id' => $this->receiverId,
                     'id' => $this->chatId,
                     'sessionId' => $this->sessionId,
-                    'status' => $this->userStatus
+                    'status' => $this->userStatus,
+                    'created_at' => $this->created_at,
                 ];
             }else {
                 return [
@@ -78,7 +80,8 @@ class MessageBroadcasted implements ShouldBroadcast
                     'admin_id' => 1,
                     'id' => $this->chatId,
                     'sessionId' => $this->sessionId,
-                    'status' => $this->userStatus
+                    'status' => $this->userStatus,
+                    'created_at' => $this->created_at,
                 ];
                 
             }

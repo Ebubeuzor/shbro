@@ -285,7 +285,7 @@ class AdminGuestChatController extends Controller
                     Mail::to($user->email)->queue(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
                 }
             }
-            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id,$data['chat_session_id']));
+            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id,$data['chat_session_id'], $chat->created_at));
 
             return response()->json(['message' => 'Conversation started successfully']);
         }
@@ -304,11 +304,8 @@ class AdminGuestChatController extends Controller
                 ]);
             }
 
-            if (!empty(isset($data['image']))) {
-                event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id,$data['chat_session_id']));
-            }else {
-                event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id,$data['chat_session_id']));
-            }
+            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id,$data['chat_session_id'], $chat->created_at));
+            
 
             return response()->json(['message' => 'Message sent']);
         }

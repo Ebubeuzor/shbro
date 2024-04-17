@@ -162,7 +162,7 @@ class ChatController extends Controller
             $uniqueCohosts = $cohosts->unique('user.email');
 
             foreach ($uniqueCohosts as $cohost) {
-                SendMailForChatToCohosts::dispatch($message,$cohost->user_id, $senderId, true);
+                SendMailForChatToCohosts::dispatch($message,$cohost->user_id, $receiverId, true);
             }
         }
     }

@@ -113,7 +113,7 @@
         
     document.addEventListener('DOMContentLoaded', function() {
         
-        initializeTypingEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
+        initializeEcho("26|bDKqrICjIUHHzQUs04YkWdwBpLMyBQ3tCit4aTyT5849c379");
 
     });
 

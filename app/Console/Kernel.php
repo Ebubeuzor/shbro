@@ -29,8 +29,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new ProcessCancelTrips)->hourly();
-        $schedule->job(new CalculateHostTotalBalance)->hourly();
-        $schedule->job(new ProcessSecurityDeposit)->hourly();
+        $schedule->job(new CalculateHostTotalBalance)->everyTwoHours();
+        $schedule->job(new ProcessSecurityDeposit)->everyThreeHours();
 
         $schedule->job(new DeleteExpiredBookings)->everyMinute();
         

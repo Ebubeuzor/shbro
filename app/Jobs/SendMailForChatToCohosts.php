@@ -114,6 +114,9 @@ class SendMailForChatToCohosts implements ShouldQueue
             ]);
             
             
+            // Trigger message event
+            // event(new MessageSent($message, $senderId, $receiverId));
+            
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }

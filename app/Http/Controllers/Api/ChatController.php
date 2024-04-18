@@ -36,6 +36,9 @@ class ChatController extends Controller
         // Load booking requests for each message if they exist
         foreach ($messages as $message) {
             $message->load('bookingRequest');
+            foreach ($message->bookingRequest as $bookrequest) {
+                $bookrequest->userName = User::find($bookrequest->user_id)->name;
+            }
         }
 
         // Return the messages along with booking requests

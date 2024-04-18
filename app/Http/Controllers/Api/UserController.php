@@ -34,6 +34,7 @@ use App\Mail\VerifyUser;
 use App\Models\AboutUser;
 use App\Models\Adminrole;
 use App\Models\Booking;
+use App\Models\Canceltrip;
 use App\Models\HostHome;
 use App\Models\Hosthomecohost;
 use App\Models\HostView;
@@ -74,6 +75,74 @@ class UserController extends Controller
         );
     }
     
+    /**
+     * @lrd:start
+     * Get records of all the money that went into the user's wallet.
+     *
+     * @lrd:end
+     */
+    public function viewUserWalletRecords()
+    {
+        try {
+            // Retrieve the authenticated user's ID
+            $userId = auth()->id();
+
+            // Retrieve records from bookings where the user is the host and addedToHostWallet is not null
+            $bookingHostBalanceRecords = Booking::where('hostId', $userId)
+                ->whereNotNull('addedToHostWallet')
+                ->select('id', 'hostBalance as amount', 'created_at', 'updated_at')
+                ->get();
+
+            // Retrieve records from cancel trips where the user is the host and addedToHostWallet is not null
+            $cancelTripHostRefundRecords = Canceltrip::where('host_id', $userId)
+                ->whereNotNull('addedToHostWallet')
+                ->select('id', 'host_refund as amount', 'created_at', 'updated_at')
+                ->get();
+
+            // Retrieve records from cancel trips where the user is the guest and addedToGuestWallet is not null
+            $cancelTripGuestRefundRecords = CancelTrip::where('user_id', $userId)
+                ->whereNotNull('addedToGuestWallet')
+                ->select('id', 'guest_refund as amount', 'created_at', 'updated_at')
+                ->get();
+
+            // Retrieve records from bookings where the user is the host and securityDepositToHost is not null
+            $bookingSecurityDepositToHostRecords = Booking::where('hostId', $userId)
+                ->whereNotNull('securityDepositToHost')
+                ->whereNotNull('pauseSecurityDepositToGuest')
+                ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
+                ->get();
+
+            // Retrieve records from bookings where the user is the guest and securityDepositToGuest is not null
+            $bookingSecurityDepositToGuestRecords = Booking::where('user_id', $userId)
+                ->whereNotNull('securityDepositToGuest')
+                ->whereNotNull('pauseSecurityDepositToGuest')
+                ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
+                ->get();
+
+            // Combine all records into a single collection with titles
+            $walletRecords = collect([
+                'Host Balance' => $bookingHostBalanceRecords,
+                'Host Refund' => $cancelTripHostRefundRecords,
+                'Guest Refund' => $cancelTripGuestRefundRecords,
+                'Host Security Deposit' => $bookingSecurityDepositToHostRecords,
+                'Guest Security Deposit' => $bookingSecurityDepositToGuestRecords,
+            ])->map(function ($records, $title) {
+                return [
+                    'title' => $title,
+                    'records' => $records,
+                ];
+            });
+
+            return response()->json(['wallet_records' => $walletRecords]);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving user wallet records.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /**
      * @lrd:start
      * Create or update the about user details for the authenticated user.

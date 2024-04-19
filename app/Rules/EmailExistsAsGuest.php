@@ -17,7 +17,15 @@ class EmailExistsAsGuest implements Rule
      */
     public function passes($attribute, $value)
     {
-        return User::where('email', $value)->whereNotNull('is_guest')->exists();
+        $existingUserGuest = User::where('email', $value)->whereNotNull('is_guest')->exists();
+        $existingUser = User::where('email', $value)->exists();
+        if (!$existingUser) {
+           return true;
+        }elseif ($existingUserGuest) {
+            return true;
+        }else {
+            return false;
+        }
     }
 
     /**

@@ -1939,42 +1939,63 @@ class UserController extends Controller
     }
 
     /**
-     * @lrd:start
+     * @lrd:start 
      * Retrieve pending security deposits for successful bookings.
-     *
-     * This method fetches all bookings with a null guestPaidStatus and paymentStatus set to 'success'.
-     * It compiles relevant information such as booking ID, security deposit, user name, email, and payment date.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * This method fetches all bookings with a null value for either securityDepositToGuest or securityDepositToHost and
+     * paymentStatus set to 'success'. It compiles relevant information such as booking ID, security deposit, user name,
+     * email, payment date, and status.
+     * If the value of pauseSecurityDepositToGuest is not null, the status is set to 'Under Investigation';
+     * otherwise, it is set to 'Pending'.
+     * @return \Illuminate\Http\JsonResponse Returns a JSON response containing an array of pending security deposit information.
+     * 
+     * Implementation details:
+     * Retrieve bookings where either securityDepositToGuest or securityDepositToHost is null and paymentStatus is 'success'.
+     * Determine the status based on the value of pauseSecurityDepositToGuest.
+     * Compile booking information including ID, security deposit, user name, email, and payment date.
      * @lrd:end
      */
     public function getPendingSecurityDeposits()
     {
-        // Retrieve bookings with null guestPaidStatus and successful paymentStatus
-        $pendingBookings = Booking::whereNull('guestPaidStatus')
-            ->where('paymentStatus', 'success')
-            ->latest()
-            ->get();
+        try {
+            // Retrieve bookings with null security deposit and successful payment status
+            $pendingBookings = Booking::where('paymentStatus', 'success')
+                ->where(function ($query) {
+                    $query->whereNull('securityDepositToGuest')
+                        ->orWhereNull('securityDepositToHost');
+                })
+                ->latest()
+                ->get();
 
-        $result = [];
+            $result = [];
 
-        // Iterate through each booking to extract and compile relevant information
-        foreach ($pendingBookings as $booking) {
-            // Find the associated user for the booking
-            $user = User::find($booking->user_id);
+            // Iterate through each booking to extract and compile relevant information
+            foreach ($pendingBookings as $booking) {
+                // Find the associated user for the booking
+                $user = User::find($booking->user_id);
 
-            // Add booking information to the result array
-            $result[] = [
-                'id' => $booking->id,
-                'security_deposit' => $booking->securityDeposit,
-                'user_name' => $user->name,
-                'user_email' => $user->email,
-                'payment_date' => $booking->created_at->format('M j, Y'),
-            ];
+                // Set the status based on the value of pauseSecurityDepositToGuest
+                $status = $booking->pauseSecurityDepositToGuest ? 'Under Investigation' : 'Pending';
+
+                // Add booking information to the result array
+                $result[] = [
+                    'id' => $booking->id,
+                    'security_deposit' => $booking->securityDeposit,
+                    'user_name' => $user->name,
+                    'user_email' => $user->email,
+                    'payment_date' => $booking->created_at->format('M j, Y'),
+                    'status' => $status,
+                ];
+            }
+
+            // Return the result as a JSON response
+            return response()->json(['pending_security_deposits' => $result], 200);
+        } catch (\Exception $e) {
+            // Provide a response for other exceptions
+            return response()->json([
+                'message' => 'An error occurred while retrieving pending security deposits.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Return the result as a JSON response
-        return response(['pending_security_deposits' => $result], 200);
     }
 
 

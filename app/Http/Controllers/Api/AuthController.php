@@ -185,12 +185,6 @@ class AuthController extends Controller
     public function becomeACoHost($userId,$hostid)
     {
 
-        $user = User::find($userId);
-
-        if ($user->email_verified_at == null) {
-            abort(400,"Please verify your account first");
-        }
-
         $hostHomes = HostHome::where('user_id', $hostid)->get();
 
         // Iterate through each host home

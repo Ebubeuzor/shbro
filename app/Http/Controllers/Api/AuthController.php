@@ -132,7 +132,7 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'totalbalance' => 0,
             ]);
-        }elseif (!empty(isset($data['hostremtoken'])) && !empty(isset($data['hostid']))) {
+        }elseif (!empty(isset($data['hostremtoken'])) || !empty(isset($data['hostid']))) {
             $decryptedCohostemail = Crypt::decryptString($data['encrptedCoHostemail']); 
             $decryptedHostremToken = Crypt::decryptString($data['hostremtoken']);
 
@@ -155,9 +155,6 @@ class AuthController extends Controller
                 }
 
             }else {
-                info($decryptedCohostemail);
-                info($decryptedHostremToken);
-                info($data['hostremtoken']);
                 abort(400, "Invalid host or cohost authorization ");
             }
         }else {

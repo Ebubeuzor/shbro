@@ -155,7 +155,10 @@ class AuthController extends Controller
                 }
 
             }else {
-                abort(400, "Invalid host or cohost authorization " . $decryptedHostremToken);
+                info($decryptedCohostemail);
+                info($decryptedHostremToken);
+                info($data['hostremtoken']);
+                abort(400, "Invalid host or cohost authorization ");
             }
         }else {
             $user = User::create([

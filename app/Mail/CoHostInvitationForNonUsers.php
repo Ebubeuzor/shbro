@@ -26,12 +26,12 @@ class CoHostInvitationForNonUsers extends Mailable
     public function build()
     {
         $encryptedCohostemail = Crypt::encryptString($this->cohostemail);
-        $encryptedHostremToken = Crypt::encryptString($this->hostremToken);
+        $hostremToken = $this->hostremToken;
         return $this->subject("Invitation to join Shortlet Bookings and ")
         ->view('emails.invitationfornonusers')
         ->with([
             'cohostemail' => $encryptedCohostemail,
-            'hostremToken' => $encryptedHostremToken,
+            'hostremToken' => $hostremToken,
             'hostid' => $this->hostid,
         ])
         ;

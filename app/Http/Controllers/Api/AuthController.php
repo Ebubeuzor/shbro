@@ -204,6 +204,7 @@ class AuthController extends Controller
             }
         }
         
+        
         return redirect()->away('http://localhost:5173');
 
     }

@@ -134,7 +134,7 @@ class AuthController extends Controller
             ]);
         }elseif (!empty(isset($data['hostremtoken'])) || !empty(isset($data['hostid']))) {
             $decryptedCohostemail = Crypt::decryptString($data['encrptedCoHostemail']); 
-            $decryptedHostremToken = Crypt::decryptString($data['hostremtoken']);
+            $decryptedHostremToken = $data['hostremtoken'];
 
             $oghost = User::where('remember_token', $decryptedHostremToken)->where('id', $data['hostid'])->first();
             if ($oghost) {

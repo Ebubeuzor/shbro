@@ -14,10 +14,10 @@ class OtpNotification extends Notification
     /**
      * Create a new notification instance.
      *
-     * @param string $code Otp code
+     * @param array $data Otp data
      * @return void
      */
-    public function __construct(protected $code)
+    public function __construct(protected array $data)
     {
         //
     }
@@ -38,8 +38,9 @@ class OtpNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('OTP Code')
-            ->line('Your OTP code is: ' . $this->code)
+            ->subject('OTP Verification Code')
+            ->line('Your OTP verification code is: ' . $this->data['code'])
+            ->line('Code expires at ' . $this->data['expires'])
             ->line('Thank you for using our application!');
     }
 

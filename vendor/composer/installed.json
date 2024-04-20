@@ -10920,7 +10920,6 @@
         "spatie/flare-client-php",
         "spatie/ignition",
         "spatie/laravel-ignition",
-        "symfony/yaml",
         "theseer/tokenizer"
     ]
 }

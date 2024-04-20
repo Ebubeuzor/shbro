@@ -55,6 +55,7 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
+        'cache' => \App\Http\Middleware\CacheMiddleware::class,
         'checkUserConditions' => \App\Http\Middleware\CheckUserConditions::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'googleSignup' => \App\Http\Middleware\GoogleSignupMiddleware::class,

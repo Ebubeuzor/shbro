@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class CacheMiddleware
@@ -19,8 +20,7 @@ class CacheMiddleware
     {
         // Cache only GET requests
         if ($request->isMethod('GET')) {
-            // Generate a unique cache key based on the request URL
-            $cacheKey = 'route_' . str_replace('/', '_', $request->path());
+            $cacheKey = $this->generateCacheKey($request);
 
             if (Cache::has($cacheKey)) {
                 // If the response is cached, return it directly
@@ -33,9 +33,28 @@ class CacheMiddleware
 
         // Cache the response for a certain duration for GET requests
         if ($request->isMethod('GET')) {
-            Cache::put($cacheKey, $response->getContent(), 604800);
+            $cacheKey = $this->generateCacheKey($request);
+            Cache::put($cacheKey, $response->getContent(), 604800); // Cache for 1 week
         }
 
         return $response;
+    }
+
+    /**
+     * Generate the cache key based on the request and user's authentication status.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return string
+     */
+    private function generateCacheKey(Request $request)
+    {
+        if (Auth::check()) {
+            // If user is authenticated, include user's ID in cache key
+            $userId = Auth::id();
+            return 'user_' . $userId . '_route_' . str_replace('/', '_', $request->path());
+        } else {
+            // If user is not authenticated, generate cache key without user's ID
+            return 'unauthenticated_route_' . str_replace('/', '_', $request->path());
+        }
     }
 }

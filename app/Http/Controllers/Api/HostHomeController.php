@@ -330,11 +330,13 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
 
-        ProcessHostHomeCreation::dispatch($data, $user->id);
-        
+        // Use afterResponse method to dispatch the job after the response
         return response([
             "ok" => "Created"
-        ],201);
+        ], 201)->afterResponse(function () use ($data, $user) {
+            // Dispatch the job after the response has been sent
+            ProcessHostHomeCreation::dispatch($data, $user->id);
+        });
     }
 
     

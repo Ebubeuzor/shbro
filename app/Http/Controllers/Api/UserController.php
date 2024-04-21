@@ -54,6 +54,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -213,19 +214,26 @@ class UserController extends Controller
         // Get the authenticated user
         $user = $request->user();
 
-        // Check if the user has adminStatus as 'admin' or 'super admin'
-        if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
-            // Fetch the admin roles for the user
-            $adminRoles = Adminrole::where('user_id', $user->id)->get(['rolePermission']);
+        // Define cache key
+        $cacheKey = 'user_info_' . $user->id;
 
-            // Merge the admin roles with the user data
-            $userDataWithRoles = $user->toArray() + ['adminRoles' => $adminRoles];
+        // Cache user information for 60 minutes
+        $userDataWithRoles = Cache::remember($cacheKey, 60, function () use ($user) {
+            // Check if the user has adminStatus as 'admin' or 'super admin'
+            if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
+                // Fetch the admin roles for the user
+                $adminRoles = Adminrole::where('user_id', $user->id)->get(['rolePermission']);
 
-            return response($userDataWithRoles, 200);
-        }
+                // Merge the admin roles with the user data
+                return $user->toArray() + ['adminRoles' => $adminRoles];
+            }
 
-        // If not an admin, return user data without admin roles
-        return response($user, 200);
+            // If not an admin, return user data without admin roles
+            return $user;
+        });
+
+        // Return user information
+        return response($userDataWithRoles, 200);
     }
     
     /**

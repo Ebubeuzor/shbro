@@ -23,12 +23,8 @@ use App\Models\User;
 use App\Models\UserTrip;
 use App\Repository\ChatRepository;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use KingFlamez\Rave\Facades\Rave as Flutterwave;
 use Unicodeveloper\Paystack\Facades\Paystack;
 
 use function PHPSTORM_META\map;

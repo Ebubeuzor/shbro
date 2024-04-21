@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 
+Route::middleware('cache')->group(function () {
+
     Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
     Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
 
@@ -259,3 +261,4 @@ use Illuminate\Support\Facades\Route;
     Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
     Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
+});

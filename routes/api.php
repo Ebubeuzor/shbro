@@ -20,10 +20,27 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 
-// Route::middleware('cache')->group(function () {
+Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
+Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
+Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
+    Route::get('notification', [NotifyController::class, 'index']);
+    
+    Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
+        Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
+        Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
+    });
+
+    Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
+    Route::get('admin-guest-chat/joinChat/{guestid}/{sessionId}', [AdminGuestChatController::class, 'joinChat']);
+    Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
+    Route::get('admin-guest-chat/getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
+    Route::get('admin-guest-chat/getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);
+
+});
+
+Route::middleware('cache')->group(function () {
 
     Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
-    Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
 
     Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
@@ -44,7 +61,6 @@ use Illuminate\Support\Facades\Route;
 
         Route::apiResource('/userDetail', UserController::class);
         
-        Route::get('notification', [NotifyController::class, 'index']);
         
         Route::get('sendNotificationToUser', [NotifyController::class, 'sendNotificationToUser']);
         
@@ -112,11 +128,6 @@ use Illuminate\Support\Facades\Route;
         Route::post('hosthomes', [HostHomeController::class, 'store']);
         Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
         Route::get('addCoHost', [HostHomeController::class, 'addCoHost']);
-        Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
-        Route::get('admin-guest-chat/joinChat/{guestid}/{sessionId}', [AdminGuestChatController::class, 'joinChat']);
-        Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
-        Route::get('admin-guest-chat/getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
-        Route::get('admin-guest-chat/getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);
         Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
         Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
         Route::delete('removeCoHost/{userid}', [HostHomeController::class, 'removeCoHost']);
@@ -215,10 +226,6 @@ use Illuminate\Support\Facades\Route;
         Route::get('/getHostReviews', [ReviewController::class, 'getHostReviews']);
         Route::get('/getHostPendingReviewsForGuest', [ReviewController::class, 'getHostPendingReviewsForGuest']);
         Route::get('/getHostPendingReviews', [ReviewController::class, 'getHostPendingReviews']);
-        Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
-            Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
-            Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
-        });
         
         Route::post('/filterHomepageForAuthUser', [UserController::class, 'filterHomepage']);
         Route::get('/allReservation', [UserController::class, 'allReservation']);
@@ -240,7 +247,6 @@ use Illuminate\Support\Facades\Route;
 
 
 
-    Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
     Route::get('homepage', [HomepageController::class, 'index']);
 
     Route::post('signup', [AuthController::class, 'signup']);
@@ -261,4 +267,4 @@ use Illuminate\Support\Facades\Route;
     Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
     Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
-// });
+});

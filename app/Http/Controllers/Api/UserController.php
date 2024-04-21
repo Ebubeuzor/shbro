@@ -218,7 +218,7 @@ class UserController extends Controller
         $cacheKey = 'user_info_' . $user->id;
 
         // Cache user information for 60 minutes
-        $userDataWithRoles = Cache::remember($cacheKey, 60, function () use ($user) {
+        $userDataWithRoles = Cache::remember($cacheKey, 604800, function () use ($user) {
             // Check if the user has adminStatus as 'admin' or 'super admin'
             if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
                 // Fetch the admin roles for the user

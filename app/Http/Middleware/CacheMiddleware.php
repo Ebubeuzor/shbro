@@ -29,7 +29,7 @@ class CacheMiddleware
         $response = $next($request);
 
         // Cache the response for a certain duration (e.g., 1 hour)
-        Cache::put($cacheKey, $response->getContent(), 60);
+        Cache::put($cacheKey, $response->getContent(), 604800);
 
         return $response;
     }

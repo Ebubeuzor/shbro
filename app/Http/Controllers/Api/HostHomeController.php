@@ -1645,5 +1645,13 @@ class HostHomeController extends Controller
         }
     }
     
+    
+    public function clearUserHostHomesCache($userId)
+    {
+        $cacheKey = 'user_host_homes_' . $userId;
+        if ($cacheKey) {
+            Cache::forget($cacheKey);
+        }
+    }
 
 }

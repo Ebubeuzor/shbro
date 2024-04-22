@@ -24,12 +24,14 @@ Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
 Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
 Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('notification', [NotifyController::class, 'index']);
+    Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
     
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
 
+    Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
     Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
     Route::get('admin-guest-chat/joinChat/{guestid}/{sessionId}', [AdminGuestChatController::class, 'joinChat']);
     Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
@@ -126,7 +128,6 @@ Route::middleware('cache')->group(function () {
             ->name('deleteNoticeById');
 
         Route::post('hosthomes', [HostHomeController::class, 'store']);
-        Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
         Route::get('addCoHost', [HostHomeController::class, 'addCoHost']);
         Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
         Route::delete('hosthomes/{hosthome}', [HostHomeController::class, 'destroy']);
@@ -212,7 +213,6 @@ Route::middleware('cache')->group(function () {
         Route::delete('/deleteReviews/{reviewId}', [ReviewController::class, 'deleteReviews']);
         Route::delete('/deleteHostPendingReviews/{id}', [ReviewController::class, 'deleteHostPendingReviews']);
         Route::delete('/deletesHostPendingReviewsForGuest/{id}', [ReviewController::class, 'deletesHostPendingReviewsForGuest']);
-        Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
         Route::get('/schdulerGetHostHomeAndId', [HostHomeController::class, 'schdulerGetHostHomeAndId']);
 
         

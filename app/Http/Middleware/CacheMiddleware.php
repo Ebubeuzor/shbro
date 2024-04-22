@@ -34,7 +34,7 @@ class CacheMiddleware
         // Cache the response for a certain duration for GET requests
         if ($request->isMethod('GET')) {
             $cacheKey = $this->generateCacheKey($request);
-            Cache::put($cacheKey, $response->getContent(), 604800); // Cache for 1 week
+            Cache::put($cacheKey, $response->getContent(), 360); // Cache for 1 week
         }
 
         return $response;

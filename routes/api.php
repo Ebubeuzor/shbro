@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
+Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
 Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('notification', [NotifyController::class, 'index']);
     Route::get('/getUserHostHomes', [HostHomeController::class, 'getUserHostHomes']);
+    Route::get('showGuestHomeForAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
     
     Route::group(['prefix' => 'chat','as' => 'chat.'], function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
@@ -242,7 +244,6 @@ Route::middleware('cache')->group(function () {
         Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
         Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
 
-        Route::get('showGuestHomeForAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
     });
 
 
@@ -261,7 +262,6 @@ Route::middleware('cache')->group(function () {
 
     Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
     Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
-    Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
     Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
     Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
     Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);

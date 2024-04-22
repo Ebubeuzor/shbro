@@ -49,6 +49,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -146,25 +147,36 @@ class HostHomeController extends Controller
      */
     public function getUserHostHomes()
     {
+        // Check if the response is cached
+        $cacheKey = 'user_host_homes_' . Auth::id();
+        if (Cache::has($cacheKey)) {
+            // If cached, return the cached response
+            return Cache::get($cacheKey);
+        }
+
         // Retrieve all host homes for the authenticated user
         $userHostHomes = Auth::user()->hostHomes;
 
         $userCohostedHomes = Auth::user()->cohosthomes()->with('hosthome')->get()
-        ->map(function ($cohost) {
-            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
-            return $cohostUser; // Return an empty collection if user not found
-        })
-        ->flatten();
+            ->map(function ($cohost) {
+                $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
+                return $cohostUser; // Return an empty collection if user not found
+            })
+            ->flatten();
 
-            // Combine both sets of homes
+        // Combine both sets of homes
         $userHostHomes = $userHostHomes->merge($userCohostedHomes);
 
         // Use unique to remove potential duplicates
         $userHostHomes = $userHostHomes->unique();
 
-        return response([
+        // Cache the response for 1 hour
+        Cache::put($cacheKey, response([
             "userHostHomes" => HostHomeResource::collection($userHostHomes),
-        ], 200);
+        ], 200), 3600);
+
+        // Return the response
+        return Cache::get($cacheKey);
     }
 
     /**
@@ -204,45 +216,6 @@ class HostHomeController extends Controller
             ->whereNull('banned')
             ->whereNull('suspend')->get()
         );
-    }
-
-    private function saveVideo($video)
-    {
-        // Check if video is base64 string
-        if (preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
-            $videoData = substr($video, strpos($video, ',') + 1);
-            $videoType = strtolower($matches[1]);
-
-            // Check if file is a video
-            if (!in_array($videoType, ['mp4','webm', 'avi', 'mov', 'mkv'])) {
-                throw new \Exception('Invalid video type');
-            }
-
-            // Decode base64 video data
-            $decodedVideo = base64_decode($videoData);
-
-            if ($decodedVideo === false) {
-                throw new \Exception('Failed to decode video');
-            }
-        } else {
-            throw new \Exception('Invalid video format');
-        }
-
-        $dir = 'videos/';
-        $file = Str::random() . '.' . $videoType;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
-
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-
-        // Save the decoded video to the file
-        if (!file_put_contents($absolutePath . $file, $decodedVideo, FILE_BINARY)) {
-            throw new \Exception('Failed to save video');
-        }
-
-        return $relativePath;
     }
 
     private function saveImage($image,$hosthomeid)
@@ -334,7 +307,7 @@ class HostHomeController extends Controller
         
         return response([
             "ok" => "Created"
-        ],201);
+        ], 201);
     }
 
     
@@ -1409,45 +1382,6 @@ class HostHomeController extends Controller
         }
     }
 
-
-    /**
-     * Determine the category of the duration (week or month).
-     *
-     * @param string $duration
-     * @return string
-     */
-    private function getDurationCategory($duration)
-    {
-        // Implement your logic to determine the category
-        // For example, check if the duration contains 'week' or 'month'
-        if (strpos($duration, 'week') !== false) {
-            return 'week';
-        } elseif (strpos($duration, 'month') !== false) {
-            return 'month';
-        }
-    
-        return 'other';
-    }
-    
-    /**
-     * Get all durations within the specified category.
-     *
-     * @param string $category
-     * @return array
-     */
-    private function getDurationsInCategory($category)
-    {
-        // Replace this with your dynamic logic to get durations in the specified category
-        // For example, return all weeks or all months based on the category
-        if ($category === 'week') {
-            return ['1 week', '2 weeks', '3 weeks'];
-        } elseif ($category === 'month') {
-            return ['1 month', '2 months', '3 months'];
-        }
-    
-        return [];
-    }
-
     /**
      * @lrd:start
      * this is for a user (Host Only) to see his house but only the admin can see every house
@@ -1565,63 +1499,12 @@ class HostHomeController extends Controller
         $user = User::find(auth()->id());
 
         ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId);
-        
+
         return response([
             "ok" => "Updated"
         ]);
     }
 
-    
-    private function hasNewListingPromotionDiscount($hostHome)
-    {
-        $discounts = Hosthomediscount::where('host_home_id', $hostHome->id)->get();
-
-        foreach ($discounts as $discount) {
-            if ($discount->discount === '20% New listing promotion') {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function updateNotices($hosthome, array $notices)
-    {
-
-        foreach ($notices as $notice) {
-            $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome];
-            $this->createNotices($hosthomenoticeData);
-        }
-    }
-
-    private function updateRules($hosthome, array $rules)
-    {
-
-        foreach ($rules as $rule) {
-            $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome];
-            $this->createRules($hosthomeruleData);
-        }
-    }
-
-    private function updateDiscounts($hosthome, array $discounts)
-    {
-        foreach ($discounts as $discount) {
-            $hosthomediscountData = ['discount' => $discount, 'host_home_id' => $hosthome];
-
-            // Handle "20% New listing promotion" discount
-            if ($discount === "20% New listing promotion") {
-                $bookingCount = $hosthome->bookingCount ?? 0;
-
-                // Apply the discount only if the bookingCount is less than 3
-                if ($bookingCount < 3) {
-                    
-                    $this->applyNewListingPromotion($hosthome);
-                }
-            }
-
-            $this->createDiscounts($hosthomediscountData);
-        }
-    }
     
     public function approveHomeForHost($hostid, $hosthomeid)
     {
@@ -1679,86 +1562,6 @@ class HostHomeController extends Controller
         return view('approveordecline', ['message' => 'Apartment deletion has been declined.']);
     }
 
-
-
-
-    private function applyNewListingPromotion($hostHomeId)
-    {
-        $hostHome = HostHome::find($hostHomeId);
-
-        // Ensure $hostHome is an instance of HostHome
-        if ($hostHome instanceof HostHome) {
-            $priceDiscount = intval($hostHome->actualPrice) * 0.2;
-            $price = intval($hostHome->actualPrice) - $priceDiscount;
-
-            // Make sure the discounted price is not less than 0
-            $hostHome->price = max(0, $price);
-
-            // Save the updated price immediately
-            $hostHome->save();
-        }else {
-            return response("Not good",422);
-        }
-    }
-
-
-
-
-
-
-    private function updateReservations($hosthome, array $reservations)
-    {
-
-        $getHostHome = HostHome::find($hosthome);
-        
-        $getHostHome->hosthomereservations()->delete();
-
-        foreach ($reservations as $reservation) {
-            $hosthomedescriptionData = ['reservation' => $reservation, 'host_home_id' => $hosthome];
-            $this->createReservations($hosthomedescriptionData);
-        }
-    }
-
-    private function updateDescriptions($hosthomeid, array $hosthomedescriptions)
-    {
-        foreach ($hosthomedescriptions as $hosthomedescription) {
-            // Check if a description with the same host_home_id and description content already exists
-            $existingDescription = Hosthomedescription::where('host_home_id', $hosthomeid)
-                ->where('description', $hosthomedescription)
-                ->first();
-
-            if ($existingDescription) {
-                // Update existing description
-                $existingDescription->update(['description' => $hosthomedescription]);
-            } else {
-                // Create new description
-                $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
-                $this->createDescriptions($descriptionData);
-            }
-        }
-
-    }
-
-    
-    
-
-    private function updateOffers($hosthome, array $amenities)
-    {
-        foreach ($amenities as $amenity) {
-            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
-            $this->createOffers($amenityData);
-        }
-    }
-
-    private function updateImages($hosthome, array $images)
-    {
-
-        foreach ($images as $base64Image) {
-            $imageData = ['image' => $base64Image, 'host_home_id' => $hosthome];
-            $this->createImages($imageData);
-        }
-    }
-
     /* 
     *@lrd:start
     *This method deletes the provided Hosthomephoto instance and returns a response indicating the operation's success.
@@ -1809,6 +1612,15 @@ class HostHomeController extends Controller
                 'needApproval' => true
             ]);
             Mail::to($host->email)->queue(new ApartmentDeleteApprovalRequest($hostHome,$host,$user));
+            $cohosts = $host->cohosts()->with('user')->get();
+            // Filter out duplicate co-hosts based on email
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            $this->clearUserHostHomesCache($host->id);
+
+            foreach ($uniqueCohosts as $cohost) {
+                $this->clearUserHostHomesCache($cohost->user->id);
+            }
             return response('Request has been sent to host',200);
         }else{
             $hostHome->hosthomedescriptions()->delete();
@@ -1819,6 +1631,16 @@ class HostHomeController extends Controller
             $hostHome->hosthomereservations()->delete();
             $hostHome->hosthomerules()->delete();
             $hostHome->forceDelete();
+            
+            $cohosts = $host->cohosts()->with('user')->get();
+            // Filter out duplicate co-hosts based on email
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            $this->clearUserHostHomesCache($host->id);
+
+            foreach ($uniqueCohosts as $cohost) {
+                $this->clearUserHostHomesCache($cohost->user->id);
+            }
             return response('This home has been deleted',200);
         }
     }

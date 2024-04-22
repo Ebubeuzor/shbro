@@ -17,6 +17,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
@@ -157,6 +158,17 @@ class ProcessHostHomeUpdate implements ShouldQueue
             if ($cohost) {
                 $destination = "http://localhost:5173/EditHostHomes/$hostHome->id";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$this->user,$destination));
+                $mainHost = User::find($cohost->host_id);
+                
+                $cohosts = $mainHost->cohosts()->with('user')->get();
+                // Filter out duplicate co-hosts based on email
+                $uniqueCohosts = $cohosts->unique('user.email');
+
+                $this->clearUserHostHomesCache($mainHost->id);
+
+                foreach ($uniqueCohosts as $cohost) {
+                    $this->clearUserHostHomesCache($cohost->user->id);
+                }
             }
             $message = "Your listing has been updated now awaiting admin approval";
             $title = "Listing updated Successfully.";
@@ -169,7 +181,26 @@ class ProcessHostHomeUpdate implements ShouldQueue
             event(new NewNotificationEvent($notification, $notification->id, $host->id));
                 
             Mail::to($host->email)->queue(new NotificationMail($host,$message,$title));
+            $mainHost = User::find($this->user->id);
+                
+            $cohosts = $mainHost->cohosts()->with('user')->get();
+            // Filter out duplicate co-hosts based on email
+            $uniqueCohosts = $cohosts->unique('user.email');
+
+            $this->clearUserHostHomesCache($mainHost->id);
+
+            foreach ($uniqueCohosts as $cohost) {
+                $this->clearUserHostHomesCache($cohost->user->id);
+            }
         });
+    }
+    
+    public function clearUserHostHomesCache($userId)
+    {
+        $cacheKey = 'user_host_homes_' . $userId;
+        if ($cacheKey) {
+            Cache::forget($cacheKey);
+        }
     }
 
     private function hasNewListingPromotionDiscount($hostHome)

@@ -16,6 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -159,6 +160,18 @@ class ProcessHostHomeCreation implements ShouldQueue
                     'needApproval' => true
                 ]);
                 Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
+                $coHost = Hosthomecohost::where('user_id',auth()->id())->first();
+                $mainHost = User::find($coHost->host_id);
+                
+                $cohosts = $mainHost->cohosts()->with('user')->get();
+                // Filter out duplicate co-hosts based on email
+                $uniqueCohosts = $cohosts->unique('user.email');
+
+                $this->clearUserHostHomesCache($mainHost->id);
+
+                foreach ($uniqueCohosts as $cohost) {
+                    $this->clearUserHostHomesCache($cohost->user->id);
+                }
             }
 
             if ($host->cohosts()->exists()) {
@@ -171,8 +184,30 @@ class ProcessHostHomeCreation implements ShouldQueue
                         'host_home_id' => $hostHome->id
                     ]);
                 }
+
+                $mainHost = User::find($this->userId);
+                
+                $cohosts = $mainHost->cohosts()->with('user')->get();
+                // Filter out duplicate co-hosts based on email
+                $uniqueCohosts = $cohosts->unique('user.email');
+
+                $this->clearUserHostHomesCache($mainHost->id);
+
+                foreach ($uniqueCohosts as $cohost) {
+                    $this->clearUserHostHomesCache($cohost->user->id);
+                }
             }
+
+
         });
+    }
+
+    public function clearUserHostHomesCache($userId)
+    {
+        $cacheKey = 'user_host_homes_' . $userId;
+        if ($cacheKey) {
+            Cache::forget($cacheKey);
+        }
     }
 
     private function saveVideo($video)

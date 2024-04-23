@@ -42,8 +42,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
 });
 
-Route::middleware('cache')->group(function () {
-
     Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 
     Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
@@ -267,4 +265,3 @@ Route::middleware('cache')->group(function () {
     Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
     Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
-});

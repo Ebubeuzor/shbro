@@ -91,18 +91,21 @@ class UserController extends Controller
             $bookingHostBalanceRecords = Booking::where('hostId', $userId)
                 ->whereNotNull('addedToHostWallet')
                 ->select('id', 'hostBalance as amount', 'created_at', 'updated_at')
+                ->with('hosthome:id,title')
                 ->get();
 
             // Retrieve records from cancel trips where the user is the host and addedToHostWallet is not null
             $cancelTripHostRefundRecords = Canceltrip::where('host_id', $userId)
                 ->whereNotNull('addedToHostWallet')
                 ->select('id', 'host_refund as amount', 'created_at', 'updated_at')
+                ->with(['booking.hosthome:id,title'])
                 ->get();
 
             // Retrieve records from cancel trips where the user is the guest and addedToGuestWallet is not null
             $cancelTripGuestRefundRecords = CancelTrip::where('user_id', $userId)
                 ->whereNotNull('addedToGuestWallet')
                 ->select('id', 'guest_refund as amount', 'created_at', 'updated_at')
+                ->with(['booking.hosthome:id,title'])
                 ->get();
 
             // Retrieve records from bookings where the user is the host and securityDepositToHost is not null
@@ -110,6 +113,7 @@ class UserController extends Controller
                 ->whereNotNull('securityDepositToHost')
                 ->whereNotNull('pauseSecurityDepositToGuest')
                 ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
+                ->with('hosthome:id,title')
                 ->get();
 
             // Retrieve records from bookings where the user is the guest and securityDepositToGuest is not null
@@ -117,6 +121,7 @@ class UserController extends Controller
                 ->whereNotNull('securityDepositToGuest')
                 ->whereNotNull('pauseSecurityDepositToGuest')
                 ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
+                ->with('hosthome:id,title')
                 ->get();
 
             // Combine all records into a single collection with titles

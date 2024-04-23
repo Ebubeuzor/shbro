@@ -198,8 +198,6 @@ class AdminGuestChatController extends Controller
             }
         }
 
-        info($user);
-
         $recipient_id = intval($data['recipient_id']);
         $endedConvo = null;
 
@@ -307,7 +305,12 @@ class AdminGuestChatController extends Controller
             event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id,$data['chat_session_id'], $chat->created_at));
             
 
-            return response()->json(['message' => 'Message sent']);
+            return response()->json(
+                [
+                    'message' => 'Message sent',
+                    'user_id' => $user->id
+                ]
+            );
         }
 
 

@@ -93,7 +93,7 @@ class UserController extends Controller
                 ->select('id', 'hostBalance as amount', 'created_at', 'updated_at')
                 ->with('hosthome:id,title')
                 ->get();
-
+ 
             // Retrieve records from cancel trips where the user is the host and addedToHostWallet is not null
             $cancelTripHostRefundRecords = Canceltrip::where('host_id', $userId)
                 ->whereNotNull('addedToHostWallet')

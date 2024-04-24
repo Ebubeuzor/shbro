@@ -31,6 +31,7 @@ class StartConversationRequest extends FormRequest
             'chat_session_id' => 'nullable',
             'email' => 'nullable',
             'name' => 'nullable',
+            'token' => 'nullable',
         ];
     }
 }

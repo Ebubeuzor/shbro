@@ -172,11 +172,12 @@ class AdminGuestChatController extends Controller
         $data = $request->validated();
 
         $user = null;
+        $token = null;
 
         if (Auth::guard('sanctum')->check()) {
             $user = Auth::guard('sanctum')->user(); // Authenticated user via API token
         } else {
-            if (empty($data['name']) || empty($data['email'])) {
+            if (empty($data['name']) || empty($data['email']) ) {
                 return response("Please enter your name and email",422);
             }else {
                 
@@ -195,6 +196,9 @@ class AdminGuestChatController extends Controller
                     $user = $existingUser;
                 }
 
+                if(empty($data['token'])){
+                    $token = $user->createToken('main')->plainTextToken;
+                }
             }
         }
 
@@ -274,7 +278,6 @@ class AdminGuestChatController extends Controller
         $imageUrl = !empty($chat->image) ? url($chat->image) : null;
 
         if (empty(isset($data['recipient_id']))) {
-            info("Hi");
             $users = User::all();
             foreach ($users as $user) {
 
@@ -285,7 +288,11 @@ class AdminGuestChatController extends Controller
             }
             event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id,$data['chat_session_id'], $chat->created_at));
 
-            return response()->json(['message' => 'Conversation started successfully']);
+            return response()->json([
+                'message' => 'Conversation started successfully',
+                'user_id' => $user->id,
+                'token' => $token
+            ]);
         }
         else {
 
@@ -308,7 +315,8 @@ class AdminGuestChatController extends Controller
             return response()->json(
                 [
                     'message' => 'Message sent',
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
+                    'token' => $token
                 ]
             );
         }

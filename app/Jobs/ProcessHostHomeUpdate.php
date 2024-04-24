@@ -192,7 +192,23 @@ class ProcessHostHomeUpdate implements ShouldQueue
             foreach ($uniqueCohosts as $cohost) {
                 $this->clearUserHostHomesCache($cohost->user->id);
             }
+
+            $this->clearCacheForAllUsers();
         });
+    }
+    
+    
+    private function clearCacheForAllUsers()
+    {
+        // Generate cache key without user-specific information
+        $cacheKey1 = 'host_homes_*';
+        $cacheKey2 = 'filtered_host_homes_dates_*';
+        $cacheKey3 = 'filtered_host_homes_*';
+        $cacheKey4 = 'showGuestHome_' . $this->hostHomeId;
+        Cache::forget($cacheKey1);
+        Cache::forget($cacheKey2);
+        Cache::forget($cacheKey3);
+        Cache::forget($cacheKey4);
     }
     
     public function clearUserHostHomesCache($userId)

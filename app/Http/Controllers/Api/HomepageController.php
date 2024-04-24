@@ -7,6 +7,7 @@ use App\Http\Requests\HomepageRequest;
 use App\Http\Resources\HomepageResource;
 use App\Models\Homepage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 
@@ -20,9 +21,11 @@ class HomepageController extends Controller
      */
     public function index()
     {
-        return HomepageResource::collection(
-            Homepage::whereId(1)->get()
-        );
+        $cacheKey = "homepagedata";
+        return   Cache::remember($cacheKey, now()->addDay(), fn () =>   
+            HomepageResource::collection(
+                Homepage::whereId(1)->get()
+            ));
     }
 
     
@@ -80,6 +83,9 @@ class HomepageController extends Controller
         $attributes['title'] = $data['title'];
         $attributes['subtitle'] = $data['subtitle'];
         Homepage::updateOrCreate([], $attributes);
+        $cacheKey = "homepagedata";
+        Cache::forget( $cacheKey );
+        return response("Done", 201);
     }
 
 

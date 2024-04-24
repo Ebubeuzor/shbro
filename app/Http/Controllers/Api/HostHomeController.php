@@ -73,13 +73,18 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
-        return HostHomeResource::collection(
-            HostHome::where('verified', 1)
-                ->where('disapproved', null)
-                ->whereNull('banned')
-                ->whereNull('suspend')
-                ->paginate($perPage)
-        );
+        // Generate a cache key based on the request parameters
+        $cacheKey = 'host_homes_' . $perPage;
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            return HostHomeResource::collection(
+                HostHome::where('verified', 1)
+                    ->where('disapproved', null)
+                    ->whereNull('banned')
+                    ->whereNull('suspend')
+                    ->paginate($perPage)
+            );
+        });
     }
 
     
@@ -1420,7 +1425,11 @@ class HostHomeController extends Controller
                     ->where('disapproved',null)
                     ->whereNull('banned')
                     ->whereNull('suspend')->first();
-        return new HostHomeResource($hostHome);
+        $cacheKey = "showGuestHome_".$hostHomeId;
+
+        return Cache::remember( $cacheKey , now()->addHour() ,function () use ($hostHome){
+            return new HostHomeResource($hostHome);
+        });
     }
     
     
@@ -1643,6 +1652,9 @@ class HostHomeController extends Controller
             }
             return response('This home has been deleted',200);
         }
+
+        
+        $this->clearCacheForAllUsers($id);
     }
     
     
@@ -1654,4 +1666,16 @@ class HostHomeController extends Controller
         }
     }
 
+    private function clearCacheForAllUsers($id)
+    {
+        // Generate cache key without user-specific information
+        $cacheKey1 = 'host_homes_*';
+        $cacheKey2 = 'filtered_host_homes_dates_*';
+        $cacheKey3 = 'filtered_host_homes_*';
+        $cacheKey4 = 'showGuestHome_' . $id;
+        Cache::forget($cacheKey1);
+        Cache::forget($cacheKey2);
+        Cache::forget($cacheKey3);
+        Cache::forget($cacheKey4);
+    }
 }

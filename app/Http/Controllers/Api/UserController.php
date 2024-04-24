@@ -54,6 +54,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -218,19 +219,25 @@ class UserController extends Controller
         // Get the authenticated user
         $user = $request->user();
 
-        // Check if the user has adminStatus as 'admin' or 'super admin'
-        if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
-            // Fetch the admin roles for the user
-            $adminRoles = Adminrole::where('user_id', $user->id)->get(['rolePermission']);
+        // Generate a unique cache key based on the user's ID
+        $cacheKey = "user_info_{$user->id}";
 
-            // Merge the admin roles with the user data
-            $userDataWithRoles = $user->toArray() + ['adminRoles' => $adminRoles];
+        // Return cached data if available, otherwise fetch and cache the user info
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($user) {
+            // Check if the user has adminStatus as 'admin' or 'super admin'
+            if ($user->adminStatus === 'admin' || $user->adminStatus === 'super admin') {
+                // Fetch the admin roles for the user
+                $adminRoles = Adminrole::where('user_id', $user->id)->get(['rolePermission']);
 
-            return response($userDataWithRoles, 200);
-        }
+                // Merge the admin roles with the user data
+                $userDataWithRoles = $user->toArray() + ['adminRoles' => $adminRoles];
 
-        // If not an admin, return user data without admin roles
-        return response($user, 200);
+                return response()->json($userDataWithRoles, 200);
+            }
+
+            // If not an admin, return user data without admin roles
+            return response()->json($user, 200);
+        });
     }
     
     /**
@@ -394,6 +401,8 @@ class UserController extends Controller
         }
         
         $user->save();
+        $cacheKey = "user_info_{$user->id}";
+        Cache::forget($cacheKey);
         return response("Updated successfully");
 
     }
@@ -781,8 +790,13 @@ class UserController extends Controller
         if ($wishlistItem) {
             // Remove the specific wishlist item associated with this HostHome
             $wishlistItem->delete();
+            
+            $cacheKey = "user_wishlist".auth()->id();
 
+            Cache::forget($cacheKey);
+            
             return response("HostHome removed from the wishlist", 200);
+
         } else {
             return response("Item not found in the wishlist", 404);
         }
@@ -798,8 +812,11 @@ class UserController extends Controller
     {
         
         $user = User::where('id', auth()->id())->firstOrFail();
-        $userWishlist = $user->wishlistcontainers()->distinct()->get();
-        return response()->json(['userWishlist' => $userWishlist]);
+        $cacheKey = "user_wishlist".auth()->id();
+        return Cache::remember($cacheKey, now()->addWeek() ,function () use($user){
+            $userWishlist = $user->wishlistcontainers()->distinct()->get();
+            return response()->json(['userWishlist' => $userWishlist]);
+        });
     }
     
     /**
@@ -888,7 +905,16 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
-        // Extract the validated data
+        // Define a unique cache key based on the request data
+        $cacheKey = 'filtered_host_homes_dates_' . md5(json_encode($data));
+
+        // Check if the data is already cached
+        if (Cache::has($cacheKey)) {
+            // If cached data exists, return it
+            return Cache::get($cacheKey);
+        }
+
+        // If data is not cached, perform the filtering
         $address = $data['address'];
         $startDate = $data['start_date'];
         $endDate = $data['end_date'];
@@ -909,12 +935,11 @@ class UserController extends Controller
             })
             ->where('guests', '>=', $guests)
             ->where('verified', 1)
-            ->where('disapproved',null)
+            ->where('disapproved', null)
             ->whereNull('banned')
             ->whereNull('suspend');
 
         if ($allowPets === 'allow_pets') {
-            // If allow_pets is 'no_pets', filter by the rule
             $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
                 $query->where('rule', 'No pets');
             });
@@ -922,6 +947,10 @@ class UserController extends Controller
 
         $result = $filteredHostHomes->distinct()->paginate($per_page);
 
+        // Cache the result with the defined cache key for future use
+        Cache::put($cacheKey, $result, now()->addHours(1)); // Adjust cache expiry time as needed
+
+        // Return the result
         return HostHomeResource::collection($result);
     }
 
@@ -1378,6 +1407,16 @@ class UserController extends Controller
     {
         try {
             $data = $request->validated();
+
+            // Define a unique cache key based on the request data
+            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data));
+
+            // Check if the data is already cached
+            if (Cache::has($cacheKey)) {
+                // If cached data exists, return it
+                return Cache::get($cacheKey);
+            }
+
             $propertyType = $data['property_type'];
             $minBedrooms = $data['bedrooms'];
             $minBeds = $data['beds'];
@@ -1432,6 +1471,8 @@ class UserController extends Controller
             // Fetch the filtered results along with associated host home photos
             $result = $query->with('hosthomephotos')->distinct()->paginate($per_page);
     
+            // Cache the result with the defined cache key for future use
+            Cache::put($cacheKey, $result, now()->addHours(1));
             // Return the filtered data as JSON response
             return response()->json(['data' => HostHomeResource::collection($result)], 200);
         } catch (QueryException $e) {

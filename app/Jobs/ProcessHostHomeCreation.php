@@ -217,11 +217,6 @@ class ProcessHostHomeCreation implements ShouldQueue
             $videoData = substr($video, strpos($video, ',') + 1);
             $videoType = strtolower($matches[1]);
 
-            // Check if file is a video
-            if (!in_array($videoType, ['mp4','webm', 'avi', 'mov', 'mkv'])) {
-                throw new \Exception('Invalid video type');
-            }
-
             // Decode base64 video data
             $decodedVideo = base64_decode($videoData);
 

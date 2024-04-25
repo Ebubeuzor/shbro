@@ -290,7 +290,7 @@ class AdminGuestChatController extends Controller
 
             return response()->json([
                 'message' => 'Conversation started successfully',
-                'user_id' => $user->id,
+                'user_id' => $authUser->id,
                 'token' => $token
             ]);
         }
@@ -315,7 +315,7 @@ class AdminGuestChatController extends Controller
             return response()->json(
                 [
                     'message' => 'Message sent',
-                    'user_id' => $user->id,
+                    'user_id' => $authUser->id,
                     'token' => $token
                 ]
             );

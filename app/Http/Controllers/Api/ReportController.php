@@ -409,12 +409,7 @@ class ReportController extends Controller
         if (preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
             $videoData = substr($video, strpos($video, ',') + 1);
             $videoType = strtolower($matches[1]);
-
-            // Check if file is a video
-            if (!in_array($videoType, ['mp4','webm', 'avi', 'mov', 'mkv'])) {
-                throw new \Exception('Invalid video type');
-            }
-
+            
             // Decode base64 video data
             $decodedVideo = base64_decode($videoData);
 
@@ -469,11 +464,6 @@ class ReportController extends Controller
         if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
             $imageData = substr($image, strpos($image, ',') + 1);
             $imageType = strtolower($matches[1]);
-
-            // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png','webp'])) {
-                throw new \Exception('Invalid image type');
-            }
 
             // Decode base64 image data
             $decodedImage = base64_decode($imageData);

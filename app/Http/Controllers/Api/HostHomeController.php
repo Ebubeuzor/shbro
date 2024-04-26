@@ -739,14 +739,18 @@ class HostHomeController extends Controller
         if (!$hostHome) {
             abort(404, "Hosthome not found");
         }
-
+        
         $dates = $data['dates'];
 
+        $user = User::find(auth()->id());
+        $host = User::find($hostHome->user_id);
+        
         if (!isset($data['dates'])) {
             $hostHome->update([
                 'actualPrice' => $price,
             ]);
-    
+            
+            ClearCache::dispatch($hostHome->id,$host->id);
             return response("Price for all homes updated", 200);
         }
         
@@ -775,8 +779,6 @@ class HostHomeController extends Controller
             $reservedDate->save();
         }
 
-        $user = User::find(auth()->id());
-        $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "http://localhost:5173/Scheduler";
@@ -1671,7 +1673,7 @@ class HostHomeController extends Controller
         }
 
         
-        $this->clearCacheForAllUsers($id);
+        $this->clearCacheForAllUsers();
     }
     
     
@@ -1683,16 +1685,8 @@ class HostHomeController extends Controller
         }
     }
 
-    private function clearCacheForAllUsers($id)
+    private function clearCacheForAllUsers()
     {
-        // Generate cache key without user-specific information
-        $cacheKey1 = 'host_homes_*';
-        $cacheKey2 = 'filtered_host_homes_dates_*';
-        $cacheKey3 = 'filtered_host_homes_*';
-        $cacheKey4 = 'showGuestHome_' . $id;
-        Cache::forget($cacheKey1);
-        Cache::forget($cacheKey2);
-        Cache::forget($cacheKey3);
-        Cache::forget($cacheKey4);
+        Cache::flush();
     }
 }

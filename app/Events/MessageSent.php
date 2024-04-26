@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
+ 
     
     public $message;
     public $sender;

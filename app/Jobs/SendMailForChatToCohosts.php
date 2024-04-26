@@ -75,7 +75,7 @@ class SendMailForChatToCohosts implements ShouldQueue
             throw new \Exception($th->getMessage());
         }
     }
-    
+     
     private function sendMessageForBookingRequest($message, $senderId, $receiverId)
     {
         $chat = new ChatRepository();

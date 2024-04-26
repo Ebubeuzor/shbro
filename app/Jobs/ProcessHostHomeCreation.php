@@ -191,23 +191,17 @@ class ProcessHostHomeCreation implements ShouldQueue
                 // Filter out duplicate co-hosts based on email
                 $uniqueCohosts = $cohosts->unique('user.email');
 
-                $this->clearUserHostHomesCache($mainHost->id);
+                $this->clearAllCache();
 
-                foreach ($uniqueCohosts as $cohost) {
-                    $this->clearUserHostHomesCache($cohost->user->id);
-                }
             }
 
 
         });
     }
 
-    public function clearUserHostHomesCache($userId)
+    public function clearAllCache()
     {
-        $cacheKey = 'user_host_homes_' . $userId;
-        if ($cacheKey) {
-            Cache::forget($cacheKey);
-        }
+        Cache::flush();
     }
 
     private function saveVideo($video)

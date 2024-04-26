@@ -200,15 +200,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
     
     private function clearCacheForAllUsers()
     {
-        // Generate cache key without user-specific information
-        $cacheKey1 = 'host_homes_*';
-        $cacheKey2 = 'filtered_host_homes_dates_*';
-        $cacheKey3 = 'filtered_host_homes_*';
-        $cacheKey4 = 'showGuestHome_' . $this->hostHomeId;
-        Cache::forget($cacheKey1);
-        Cache::forget($cacheKey2);
-        Cache::forget($cacheKey3);
-        Cache::forget($cacheKey4);
+        Cache::flush();
     }
     
     public function clearUserHostHomesCache($userId)

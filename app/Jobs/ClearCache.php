@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Cache;
 class ClearCache implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
+    public $tries = 3;
+
+    public $retryAfter = 5;
 
     /**
      * Create a new job instance.
@@ -36,7 +40,7 @@ class ClearCache implements ShouldQueue
     public function handle()
     {
         $mainHost = User::find($this->hostId);
-        
+
         $cohosts = $mainHost->cohosts()->with('user')->get();
         
         // Filter out duplicate co-hosts based on email
@@ -53,15 +57,7 @@ class ClearCache implements ShouldQueue
     
     private function clearCacheForAllUsers()
     {
-        // Generate cache key without user-specific information
-        $cacheKey1 = 'host_homes_*';
-        $cacheKey2 = 'filtered_host_homes_dates_*';
-        $cacheKey3 = 'filtered_host_homes_*';
-        $cacheKey4 = 'showGuestHome_' . $this->hostHomeId;
-        Cache::forget($cacheKey1);
-        Cache::forget($cacheKey2);
-        Cache::forget($cacheKey3);
-        Cache::forget($cacheKey4);
+        Cache::flush();
     }
     
     public function clearUserHostHomesCache($userId)

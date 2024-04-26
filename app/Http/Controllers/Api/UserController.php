@@ -89,41 +89,51 @@ class UserController extends Controller
             $userId = auth()->id();
 
             // Retrieve records from bookings where the user is the host and addedToHostWallet is not null
-            $bookingHostBalanceRecords = Booking::where('hostId', $userId)
-                ->whereNotNull('addedToHostWallet')
-                ->select('id', 'hostBalance as amount', 'created_at', 'updated_at')
-                ->with('hosthome:id,title')
+            $bookingHostBalanceRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+                ->where('bookings.hostId', $userId)
+                ->whereNotNull('bookings.addedToHostWallet')
+                ->select('bookings.id', 'bookings.hostBalance as amount', 'bookings.created_at', 'bookings.updated_at')
+                ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
                 ->get();
 
             // Retrieve records from cancel trips where the user is the host and addedToHostWallet is not null
-            $cancelTripHostRefundRecords = Canceltrip::where('host_id', $userId)
-                ->whereNotNull('addedToHostWallet')
-                ->select('id', 'host_refund as amount', 'created_at', 'updated_at')
-                ->with(['booking.hosthome:id,title'])
-                ->get();
+            $cancelTripHostRefundRecords = Canceltrip::join('bookings', 'canceltrips.booking_id', '=', 'bookings.id')
+            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->where('canceltrips.host_id', $userId)
+            ->whereNotNull('canceltrips.addedToHostWallet')
+            ->select('canceltrips.id', 'canceltrips.host_refund as amount', 'canceltrips.created_at', 'canceltrips.updated_at')
+            ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
+            ->get();
+
 
             // Retrieve records from cancel trips where the user is the guest and addedToGuestWallet is not null
-            $cancelTripGuestRefundRecords = CancelTrip::where('user_id', $userId)
-                ->whereNotNull('addedToGuestWallet')
-                ->select('id', 'guest_refund as amount', 'created_at', 'updated_at')
-                ->with(['booking.hosthome:id,title'])
-                ->get();
+            $cancelTripGuestRefundRecords = CancelTrip::join('bookings', 'canceltrips.booking_id', '=', 'bookings.id')
+            ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->where('canceltrips.user_id', $userId)
+            ->whereNotNull('canceltrips.addedToGuestWallet')
+            ->select('canceltrips.id', 'canceltrips.guest_refund as amount', 'canceltrips.created_at', 'canceltrips.updated_at')
+            ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
+            ->get();
+
 
             // Retrieve records from bookings where the user is the host and securityDepositToHost is not null
-            $bookingSecurityDepositToHostRecords = Booking::where('hostId', $userId)
-                ->whereNotNull('securityDepositToHost')
-                ->whereNotNull('pauseSecurityDepositToGuest')
-                ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
-                ->with('hosthome:id,title')
-                ->get();
+            $bookingSecurityDepositToHostRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->where('bookings.hostId', $userId)
+            ->whereNotNull('bookings.securityDepositToHost')
+            ->whereNotNull('bookings.pauseSecurityDepositToGuest')
+            ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
+            ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
+            ->get();
 
             // Retrieve records from bookings where the user is the guest and securityDepositToGuest is not null
-            $bookingSecurityDepositToGuestRecords = Booking::where('user_id', $userId)
-                ->whereNotNull('securityDepositToGuest')
-                ->whereNotNull('pauseSecurityDepositToGuest')
-                ->select('id', 'securityDeposit as amount', 'created_at', 'updated_at')
-                ->with('hosthome:id,title')
-                ->get();
+            $bookingSecurityDepositToGuestRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
+            ->where('bookings.user_id', $userId)
+            ->whereNotNull('bookings.securityDepositToGuest')
+            ->whereNotNull('bookings.pauseSecurityDepositToGuest')
+            ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
+            ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
+            ->get();
+
 
             // Combine all records into a single collection with titles
             $walletRecords = collect([

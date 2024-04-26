@@ -8,6 +8,7 @@ use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
+use App\Jobs\ClearCache;
 use App\Jobs\ProcessDescription;
 use App\Jobs\ProcessDiscount;
 use App\Jobs\ProcessHostHomeCreation;
@@ -781,6 +782,8 @@ class HostHomeController extends Controller
             $destination = "http://localhost:5173/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
+
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Prices updated successfully", 200);
     }
 
@@ -843,6 +846,8 @@ class HostHomeController extends Controller
             $destination = "http://localhost:5173/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Prices updated for the specified date range", 200);
     }
 
@@ -883,6 +888,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
         
     }
@@ -920,6 +926,8 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
     }
 
@@ -954,7 +962,8 @@ class HostHomeController extends Controller
             $destination = "http://localhost:5173/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
-
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
     }
 
@@ -989,7 +998,8 @@ class HostHomeController extends Controller
             $destination = "http://localhost:5173/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
-
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
     }
 
@@ -1024,7 +1034,8 @@ class HostHomeController extends Controller
             $destination = "http://localhost:5173/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
-
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
     }
 
@@ -1060,6 +1071,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Done", 200);
     }
 
@@ -1115,6 +1127,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Dates blocked successfully", 200);
     }
 
@@ -1146,6 +1159,7 @@ class HostHomeController extends Controller
         $this->unblockDateRange($id, $startDate, $endDate);
         // Respond with success message
         
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Dates unblocked successfully", 200);
     }
     
@@ -1171,6 +1185,8 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
+        
+        ClearCache::dispatch($hostHome->id,$host->id);
         return response("Prices updated for the specified date range", 200);
     }
     
@@ -1230,6 +1246,7 @@ class HostHomeController extends Controller
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
             }
             
+            ClearCache::dispatch($hostHome->id,$host->id);
             return response()->json([
                 'message' => 'Discount updated successfully.',
                 'data' => $existingDiscount ?? $ostHomeCustomDiscount,

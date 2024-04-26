@@ -33,7 +33,7 @@ class EndSessionJob implements ShouldQueue
                 // Check if the last message already has end_convo value
                 if (is_null($lastMessage->end_convo)) {
                     // Calculate the time difference between the last message and the current time
-                    $lastMessageSentAt = Carbon::parse($lastMessage->created_at);
+                    $lastMessageSentAt = Carbon::parse($lastMessage->updated_at);
                     $now = Carbon::now();
                     $minutesSinceLastMessage = $now->diffInMinutes($lastMessageSentAt);
 

@@ -11,6 +11,7 @@ use App\Mail\NotificationMail;
 use App\Models\AdminGuestChat;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -177,26 +178,24 @@ class AdminGuestChatController extends Controller
         if (Auth::guard('sanctum')->check()) {
             $user = Auth::guard('sanctum')->user(); // Authenticated user via API token
         } else {
-            if (empty($data['name']) || empty($data['email']) ) {
-                return response("Please enter your name and email",422);
-            }else {
-                
+            if (empty($data['name']) || empty($data['email'])) {
+                return response("Please enter your name and email", 422);
+            } else {
                 // User is not authenticated, check if email exists in the database
                 $existingUser = User::where('email', $data['email'])->first();
-        
+
                 // If email does not exist, create a temporary guest account
                 if (!$existingUser) {
                     $user = new User();
                     $user->name = $data['name'];
                     $user->email = $data['email'];
-                    $user->is_guest = true; 
+                    $user->is_guest = true;
                     $user->save();
-    
-                }else {
+                } else {
                     $user = $existingUser;
                 }
 
-                if(empty($data['token'])){
+                if (empty($data['token'])) {
                     $token = $user->createToken('main')->plainTextToken;
                 }
             }
@@ -206,111 +205,115 @@ class AdminGuestChatController extends Controller
         $endedConvo = null;
 
         if (isset($data['chat_session_id'])) {
-            
+
             if ($data['status'] == "guest") {
                 $endedConvo = AdminGuestChat::where('admin_id', $recipient_id)
-                ->where('session_id', $data['chat_session_id'])
-                ->whereNotNull('end_convo')
-                ->orderBy('created_at', 'desc') 
-                ->first();
+                    ->where('session_id', $data['chat_session_id'])
+                    ->whereNotNull('end_convo')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
             } else {
                 $endedConvo = AdminGuestChat::where('user_id', $recipient_id)
-                ->where('session_id', $data['chat_session_id'])
-                ->whereNotNull('end_convo')
-                ->orderBy('created_at', 'desc') 
-                ->first();
+                    ->where('session_id', $data['chat_session_id'])
+                    ->whereNotNull('end_convo')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
             }
-            
+
             if ($endedConvo) {
                 abort(400, "Chat session has already ended please leave and start another session");
             }
-            
         }
-
 
         if ($data['status'] == "guest" && !empty(isset($data['chat_session_id']))) {
             $existingSession = AdminGuestChat::where('user_id', $user->id)
-            ->whereNull('end_convo')
-            ->orderBy('session_id', 'desc')
-            ->first();
+                ->whereNull('end_convo')
+                ->orderBy('session_id', 'desc')
+                ->first();
 
             if ($existingSession && $existingSession->admin_id != null && $existingSession->session_id != $data['chat_session_id']) {
                 abort(400, "You already have an active chat session. Please end it before starting a new one or try again later.");
             }
         }
-        
+
         $authUser = User::find($user->id);
 
-
-
         // Generate a unique session ID
-        $sessionId = Str::uuid();
-        $chat = new AdminGuestChat();
+        $sessionId = !empty($data['chat_session_id']) ? $data['chat_session_id'] : Str::uuid()->toString();
 
-        $existingChat = AdminGuestChat::where('user_id', $user->id)
-        ->whereNull('admin_id')
-        ->where('created_at', '>=', now()->subMinutes(5))
-        ->first();
-
-        $chat->user_id = $user->id;
-        $chat->status = $data['status'];
-
-
-
-        if ($existingChat) {
-            $chat->session_id = $existingChat->session_id;
-        }elseif (empty(isset($data['chat_session_id']))) {
+        try {
+            // Attempt to save the chat with the generated session ID
+            $chat = new AdminGuestChat();
+            $chat->user_id = $user->id;
+            $chat->status = $data['status'];
             $chat->session_id = $sessionId;
-        }else {
-            $chat->session_id = $data['chat_session_id'];
-        }
-        
 
-        if (!empty(isset($data['message']))) {
-            $chat->message = $data['message'];
+            if (!empty($data['message'])) {
+                $chat->message = $data['message'];
+            }
+
+            if (!empty($data['image'])) {
+                $chat->image = $this->saveImage($data['image']);
+            }
+
+            $chat->save();
+            $imageUrl = !empty($chat->image) ? url($chat->image) : null;
+        } catch (QueryException $e) {
+            // Handle unique constraint violation
+            if ($e->errorInfo[1] == 1062) { // MySQL error code for unique constraint violation
+                // Generate a new session ID and retry saving
+                $sessionId = Str::uuid()->toString();
+                $chat = new AdminGuestChat();
+                $chat->user_id = $user->id;
+                $chat->status = $data['status'];
+                $chat->session_id = $sessionId;
+
+                if (!empty($data['message'])) {
+                    $chat->message = $data['message'];
+                }
+
+                if (!empty($data['image'])) {
+                    $chat->image = $this->saveImage($data['image']);
+                }
+
+                $chat->save();
+                $imageUrl = !empty($chat->image) ? url($chat->image) : null;
+            } else {
+                // Rethrow other database errors
+                throw $e;
+            }
         }
 
-        if (!empty(isset($data['image']))) {
-            $chat->image = $this->saveImage($data['image']);
-        }
-        
-        $chat->save();
-        $imageUrl = !empty($chat->image) ? url($chat->image) : null;
-
-        if (empty(isset($data['recipient_id']))) {
+        if (empty($data['recipient_id'])) {
             $users = User::all();
             foreach ($users as $user) {
-
                 if ($user->adminStatus != null && $user->id != 1) {
-                    $message = $authUser->name . " has reqested assistant for a certain matter";
-                    Mail::to($user->email)->queue(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
+                    $message = $authUser->name . " has requested assistance for a certain matter";
+                    Mail::to($user->email)->queue(new NotificationMail($authUser, $message, "A guest requires Assistance"));
                 }
             }
-            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id,$data['chat_session_id'], $chat->created_at));
+            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id, $data['chat_session_id'], $chat->created_at));
 
             return response()->json([
                 'message' => 'Conversation started successfully',
                 'user_id' => $authUser->id,
                 'token' => $token
             ]);
-        }
-        else {
-
+        } else {
             $updateChat = AdminGuestChat::find($chat->id);
 
             if ($data['status'] == "guest") {
                 $updateChat->update([
                     'admin_id' => $data['recipient_id']
                 ]);
-            }else {
+            } else {
                 $updateChat->update([
                     'admin_id' => $user->id,
                     'user_id' => $data['recipient_id']
                 ]);
             }
 
-            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id,$data['chat_session_id'], $chat->created_at));
-            
+            event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], $recipient_id, $chat->id, $data['chat_session_id'], $chat->created_at));
 
             return response()->json(
                 [
@@ -320,8 +323,6 @@ class AdminGuestChatController extends Controller
                 ]
             );
         }
-
-
     }
 
 

@@ -62,29 +62,16 @@ class MessageBroadcasted implements ShouldBroadcast
             return ['unattended_chats' => $unattendedChats];
         }else {
             if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
-                $query = AdminGuestChat::where('user_id', $this->user->id)
-                ->where('session_id', $this->sessionId)
-                ->where('admin_id', $this->receiverId)
-                ->get();
-
-                $chatDataArray = [];
-
-                
-                foreach ($query as $chatData) {
-                    
-                    $chatDataArray[] = [
-                        'user_id' => $chatData->user_id,
-                        'message' => $chatData->message,
-                        'image' => $chatData->image ?? null,
-                        'admin_id' => $chatData->admin_id,
-                        'id' => $chatData->id,
-                        'sessionId' => $chatData->session_id,
-                        'status' => $chatData->status,
-                        'created_at' => $chatData->created_at,
-                    ];
-                }
-
-                return $chatDataArray;
+                return [
+                    'user_id' => $this->user->id,
+                    'message' => $this->message,
+                    'image' => $this->image != null ? $this->image : null,
+                    'admin_id' => $this->receiverId,
+                    'id' => $this->chatId,
+                    'sessionId' => $this->sessionId,
+                    'status' => $this->userStatus,
+                    'created_at' => $this->created_at,
+                ];
             }else {
                 $query = AdminGuestChat::where('user_id', $this->receiverId)
                 ->where('session_id', $this->sessionId)

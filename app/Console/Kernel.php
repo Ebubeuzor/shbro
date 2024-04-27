@@ -32,9 +32,9 @@ class Kernel extends ConsoleKernel
         $schedule->job(new CalculateHostTotalBalance)->everyThreeMinutes();
         $schedule->job(new ProcessSecurityDeposit)->everyFifteenMinutes();
 
-        $schedule->job(new DeleteExpiredBookings)->everyMinute();
+        $schedule->job(new DeleteExpiredBookings)->everyTwoMinutes();
         
-        $schedule->job(new EndSessionJob)->everyTwoMinutes();
+        $schedule->job(new EndSessionJob)->everyMinute();
 
         $schedule->job(new ProcessEmailReminders)->daily(); // Change to everyFiveMinutes
 

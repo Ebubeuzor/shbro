@@ -457,10 +457,6 @@ class AdminGuestChatController extends Controller
             $query->where('admin_id', $adminId);
         }
         
-        info($adminId);
-        info($userId);
-        info($sessionId);
-        
         // If sessionId is not null, add the condition to filter by sessionId
         if (!is_null($sessionId)) {
             $query->where('session_id', $sessionId);
@@ -474,8 +470,6 @@ class AdminGuestChatController extends Controller
 
         // Execute the query to retrieve chat messages
         $chatMessages = $query->get();
-
-        info("data", [$chatMessages]);
 
         // Modify the chat messages to include the image URL if available
         $chatMessages->map(function ($message) {

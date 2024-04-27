@@ -63,7 +63,7 @@ class MessageBroadcasted implements ShouldBroadcast
         }else {
             if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
                 return [
-                    'user_id' => 90,
+                    'user_id' => $this->user->id,
                     'message' => $this->message,
                     'image' => $this->image != null ? $this->image : null,
                     'admin_id' => $this->receiverId,
@@ -73,16 +73,29 @@ class MessageBroadcasted implements ShouldBroadcast
                     'created_at' => $this->created_at,
                 ];
             }else {
-                return [
-                    'user_id' => $this->receiverId,
-                    'message' => $this->message,
-                    'image' => $this->image != null ? $this->image : null,
-                    'admin_id' => 1,
-                    'id' => $this->chatId,
-                    'sessionId' => $this->sessionId,
-                    'status' => $this->userStatus,
-                    'created_at' => $this->created_at,
-                ];
+                $query = AdminGuestChat::where('user_id', $this->receiverId)
+                ->where('session_id', $this->sessionId)
+                ->where('admin_id', $this->user->id)
+                ->get();
+
+                $chatDataArray = [];
+
+                
+                foreach ($query as $chatData) {
+                    
+                    $chatDataArray[] = [
+                        'user_id' => $chatData->user_id,
+                        'message' => $chatData->message,
+                        'image' => $chatData->image ?? null,
+                        'admin_id' => $chatData->admin_id,
+                        'id' => $chatData->id,
+                        'sessionId' => $chatData->session_id,
+                        'status' => $chatData->status,
+                        'created_at' => $chatData->created_at,
+                    ];
+                }
+
+                return $chatDataArray;
                 
             }
         }

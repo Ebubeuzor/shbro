@@ -62,20 +62,9 @@ class MessageBroadcasted implements ShouldBroadcast
             return ['unattended_chats' => $unattendedChats];
         }else {
             if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
-                return [
-                    'user_id' => $this->user->id,
-                    'message' => $this->message,
-                    'image' => $this->image != null ? $this->image : null,
-                    'admin_id' => $this->receiverId,
-                    'id' => $this->chatId,
-                    'sessionId' => $this->sessionId,
-                    'status' => $this->userStatus,
-                    'created_at' => $this->created_at,
-                ];
-            }else {
-                $query = AdminGuestChat::where('user_id', $this->receiverId)
+                $query = AdminGuestChat::where('user_id', $this->user->id)
                 ->where('session_id', $this->sessionId)
-                ->where('admin_id', $this->user->id)
+                ->where('admin_id', $this->receiverId)
                 ->get();
 
                 $chatDataArray = [];
@@ -96,6 +85,17 @@ class MessageBroadcasted implements ShouldBroadcast
                 }
 
                 return $chatDataArray;
+            }else {
+                return [
+                    'user_id' => $this->receiverId,
+                    'message' => $this->message,
+                    'image' => $this->image != null ? $this->image : null,
+                    'admin_id' => $this->user->id,
+                    'id' => $this->chatId,
+                    'sessionId' => $this->sessionId,
+                    'status' => $this->userStatus,
+                    'created_at' => $this->created_at,
+                ];
                 
             }
         }

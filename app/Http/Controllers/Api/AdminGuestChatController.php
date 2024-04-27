@@ -235,6 +235,8 @@ class AdminGuestChatController extends Controller
             ->orderBy('session_id', 'desc')
             ->first();
 
+            info(json_encode($existingSession));
+
             info($existingSession->session_id);
             info($data['chat_session_id']);
 

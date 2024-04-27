@@ -232,14 +232,10 @@ class AdminGuestChatController extends Controller
 
         if ($data['status'] == "guest" && !empty(isset($data['chat_session_id']))) {
             $existingSession = AdminGuestChat::where('user_id', $user->id)
-            ->whereNull('end_convo')
             ->orderBy('session_id', 'desc')
             ->first();
 
-            info($existingSession->session_id);
-            info($data['chat_session_id']);
-
-            if ($existingSession && $existingSession->admin_id != null && $existingSession->session_id != $data['chat_session_id']) {
+            if ($existingSession &&  is_null($existingSession->end_convo) && $existingSession->admin_id != null && $existingSession->session_id != $data['chat_session_id']) {
                 abort(400, "You already have an active chat session. Please end it before starting a new one or try again later.");
             }
         }

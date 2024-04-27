@@ -229,7 +229,7 @@ class AdminGuestChatController extends Controller
 
 
         if ($data['status'] == "guest" && !empty(isset($data['chat_session_id']))) {
-            $existingSession = AdminGuestChat::where('user_id', auth()->id())
+            $existingSession = AdminGuestChat::where('user_id', $user->id)
             ->whereNull('end_convo')
             ->orderBy('session_id', 'desc')
             ->first();
@@ -456,6 +456,7 @@ class AdminGuestChatController extends Controller
         if (!is_null($adminId)) {
             $query->where('admin_id', $adminId);
         }
+        
         
         // If sessionId is not null, add the condition to filter by sessionId
         if (!is_null($sessionId)) {

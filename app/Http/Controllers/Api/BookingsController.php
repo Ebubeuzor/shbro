@@ -407,11 +407,13 @@ class BookingsController extends Controller
                 case '5% Weekly discount':
                     $newListingPromotion = collect($discounts)->contains('discount', '10% Monthly discount');
         
+                    info($durationOfStay >= 7);
+                    info(!$newListingPromotion);
                     $returnPrice = $durationOfStay >= 7 && !$newListingPromotion ? $returnPrice - ($returnPrice * 0.05) : $returnPrice;
-                    break; // 5% off for stays of 7 nights or more
+                    break;
                 case '10% Monthly discount':
                     $returnPrice = $durationOfStay >= 28 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
-                    break; // 10% off for stays of 28 nights or more
+                    break;
                 default:
                     break;
             }

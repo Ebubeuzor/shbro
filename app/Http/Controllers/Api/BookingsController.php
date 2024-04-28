@@ -249,9 +249,9 @@ class BookingsController extends Controller
                 
                 $totalWeekends++;
                 if (intval($hostHome->weekendPrice) != 0) {
-                    $hostHome->weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
+                    $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
                 }else{
-                    $hostHome->weekendPrice = 0;
+                    $weekendPrice = 0;
                 }
             }
             

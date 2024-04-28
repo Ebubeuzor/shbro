@@ -413,7 +413,9 @@ class BookingsController extends Controller
                     if ($durationOfStay < 28 && $newListingPromotion){
                         break;
                     }
-                    $returnPrice = $durationOfStay >= 28 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
+                    else{
+                        $returnPrice = $durationOfStay >= 28 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
+                    }
                     break;
                 default:
                     break;

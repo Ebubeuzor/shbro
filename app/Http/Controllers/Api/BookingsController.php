@@ -248,7 +248,9 @@ class BookingsController extends Controller
             if ($this->isWeekend($currentDateFormatted) && !is_null($hostHome->weekendPrice) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
                 
                 $totalWeekends++;
-                $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
+                if (intval($hostHome->weekendPrice) != 0) {
+                    $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
+                }
             }
             
             $currentDate->modify('+1 day');
@@ -334,13 +336,11 @@ class BookingsController extends Controller
 
     private function isWeekend($date)
     {
-        // Convert the date to a DateTime object if not already
         if (!$date instanceof \DateTime) {
             $date = \DateTime::createFromFormat('Y-m-d', $date);
         }
 
-        // Check if the day of the week is Saturday or Sunday (assuming Monday is 1 and Sunday is 7)
-        return $date->format('N') >= 6; // 6 is Saturday, 7 is Sunday
+        return $date->format('N') >= 6; 
     }
 
     private function calculateDiscountedPrice($actualPrice, $standardDiscounts, $customDiscounts, $durationOfStay = 0, $bookingCount)
@@ -352,8 +352,6 @@ class BookingsController extends Controller
         }else{
             $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
         }
-
-        info($discountedPrice);
 
         return $discountedPrice;
     }

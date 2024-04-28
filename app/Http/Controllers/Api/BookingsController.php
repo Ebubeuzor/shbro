@@ -296,7 +296,7 @@ class BookingsController extends Controller
         $total = 0;
 
         info($weekendPrice);
-        info($weekendPrice == 0);
+        info('weekendPrice', [$weekendPrice == 0]);
         
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays));

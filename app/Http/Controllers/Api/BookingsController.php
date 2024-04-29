@@ -241,22 +241,24 @@ class BookingsController extends Controller
 
         $weekendPrice = 0;
         $currentDate = \DateTime::createFromFormat('Y-m-d', $checkIn->format('Y-m-d'));
+        $checkOutMinusOneDay = \DateTime::createFromFormat('Y-m-d', $checkOut->format('Y-m-d'));
+        $checkOutMinusOneDay->modify('-1 day'); // Subtract one day from the check-out date
+
         $totalWeekends = 0;
-        
-        while ($currentDate <= $checkOut) {
+
+        while ($currentDate <= $checkOutMinusOneDay) {
             $currentDateFormatted = $currentDate->format('Y-m-d');
             if ($this->isWeekend($currentDateFormatted) && !is_null($hostHome->weekendPrice) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
-                
                 $totalWeekends++;
                 if (intval($hostHome->weekendPrice) != 0) {
                     $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
-                }else{
+                } else {
                     $weekendPrice = 0;
                 }
             }
-            
-            $currentDate->modify('+1 day');
+            $currentDate->modify('+1 day'); // Move to the next day
         }
+
         
         $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
         

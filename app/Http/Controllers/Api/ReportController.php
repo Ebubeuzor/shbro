@@ -40,7 +40,7 @@ class ReportController extends Controller
      * @lrd:start
      * Retrieves a collection of reported issues for guests or hosts.
      *
-     * @return \App\Http\Resources\HostHomeReportsResource  The resource collection containing reported issues.
+     * The resource collection containing reported issues.
      * @lrd:end
     */
     public function getUsersReports()

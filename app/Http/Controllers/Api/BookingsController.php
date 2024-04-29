@@ -241,8 +241,8 @@ class BookingsController extends Controller
 
         $weekendPrice = 0;
         $currentDate = \DateTime::createFromFormat('Y-m-d', $checkIn->format('Y-m-d'));
+        $currentDate->modify('+1 day'); // Subtract one day from the check-out date
         $checkOutMinusOneDay = \DateTime::createFromFormat('Y-m-d', $checkOut->format('Y-m-d'));
-        $checkOutMinusOneDay->modify('-1 day'); // Subtract one day from the check-out date
 
         $totalWeekends = 0;
 

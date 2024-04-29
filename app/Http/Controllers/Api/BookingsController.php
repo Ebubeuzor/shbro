@@ -373,9 +373,6 @@ class BookingsController extends Controller
                 case '3 weeks':
                     $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
-                case '4 weeks':
-                    $returnPrice = $durationOfStay >= 28 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
-                    break;
                 case '1 month':
                     $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
                     break;
@@ -408,7 +405,7 @@ class BookingsController extends Controller
                 case '5% Weekly discount':
                     $newListingPromotion = collect($discounts)->contains('discount', '10% Monthly discount');
 
-                    if ($durationOfStay >= 28 && $newListingPromotion){
+                    if ($durationOfStay >= 30 && $newListingPromotion){
                         break;
                     }else {
                         $returnPrice = $durationOfStay >= 7 ? $returnPrice - ($returnPrice * 0.05) : $returnPrice;
@@ -417,11 +414,11 @@ class BookingsController extends Controller
                     case '10% Monthly discount':
                         $newListingPromotion = collect($discounts)->contains('discount', '5% Weekly discount');
         
-                    if ($durationOfStay < 28 && $newListingPromotion){
+                    if ($durationOfStay < 30 && $newListingPromotion){
                         break;
                     }
                     else{
-                        $returnPrice = $durationOfStay >= 28 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
+                        $returnPrice = $durationOfStay >= 30 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
                     }
                     break;
                 default:

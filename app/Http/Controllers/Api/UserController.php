@@ -136,7 +136,6 @@ class UserController extends Controller
                     });
             })
             ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
-            ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
             ->get();
 
 

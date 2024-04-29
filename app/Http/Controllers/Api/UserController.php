@@ -128,7 +128,13 @@ class UserController extends Controller
             // Retrieve records from bookings where the user is the guest and securityDepositToGuest is not null
             $bookingSecurityDepositToGuestRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
             ->where('bookings.user_id', $userId)
-            ->whereNotNull('bookings.addedToGuestWallet')
+            ->where(function ($query) {
+                $query->whereNotNull('bookings.addedToGuestWallet')
+                    ->orWhere(function ($query) {
+                        $query->whereNotNull('bookings.securityDepositToGuest')
+                            ->whereNotNull('bookings.pauseSecurityDepositToGuest');
+                    });
+            })
             ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
             ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
             ->get();

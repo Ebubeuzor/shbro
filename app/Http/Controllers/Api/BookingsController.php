@@ -265,25 +265,27 @@ class BookingsController extends Controller
         $bookingPrice = $discountedPrice;
 
         
-        //  'host_service_charge' => $host_service_charge,
-        $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
-        $tax = (($bookingPrice * $dateDifference) * $this->tax);
-        $subhostbalance = $bookingPrice * $dateDifference;
-        $hostfee = $subhostbalance * $this->hostServicesCharge;
-        $taxAndFees = $fees + $tax;
         
         $total = 0;
         
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+            $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
+            $tax = ($reservedDaysDiscountedPrice * $this->tax);
+            $taxAndFees = $fees + $tax;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }else {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
             $reservedDaysDiscountedPrice += $weekendPrice;
+            $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
+            $tax = ($reservedDaysDiscountedPrice * $this->tax);
+            $taxAndFees = $fees + $tax;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }
         
-        $hostBalance = ($total/100) - (intval($hostHome->security_deposit) + intval($taxAndFees));
+        $totalForHost = ($total/100) - (intval($hostHome->security_deposit) + intval($taxAndFees));
+        $hostfee = $totalForHost * $this->hostServicesCharge;
+        $hostBalance = $totalForHost - $hostfee;
 
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];

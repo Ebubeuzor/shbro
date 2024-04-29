@@ -678,7 +678,6 @@ class BookingsController extends Controller
                     
                     $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
                     $durationOfStay = $booking->duration_of_stay;
-                    $checkoutDate = $checkInDateTime->addDays($durationOfStay); 
                     $checkouttime = $hostHome->check_out_time; 
                     $checkintime = $hostHome->check_in_time; 
                     $priceForANight = $hostHome->price; 
@@ -697,8 +696,8 @@ class BookingsController extends Controller
                         'check_out_time' => $checkouttime,
                         'check_in_time' => $checkintime,
                         'priceForANight' => $priceForANight,
-                        'host_services_charge_percentage' => intval($this->hostServicesCharge) * 100,
-                        'guest_services_charge_percentage' => intval($this->guestServicesCharge) * 100,
+                        'host_services_charge_percentage' => $this->hostServicesCharge,
+                        'guest_services_charge_percentage' => $this->guestServicesCharge,
                     ]);
 
                     $userTrip = new UserTrip();

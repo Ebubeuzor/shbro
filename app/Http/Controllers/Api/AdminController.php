@@ -818,15 +818,12 @@ class AdminController extends Controller
             'host_services_charge' => 'required|numeric',
             'tax' => 'required|numeric',
         ]);
-
-        info(json_encode($request->guest_services_charge));
         
         // Divide the values by 100 before storing
         $guestCharge = $request->guest_services_charge / 100;
         $hostCharge = $request->host_services_charge / 100;
         $tax = $request->tax / 100;
 
-        info($guestCharge);
         // Update or create the service charge record
         ServiceCharge::updateOrCreate(
             ['id' => 1], // Assuming the ID is 1 for the single record
@@ -837,6 +834,13 @@ class AdminController extends Controller
             ]
         );
 
+        $users = User::all();
+        foreach($users as $user){
+            $title = "A message for every one";
+            $message = "The service charges has been updated guest service charge is now $request->guest_services_charge%, $request->host_services_charge% of every booking 
+            and vat is now $request->tax%";
+            Mail::to($user->email)->queue(new NotificationMail($user,$message, $title));
+        }
         return response()->json(['message' => 'Service charges updated successfully']);
     }
 
@@ -874,7 +878,7 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been suspended for 30 days";
-        Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
         
         $user->update([
             "suspend" => "suspend"
@@ -901,7 +905,7 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been unbanned";
-        Mail::to($user->email)->send(new NotificationMail($user, $data['message'], $title));
+        Mail::to($user->email)->queue(new NotificationMail($user, $data['message'], $title));
 
         $user->update([
             "banned" => null
@@ -929,7 +933,7 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been unsuspended";
-        Mail::to($user->email)->send(new NotificationMail($user, $data['message'], $title));
+        Mail::to($user->email)->queue(new NotificationMail($user, $data['message'], $title));
 
         $user->update([
             "suspend" => null
@@ -958,7 +962,7 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been terminated";
-        Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
         return response("Ok",200); 
@@ -986,7 +990,7 @@ class AdminController extends Controller
             foreach($users as $user){
 
                 $title = "A message for every host";
-                Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+                Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
 
             }
             return response("Ok",200);
@@ -997,7 +1001,7 @@ class AdminController extends Controller
             foreach($users as $user){
                 if ($user->is_guest == null) {
                     $title = "A message for every one";
-                    Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+                    Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
                 }
             }
             return response("Ok",200);

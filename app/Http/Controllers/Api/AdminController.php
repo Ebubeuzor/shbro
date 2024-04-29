@@ -837,9 +837,8 @@ class AdminController extends Controller
         $users = User::all();
         foreach($users as $user){
             $title = "A message for every one";
-            $message = "The service charges has been updated guest service charge is now $request->guest_services_charge%, $request->host_services_charge% of every booking 
+            $message = "The service charges and guest service charge has been updated they are now $request->guest_services_charge% and $request->host_services_charge% of every booking 
             and vat is now $request->tax%";
-            info("Message sent to {$user->name}");
             Mail::to($user->email)->queue(new NotificationMail($user,$message, $title));
         }
 

@@ -283,7 +283,7 @@ class BookingsController extends Controller
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }
         
-        $hostBalance = $total - (intval($hostHome->security_deposit) + intval($taxAndFees));
+        $hostBalance = ($total/100) - (intval($hostHome->security_deposit) + intval($taxAndFees));
 
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];

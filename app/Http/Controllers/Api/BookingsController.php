@@ -263,14 +263,28 @@ class BookingsController extends Controller
         $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
         
         $bookingPrice = $discountedPrice;
+
         
         //  'host_service_charge' => $host_service_charge,
         $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
         $tax = (($bookingPrice * $dateDifference) * $this->tax);
         $subhostbalance = $bookingPrice * $dateDifference;
         $hostfee = $subhostbalance * $this->hostServicesCharge;
-        $hostBalance = $subhostbalance - $hostfee;
         $taxAndFees = $fees + $tax;
+        
+        $total = 0;
+        
+        if ($weekendPrice == 0) {
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+        }else {
+            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+            $reservedDaysDiscountedPrice += $weekendPrice;
+            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+        }
+        
+        $hostBalance = $total - (intval($hostHome->security_deposit) + intval($taxAndFees));
+
         $booking->adults = $data['adults'];
         $booking->children = $data['children'];
         $booking->pets = $data['pets'];
@@ -294,16 +308,6 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        $total = 0;
-
-        if ($weekendPrice == 0) {
-            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
-            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
-        }else {
-            $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
-            $reservedDaysDiscountedPrice += $weekendPrice;
-            $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
-        }
         
         $data2 = [
             'amount' => $total, // Paystack expects amount in kobo

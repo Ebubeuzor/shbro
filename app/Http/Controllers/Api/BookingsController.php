@@ -39,7 +39,7 @@ class BookingsController extends Controller
     public function __construct()
     {
         // Retrieve the service charge record (assuming there's only one)
-        $serviceCharge = Servicecharge::first();
+        $serviceCharge = Servicecharge::find(1);
 
         // Set global variables to zero if no record is found
         $this->guestServicesCharge = $serviceCharge ? $serviceCharge->guest_services_charge : 0;

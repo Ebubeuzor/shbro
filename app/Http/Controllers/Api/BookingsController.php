@@ -294,7 +294,6 @@ class BookingsController extends Controller
 
         $recentToken = $user->tokens->last();
 
-        info($totalWeekends);
         $total = 0;
 
         if ($weekendPrice == 0) {

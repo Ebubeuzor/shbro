@@ -270,14 +270,14 @@ class BookingsController extends Controller
         
         if ($weekendPrice == 0) {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
-            $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
+            $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
             $tax = ($reservedDaysDiscountedPrice * $this->tax);
             $taxAndFees = $fees + $tax;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
         }else {
             $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
             $reservedDaysDiscountedPrice += $weekendPrice;
-            $fees = ($hostHome->actualPrice * $this->guestServicesCharge);
+            $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
             $tax = ($reservedDaysDiscountedPrice * $this->tax);
             $taxAndFees = $fees + $tax;
             $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;

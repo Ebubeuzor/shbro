@@ -21,10 +21,13 @@ class HostPendingReviewResource extends JsonResource
     {
         $user = User::find($this->user_id);
         $booking = Booking::find($this->booking_id);
+        $hosthome = HostHome::find($booking->host_home_id);
         return [
             'id' => $this->id,
+            'userid' => $user->id,
+            'hosthomeid' => $hosthome->id,
+            'hosthomename' => $hosthome->title,
             'username' => $user->name,
-            'userprofilepic' => $user->name,
             'guestProfilePic' => $user->profilePicture != null ? URL::to($user->profilePicture) : null,
             'check_in' => Carbon::parse($booking->check_in)->format('M j, Y')
         ];

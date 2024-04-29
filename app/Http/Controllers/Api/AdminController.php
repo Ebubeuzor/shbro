@@ -22,6 +22,7 @@ use App\Models\UserWallet;
 use App\Models\Visitor;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -286,6 +287,10 @@ class AdminController extends Controller
             $this->createAdminRoles($permissionData);
         }
 
+        $cacheKey = "user_info_{$userid}";
+
+        Cache::forget($cacheKey);
+
         return response("Done");
     }
 
@@ -334,6 +339,11 @@ class AdminController extends Controller
         Adminrole::where('user_id', $userId)
             ->where('rolePermission', $permission)
             ->delete();
+
+        
+        $cacheKey = "user_info_{$userId}";
+
+        Cache::forget($cacheKey);
 
         return response("Roles unassigned successfully", 200);
     }

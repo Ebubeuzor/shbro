@@ -842,9 +842,15 @@ class AdminController extends Controller
             Mail::to($user->email)->queue(new NotificationMail($user,$message, $title));
         }
 
+        $this->clearAllCache();
         return response()->json(['message' => 'Service charges updated successfully']);
     }
 
+    
+    public function clearAllCache()
+    {
+        Cache::flush();
+    }
 
     /**
      * @lrd:start

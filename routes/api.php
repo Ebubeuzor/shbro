@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
 Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
+Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
 
 Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 
@@ -198,7 +199,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::put('sendOtpForPhoneNumberChange', [UserController::class, 'sendOtpForPhoneNumberChange']);
     Route::post('/otp/verify', [UserController::class, 'verifyOtp']);
     Route::post('/otp/resend', [UserController::class, 'resendOtp']);
-    Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
     Route::get('guestReview/{guestId}', [UserController::class, 'guestReview']);
     Route::get('deactivateAccount', [UserController::class, 'deactivateAccount']);
     Route::get('transactionHistory', [UserController::class, 'transactionHistory']);

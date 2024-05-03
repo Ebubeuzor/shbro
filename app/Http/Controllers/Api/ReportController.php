@@ -210,7 +210,7 @@ class ReportController extends Controller
                 $booking->save();
 
                 $guest = User::find($booking->user_id);
-                $guestMessage = "Important Notice: The host has reported damages to their apartment during your stay. Your security deposit has been paused pending verification by admins. We will update you once the matter is resolved. Thank you for your cooperation.";
+                $guestMessage = "Important Notice: The host has reported damages to their apartment during your stay. Your security deposit has been paused from entering your wallet pending verification by admins. We will update you once the matter is resolved. Thank you for your cooperation.";
                 $guestTitle = "Notice: Host Report of Apartment Damage";
                 Mail::to($guest->email)->queue(new NotificationMail($guest, $guestMessage, $guestTitle));
                 
@@ -226,7 +226,6 @@ class ReportController extends Controller
                     'data' => $reportDamage,
                 ], 200);
             } else {
-                // Provide a response when the booking is not eligible for damage report
                 abort(400, 'Damage report not allowed after 24 hours of check-out.');
             }
         } catch (\Illuminate\Validation\ValidationException $e) {

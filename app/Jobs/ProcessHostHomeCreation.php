@@ -167,11 +167,6 @@ class ProcessHostHomeCreation implements ShouldQueue
                 // Filter out duplicate co-hosts based on email
                 $uniqueCohosts = $cohosts->unique('user.email');
 
-                $this->clearUserHostHomesCache($mainHost->id);
-
-                foreach ($uniqueCohosts as $cohost) {
-                    $this->clearUserHostHomesCache($cohost->user->id);
-                }
             }
 
             if ($host->cohosts()->exists()) {
@@ -195,6 +190,8 @@ class ProcessHostHomeCreation implements ShouldQueue
 
             }
 
+            $admins = User::whereNotNull('adminStatus')->get();
+            RequestPay::dispatch($admins);
 
         });
     }

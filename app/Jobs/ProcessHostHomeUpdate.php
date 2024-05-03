@@ -194,6 +194,10 @@ class ProcessHostHomeUpdate implements ShouldQueue
             }
 
             $this->clearCacheForAllUsers();
+
+            $admins = User::whereNotNull('adminStatus')->get();
+            RequestPay::dispatch($admins);
+
         });
     }
     

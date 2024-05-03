@@ -40,8 +40,6 @@ class RequestPay implements ShouldQueue
             $adminrole = Adminrole::where('user_id',$admin->id)
             ->where('rolePermission', 'Finance')->first();
 
-            info("testting");
-            info($adminrole);
             if($adminrole){
                 $admin = User::find($admin->id);
                 $message = "A guest has requested payment please go and approve";

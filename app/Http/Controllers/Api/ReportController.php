@@ -11,12 +11,16 @@ use App\Http\Requests\UpdateReporthosthomeRequest;
 use App\Http\Resources\AdminDamageResource;
 use App\Http\Resources\HostHomeReportsResource;
 use App\Http\Resources\UserReportsResource;
+use App\Jobs\NotifyAdmins;
+use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\Hosthomecohost;
 use App\Models\ReportPropertyDamage;
 use App\Models\ReportPropertyDamagePhotos;
 use App\Models\ReportUser;
+use App\Models\User;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -205,6 +209,17 @@ class ReportController extends Controller
                 $booking->pauseSecurityDepositToGuest = now();
                 $booking->save();
 
+                $guest = User::find($booking->user_id);
+                $guestMessage = "Important Notice: The host has reported damages to their apartment during your stay. Your security deposit has been paused pending verification by admins. We will update you once the matter is resolved. Thank you for your cooperation.";
+                $guestTitle = "Notice: Host Report of Apartment Damage";
+                Mail::to($guest->email)->queue(new NotificationMail($guest, $guestMessage, $guestTitle));
+                
+                $admins = User::whereNotNull('adminStatus')->get();
+                $message = "Urgent: Host has reported damages to their apartment. Immediate attention required.";
+                $title = "Damage Report: Urgent Attention Needed";
+
+                NotifyAdmins::dispatch($admins,$message,$title);
+
                 // Provide a success response
                 return response()->json([
                     'message' => 'Damage reported successfully.',
@@ -239,10 +254,6 @@ class ReportController extends Controller
     {
         $checkoutNotification = $booking->checkOutNotification;
         $twentyFourHoursAgo = now()->subHours(24);
-
-        info($checkoutNotification);
-        info($twentyFourHoursAgo);
-        info($checkoutNotification <= $twentyFourHoursAgo);
 
         // Return true if the current time is within 24 hours of check-out notification
         return $checkoutNotification <= $twentyFourHoursAgo;

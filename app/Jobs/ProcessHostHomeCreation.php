@@ -191,7 +191,11 @@ class ProcessHostHomeCreation implements ShouldQueue
             }
 
             $admins = User::whereNotNull('adminStatus')->get();
-            RequestPay::dispatch($admins);
+            
+            $message = "Attention Admins: A new apartment has been created. Please review and take necessary action. Thank you!";
+            $title = "New Apartment Created: Admin Action Required";
+            
+            NotifyAdmins::dispatch($admins,$message,$title);;
 
         });
     }

@@ -196,7 +196,9 @@ class ProcessHostHomeUpdate implements ShouldQueue
             $this->clearCacheForAllUsers();
 
             $admins = User::whereNotNull('adminStatus')->get();
-            RequestPay::dispatch($admins);
+            $message = "Attention Admins: An apartment update has been submitted by a user. Please review and take necessary action. Thank you!";
+            $title = "Urgent: User Submitted Apartment Update Requires Admin Attention";
+            NotifyAdmins::dispatch($admins,$message,$title);
 
         });
     }

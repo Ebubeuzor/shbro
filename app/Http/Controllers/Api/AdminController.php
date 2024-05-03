@@ -440,18 +440,15 @@ class AdminController extends Controller
     */
     public function paidPayments() {
 
-        $bookings = Booking::where('paymentStatus', 'success')
-        ->whereNotNull('paidHostStatus')
-        ->get();
+        $userpays = UserRequestPay::whereNull('approvedStatus')->latest()->get();
 
         // Prepare the data for response
-        $responseData = $bookings->map(function ($booking) {
+        $responseData = $userpays->map(function ($userpay) {
             return [
-                'paymentId' => $booking->paidHostPaymentId,
-                'hostEmail' => optional(User::find($booking->hostId))->email,
+                'hostEmail' => User::find($userpay->user_id)->email,
                 'status' => "Paid",
-                'paidHostdate' => $booking->paidHostdate,
-                'amountToHost' => $booking->hostBalance,
+                'paiddate' => $userpay->created_at->format('M j, Y h:ia'),
+                'amountPaid' => $userpay->hostBalance,
             ];
         });
 
@@ -470,7 +467,7 @@ class AdminController extends Controller
     
         $responseData = [];
         foreach ($users as $user) {
-            $user->profilePicture = URL::to($user->profilePicture);
+            $user->profilePicture = $user->profilePicture != null ? URL::to($user->profilePicture) : null;
             $verifiedHomesCount = $user->hosthomes()->where('verified', 1)->count();
             $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
         }
@@ -498,7 +495,6 @@ class AdminController extends Controller
             DB::raw('COUNT(DISTINCT hostId) as total_hosts_count'),
         ])
             ->where('paymentStatus', '=', 'success')
-            ->groupBy('hostId')
             ->count();
 
         // Count the total number of unique guests with successful bookings
@@ -507,7 +503,6 @@ class AdminController extends Controller
             DB::raw('COUNT(DISTINCT user_id) as total_guests_count'),
         ])
             ->where('paymentStatus', '=', 'success')
-            ->groupBy('user_id')
             ->count();
 
         // Sum of total amounts from successful bookings
@@ -520,9 +515,7 @@ class AdminController extends Controller
         $verifiedHomesCount = HostHome::where('verified', 1)->count();
 
         // Count the total number of visitors
-        $visitors = Visitor::all()
-        ->sum('views')
-        ;
+        $visitors = Visitor::all()->sum('views');
 
         // Get the current date
         $today = Carbon::now()->toDateString();
@@ -590,7 +583,7 @@ class AdminController extends Controller
             'active_guests' => $guestsCount ?? 0,
             'propertyListings' => $verifiedHomesCount ?? 0,
             'revenue' => $totalAmount ?? 0,
-            'visitors' => $visitors->views ?? 0,
+            'visitors' => $visitors ?? 0,
             'userCountForPresentDay' => $userCountForPresentDay ?? 0,
             'unVerifiedUserForPresentDay' => $unVerifiedUserForPresentDay ?? 0,
             'unApprovedHomesCount' => $unApprovedHomesCount ?? 0,

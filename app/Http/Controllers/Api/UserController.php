@@ -28,6 +28,7 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\UserTransactionResource;
 use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
+use App\Jobs\RequestPay;
 use App\Mail\ActivateAccount;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyUser;
@@ -2017,7 +2018,8 @@ class UserController extends Controller
             $pendingBookings = Booking::where('paymentStatus', 'success')
                 ->where(function ($query) {
                     $query->whereNull('securityDepositToGuest')
-                        ->orWhereNull('securityDepositToHost');
+                        ->orWhereNull('securityDepositToHost')
+                        ->orWhereNotNull('addedToGuestWallet');
                 })
                 ->latest()
                 ->get();
@@ -2323,6 +2325,9 @@ class UserController extends Controller
             $title = "Withdrawal Requested";
             $message = "You have requested a pay of " . $amount . " from your account";
             Mail::to($user->email)->send(new NotificationMail($user,$message,$title));
+
+            $admins = User::whereNotNull('adminStatus')->get();
+            RequestPay::dispatch($admins);
 
             return response()->json(['message' => 'Payment request submitted successfully.']);
         } catch (\Exception $e) {

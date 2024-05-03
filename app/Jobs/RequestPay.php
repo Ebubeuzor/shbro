@@ -39,12 +39,14 @@ class RequestPay implements ShouldQueue
         foreach ($this->admins as $admin) {
             $adminrole = Adminrole::where('user_id',$admin->id)
             ->where('rolePermission', 'Finance')->first();
+
             if($adminrole){
-                $admin = User::find(intval($admin->id));
+                $admin = User::find($admin->id);
                 $message = "A guest has requested payment please go and approve";
                 $title = "A guest has requested payment";
                 Mail::to($admin->email)->queue(new NotificationMail($admin, $message, $title));
             }
+            
         }
     }
 }

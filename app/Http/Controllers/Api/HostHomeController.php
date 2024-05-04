@@ -1154,9 +1154,8 @@ class HostHomeController extends Controller
         $endDate = $data['end_date'];
 
         $this->unblockDateRange($id, $startDate, $endDate);
-        // Respond with success message
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        // Respond with success message
         return response("Dates unblocked successfully", 200);
     }
     

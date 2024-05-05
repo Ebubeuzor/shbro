@@ -243,7 +243,7 @@ class AdminGuestChatController extends Controller
 
 
         // Generate a unique session ID
-        $sessionId = "88f46723-e922-4c95-85f2-5f3af47273e8";
+        $sessionId = Str::uuid();
         $chat = new AdminGuestChat();
 
         $existingChat = AdminGuestChat::where('user_id', $user->id)

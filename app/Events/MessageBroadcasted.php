@@ -75,7 +75,7 @@ class MessageBroadcasted implements ShouldBroadcast
                     $chatDataArray[] = [
                         'user_id' => $chatData->user_id,
                         'message' => $chatData->message,
-                        'image' => $chatData->image ?? null,
+                        'image' => $chatData->image == null ? null : url($chatData->image),
                         'admin_id' => $chatData->admin_id,
                         'id' => $chatData->id,
                         'sessionId' => $chatData->session_id,

@@ -90,8 +90,6 @@ class AdminGuestChatController extends Controller
         }
 
         // Update end_convo timestamp to mark the end of the conversation
-        
-        info($status);
 
         if ($status == 'admin') {
             $admin = User::findOrFail(auth()->id());
@@ -245,7 +243,7 @@ class AdminGuestChatController extends Controller
 
 
         // Generate a unique session ID
-        $sessionId = Str::uuid();
+        $sessionId = "88f46723-e922-4c95-85f2-5f3af47273e8";
         $chat = new AdminGuestChat();
 
         $existingChat = AdminGuestChat::where('user_id', $user->id)

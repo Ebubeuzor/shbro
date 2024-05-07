@@ -472,6 +472,13 @@ class BookingsController extends Controller
      */
     public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
     {
+        
+        $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+
+        if ($cohost) {
+            abort(400, "Cohost arent allowed to make request to book");
+        }
+
         $user = User::findOrFail(auth()->id());
         $hosthome = HostHome::findOrFail($hostHomeId);
 

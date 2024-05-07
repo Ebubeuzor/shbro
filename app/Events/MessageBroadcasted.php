@@ -89,7 +89,7 @@ class MessageBroadcasted implements ShouldBroadcast
                 return [
                     'user_id' => $this->receiverId,
                     'message' => $this->message,
-                    'image' => $this->image != null ? $this->image : null,
+                    'image' => $this->image != null ? url($this->image) : null,
                     'admin_id' => $this->user->id,
                     'id' => $this->chatId,
                     'sessionId' => $this->sessionId,

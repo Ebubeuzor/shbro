@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
+Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
 Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
 Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
 Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
@@ -126,7 +127,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     });
 
     Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
-    Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
     Route::get('admin-guest-chat/joinChat/{guestid}/{sessionId}', [AdminGuestChatController::class, 'joinChat']);
     Route::get('admin-guest-chat/getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
     Route::get('admin-guest-chat/getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);

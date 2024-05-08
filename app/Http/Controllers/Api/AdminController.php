@@ -440,7 +440,7 @@ class AdminController extends Controller
     */
     public function paidPayments() {
 
-        $userpays = UserRequestPay::whereNull('approvedStatus')->latest()->get();
+        $userpays = UserRequestPay::whereNotNull('approvedStatus')->latest()->get();
 
         // Prepare the data for response
         $responseData = $userpays->map(function ($userpay) {

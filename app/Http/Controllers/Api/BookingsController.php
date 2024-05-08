@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\UserTrip;
 use App\Repository\ChatRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Unicodeveloper\Paystack\Facades\Paystack;
@@ -736,7 +737,8 @@ class BookingsController extends Controller
                             'bookingstatus' => 'booked'
                         ]);
                     }
-
+                    $cacheKey = "allHostReservation{$host->id}";
+                    Cache::forget($cacheKey);
                     return redirect()->route('successPage');
                 } else {
                     return redirect()->route('failedPage');

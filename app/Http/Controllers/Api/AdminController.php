@@ -447,8 +447,12 @@ class AdminController extends Controller
             return [
                 'hostEmail' => User::find($userpay->user_id)->email,
                 'status' => "Paid",
+                'user_id' => $userpay->user_id,
+                'account_number' => $userpay->account_number,
+                'bank_name' => $userpay->bank_name,
+                'account_name' => $userpay->account_name,
                 'paiddate' => $userpay->created_at->format('M j, Y h:ia'),
-                'amountPaid' => $userpay->hostBalance,
+                'amountPaid' => $userpay->amount,
             ];
         });
 

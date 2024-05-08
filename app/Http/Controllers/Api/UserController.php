@@ -2043,8 +2043,7 @@ class UserController extends Controller
             // Retrieve bookings with null security deposit and successful payment status
             $pendingBookings = Booking::where('paymentStatus', 'success')
                 ->where(function ($query) {
-                    $query->whereNull('securityDepositToGuest')
-                        ->orWhereNull('securityDepositToHost')
+                    $query->orWhereNull('securityDepositToHostWallet')
                         ->orWhereNull('addedToGuestWallet');
                 })
                 ->latest()

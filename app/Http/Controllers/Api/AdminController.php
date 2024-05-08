@@ -445,7 +445,9 @@ class AdminController extends Controller
         // Prepare the data for response
         $responseData = $userpays->map(function ($userpay) {
             return [
-                'hostEmail' => User::find($userpay->user_id)->email,
+                'id' => $userpay->id,
+                'userEmail' => User::find($userpay->user_id)->email,
+                'userName' => User::find($userpay->user_id)->name,
                 'status' => "Paid",
                 'user_id' => $userpay->user_id,
                 'account_number' => $userpay->account_number,

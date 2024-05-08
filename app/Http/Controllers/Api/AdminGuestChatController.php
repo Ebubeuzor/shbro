@@ -92,13 +92,13 @@ class AdminGuestChatController extends Controller
         // Update end_convo timestamp to mark the end of the conversation
 
         if ($status == 'admin') {
-            $admin = User::findOrFail(auth()->id());
+            $admin = User::findOrFail($adminId);
 
             $message = $admin->name . " has left the chat";
 
             event(new LeaveChatEvent($guestid,$adminId,$message,$status));
         }else {
-            $guest = User::findOrFail(auth()->id());
+            $guest = User::findOrFail($guestid);
 
             $message = $guest->name . " has left the chat";
             

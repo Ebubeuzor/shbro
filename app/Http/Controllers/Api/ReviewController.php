@@ -17,6 +17,7 @@ use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ReviewController extends Controller
 {
@@ -66,6 +67,10 @@ class ReviewController extends Controller
         // Find and update the related Pendingreview to 'reviewed'
         Pendingreview::where('id', $data['pendingreviewid'])->update(['status' => 'reviewed']);
 
+        
+        $cacheKey = "hostReview{$data['host_id']}";
+        Cache::forget($cacheKey);
+        
         // Return a success response
         return response("OK", 200);
     }

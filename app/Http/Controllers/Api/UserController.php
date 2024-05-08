@@ -702,9 +702,9 @@ class UserController extends Controller
     public function createWishlist(StoreWishlistRequest $request, $id)
     {
         $data = $request->validated();
+        $user = User::where('id', $id)->firstOrFail();
 
         if (isset($data['containername'])) {
-            $user = User::where('id', $id)->firstOrFail();
 
             // Check if a wishlist container with the same name already exists for the user
             if ($user->wishlistcontainers()->where('name', $data['containername'])->exists()) {
@@ -726,6 +726,13 @@ class UserController extends Controller
                 $wishlistContainerItem->save();
 
                 return response("Ok", 201);
+                $cacheKey = "userWishlistContainersAndItems{$user->id}";
+                $cacheKey2 = "user_wishlist" . auth()->id();
+                $cacheKey3 = "userWishlistContainerItems{$user->id}";
+                Cache::forget($cacheKey);
+                Cache::forget($cacheKey2);
+                Cache::forget($cacheKey3);
+
             } else {
                 return response("Item already exists in the wishlist container", 422);
             }
@@ -741,6 +748,11 @@ class UserController extends Controller
                 $wishlistContainerItem->save();
 
                 return response("Ok", 201);
+                $cacheKey = "userWishlistContainersAndItems{$user->id}";
+                $cacheKey2 = "userWishlistContainerItems{$user->id}";
+                Cache::forget($cacheKey);
+                Cache::forget($cacheKey2);
+
             } else {
                 return response("Item already exists in the wishlist container", 422);
             }
@@ -803,9 +815,12 @@ class UserController extends Controller
             $wishlistItem->delete();
             
             $cacheKey = "user_wishlist".auth()->id();
+            $cacheKey2 = "userWishlistContainersAndItems{$userId}";
+            $cacheKey3 = "userWishlistContainerItems{$userId}";
 
             Cache::forget($cacheKey);
-            
+            Cache::forget($cacheKey2);
+            Cache::forget($cacheKey3);
             return response("HostHome removed from the wishlist", 200);
 
         } else {
@@ -840,38 +855,41 @@ class UserController extends Controller
     public function getUserWishlistContainersAndItems()
     {
         $user = User::where('id', auth()->id())->firstOrFail();
+        $cacheKey = "userWishlistContainersAndItems{$user->id}";
 
-        // Eager load wishlist containers with associated items and hosthomes
-        $userWishlist = $user->wishlistcontainers()->with('items')->distinct()->get();
+        return Cache::remember($cacheKey, function () use($user) {
+            // Eager load wishlist containers with associated items and hosthomes
+            $userWishlist = $user->wishlistcontainers()->with('items')->distinct()->get();
 
-        // Transform the userWishlist to include hosthomes details without items
-        $formattedWishlist = $userWishlist->map(function ($wishlistContainer) {
-            return [
-                'wishlistContainer' => [
-                    'id' => $wishlistContainer->id,
-                    'user_id' => $wishlistContainer->user_id,
-                    'name' => $wishlistContainer->name,
-                    'created_at' => $wishlistContainer->created_at,
-                    'updated_at' => $wishlistContainer->updated_at,
-                ],
-                'itemsLength' => count($wishlistContainer->items),
-                'items' => $wishlistContainer->items->map(function ($item) {
-                    $hostHome = HostHome::find($item->host_home_id);
-                    return [
-                        'id' => $item->id,
-                        'hosthomes' => [
-                            'id' => $hostHome->id,
-                            'hosthomephotos' => collect($hostHome->hosthomephotos)->map(function ($photo) {
-                                $photoData = json_decode($photo, true);
-                                return url($photoData['image']);
-                            })->toArray(),
-                        ],
-                    ];
-                }),
-            ];
+            // Transform the userWishlist to include hosthomes details without items
+            $formattedWishlist = $userWishlist->map(function ($wishlistContainer) {
+                return [
+                    'wishlistContainer' => [
+                        'id' => $wishlistContainer->id,
+                        'user_id' => $wishlistContainer->user_id,
+                        'name' => $wishlistContainer->name,
+                        'created_at' => $wishlistContainer->created_at,
+                        'updated_at' => $wishlistContainer->updated_at,
+                    ],
+                    'itemsLength' => count($wishlistContainer->items),
+                    'items' => $wishlistContainer->items->map(function ($item) {
+                        $hostHome = HostHome::find($item->host_home_id);
+                        return [
+                            'id' => $item->id,
+                            'hosthomes' => [
+                                'id' => $hostHome->id,
+                                'hosthomephotos' => collect($hostHome->hosthomephotos)->map(function ($photo) {
+                                    $photoData = json_decode($photo, true);
+                                    return url($photoData['image']);
+                                })->toArray(),
+                            ],
+                        ];
+                    }),
+                ];
+            });
+
+            return response()->json(['userWishlist' => $formattedWishlist]);
         });
-
-        return response()->json(['userWishlist' => $formattedWishlist]);
     }
     
     /**
@@ -881,16 +899,21 @@ class UserController extends Controller
      */
     public function getWishlistContainerItems($wishlistContainerId)
     {
-        // Find the wishlist container
-        $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);
+        $userId = auth()->id();
+        $cacheKey = "userWishlistContainerItems{$userId}";
+        return Cache::remember($cacheKey, function() use($wishlistContainerId) {
+            // Find the wishlist container
+            $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);
 
-        // Retrieve all wishlist container items for the given wishlist container
-        $wishlistContainerItems = $wishlistContainer->items;
+            // Retrieve all wishlist container items for the given wishlist container
+            $wishlistContainerItems = $wishlistContainer->items;
 
-        // Transform the wishlistContainerItems using the WishlistContainerItemResource
-        $formattedItems = WishlistContainerItemResource::collection($wishlistContainerItems);
+            // Transform the wishlistContainerItems using the WishlistContainerItemResource
+            $formattedItems = WishlistContainerItemResource::collection($wishlistContainerItems);
 
-        return response()->json(['wishlistContainerItems' => $formattedItems]);
+            return response()->json(['wishlistContainerItems' => $formattedItems]);
+        });
+        
     }
 
 
@@ -1169,8 +1192,11 @@ class UserController extends Controller
             ];
         });
 
-        // Return the co-host data
-        return response()->json(['cohosts' => $cohostData ?? []], 200);
+        $cacheKey = "hostCohost{$host->id}";
+
+        return Cache::remember($cacheKey, function () {
+            return response()->json(['cohosts' => $cohostData ?? []], 200); 
+        });
     }
 
     /**
@@ -2247,7 +2273,9 @@ class UserController extends Controller
 
         $host = User::find(intval($hostId));
 
-        return new HostHomeHostInfoResource($host);
+        $cacheKey = "hostReview{$hostId}";
+        return Cache::remember($cacheKey, fn() => new HostHomeHostInfoResource($host));
+        
     }
 
     /**

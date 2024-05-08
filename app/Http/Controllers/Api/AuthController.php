@@ -27,6 +27,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -150,6 +151,8 @@ class AuthController extends Controller
                     ]);
 
                     $this->becomeACoHost($user->id, $oghost->id);
+                    $cacheKey = "hostCohost{$oghost->id}";
+                    Cache::forget($cacheKey);
                 }else {
                     abort(400, "Email did not match to make you a cohost");
                 }

@@ -857,7 +857,7 @@ class UserController extends Controller
         $user = User::where('id', auth()->id())->firstOrFail();
         $cacheKey = "userWishlistContainersAndItems{$user->id}";
 
-        return Cache::remember($cacheKey, function () use($user) {
+        return Cache::remember($cacheKey, now()->addWeek() , function () use($user) {
             // Eager load wishlist containers with associated items and hosthomes
             $userWishlist = $user->wishlistcontainers()->with('items')->distinct()->get();
 
@@ -901,7 +901,7 @@ class UserController extends Controller
     {
         $userId = auth()->id();
         $cacheKey = "userWishlistContainerItems{$userId}";
-        return Cache::remember($cacheKey, function() use($wishlistContainerId) {
+        return Cache::remember($cacheKey, now()->addWeek() , function() use($wishlistContainerId) {
             // Find the wishlist container
             $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);
 

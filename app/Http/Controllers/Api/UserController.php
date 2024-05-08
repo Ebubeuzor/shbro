@@ -2045,7 +2045,7 @@ class UserController extends Controller
                 ->where(function ($query) {
                     $query->whereNull('securityDepositToGuest')
                         ->orWhereNull('securityDepositToHost')
-                        ->orWhereNotNull('addedToGuestWallet');
+                        ->orWhereNull('addedToGuestWallet');
                 })
                 ->latest()
                 ->get();

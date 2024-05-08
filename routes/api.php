@@ -191,7 +191,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::post('createOrUpdateAboutUser', [UserController::class, 'createOrUpdateAboutUser']);
-    Route::get('viewUserWalletRecords', [UserController::class, 'viewUserWalletRecords']);
+    Route::get('viewUserWalletRecords', [UserController::class, 'viewUserWalletRecords']); // continue here
     Route::get('userTips', [UserController::class, 'userTips']);
     Route::get('hostCompletedPayoutsHistory', [UserController::class, 'hostCompletedPayoutsHistory']);
     Route::get('hostTransactionHistory', [UserController::class, 'hostTransactionHistory']);

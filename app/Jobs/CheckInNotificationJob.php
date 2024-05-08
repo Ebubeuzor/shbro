@@ -28,8 +28,6 @@ class CheckInNotificationJob implements ShouldQueue
 
     public function handle()
     {
-        Log::info("ebubestart1");
-        
         $checkInDate = Carbon::parse($this->booking->check_in);
         $today = Carbon::today();
         

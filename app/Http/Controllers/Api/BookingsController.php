@@ -713,6 +713,9 @@ class BookingsController extends Controller
                     $userTrip->booking_id = $booking->id;
                     $userTrip->save();
 
+                    $cacheKey = 'user_trips_' . $booking->user_id;
+                    Cache::forget($cacheKey);
+
                     // Notify host about the booking
                     $message = $user->name . " has booked your apartment";
                     $host = User::find($hostHome->user_id);

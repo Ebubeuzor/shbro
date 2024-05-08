@@ -30,7 +30,6 @@ class CheckOutNotificationJob implements ShouldQueue
 
     public function handle()
     {
-        Log::info("ebubestart2");
 
         // Check if today is the check-out day
         $checkOutDate = Carbon::parse($this->booking->check_out);

@@ -1407,23 +1407,27 @@ class HostHomeController extends Controller
      */
     public function show($hostHomeId)
     {
-        $hostHome = HostHome::find($hostHomeId);
-        $user = Auth::user();
+        $cacheKey = 'host_home_' . $hostHomeId . '_user_' . auth()->id();
+        $cacheDuration = 600; // Cache duration in seconds (10 minutes)
 
-        if ($hostHome && $user->hosthomes->contains('id', $hostHomeId) ) {
-            return new HostHomeResource($hostHome);
-        }
-        else if ($user->adminStatus != null) {
-            return new HostHomeResource($hostHome);
-        }
-        else if ($user->cohosthomes->contains('host_home_id',$hostHomeId)) {
-            return new HostHomeResource($hostHome);
-        }
-        else{
-            abort(403,'Unauthorized Access');
-        }
+        $hostHome = Cache::remember($cacheKey, $cacheDuration, function () use ($hostHomeId) {
+            $hostHome = HostHome::find($hostHomeId);
+            $user = Auth::user();
 
+            if ($hostHome && ($user->adminStatus != null || $user->hosthomes->contains('id', $hostHomeId) || $user->cohosthomes->contains('host_home_id', $hostHomeId))) {
+                return $hostHome;
+            }
+
+            return null;
+        });
+
+        if ($hostHome) {
+            return new HostHomeResource($hostHome);
+        } else {
+            abort(403, 'Unauthorized Access');
+        }
     }
+
     
 
     /**
@@ -1433,14 +1437,14 @@ class HostHomeController extends Controller
      */
     public function showGuestHome($hostHomeId)
     {
-        $hostHome = HostHome::whereId($hostHomeId)
-                    ->where('verified', 1)
-                    ->where('disapproved',null)
-                    ->whereNull('banned')
-                    ->whereNull('suspend')->first();
         $cacheKey = "showGuestHome_".$hostHomeId;
-
-        return Cache::remember( $cacheKey , now()->addHour() ,function () use ($hostHome){
+        
+        return Cache::remember( $cacheKey , now()->addHour() ,function () use ($hostHomeId){
+            $hostHome = HostHome::whereId($hostHomeId)
+                        ->where('verified', 1)
+                        ->where('disapproved',null)
+                        ->whereNull('banned')
+                        ->whereNull('suspend')->first();
             return new HostHomeResource($hostHome);
         });
     }

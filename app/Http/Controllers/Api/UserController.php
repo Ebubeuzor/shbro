@@ -1069,24 +1069,34 @@ class UserController extends Controller
     * - 404: User not found.
      * @lrd:end
      */
-
     public function userTrips()
     {
-        // Get the authenticated user
-        $user = User::find(auth()->id());
-
-        // Delete all wishlist containers and their items for the user
-        if ($user) {
-            return UserTripResource::collection(
-                UserTrip::where('user_id', $user->id)
-                ->distinct()
-                ->latest()
-                ->get()
-            );
+        $cacheKey = 'user_trips_' . auth()->id();
+        $cacheDuration = 600; // Cache duration in seconds (10 minutes)
+    
+        $userTrips = Cache::remember($cacheKey, $cacheDuration, function () {
+            // Get the authenticated user
+            $user = User::find(auth()->id());
+    
+            if ($user) {
+                return UserTripResource::collection(
+                    UserTrip::where('user_id', $user->id)
+                        ->distinct()
+                        ->latest()
+                        ->get()
+                );
+            }
+    
+            return null;
+        });
+    
+        if ($userTrips) {
+            return $userTrips;
         }
-
+    
         return response()->json(['message' => 'User not found'], 404);
     }
+    
     
 
     /**

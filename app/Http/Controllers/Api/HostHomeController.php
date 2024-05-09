@@ -135,6 +135,7 @@ class HostHomeController extends Controller
             $hostHome->hosthomerules()->delete();
             $hostHome->forceDelete();
 
+            Cache::flush();
             return response([
                 "message" => "Host home deleted successfully",
             ], 200);

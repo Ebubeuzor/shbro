@@ -796,6 +796,7 @@ class AdminController extends Controller
             "banned" => "banned"
         ]);
 
+        Cache::flush();
         return response("Ok",200);
     }
     
@@ -893,6 +894,7 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "suspend" => "suspend"
         ]);
+        Cache::flush();
         return response("Ok",200);
     }
     
@@ -920,7 +922,7 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "banned" => null
         ]);
-
+        Cache::flush();
         return response("Ok", 200);
     }
 
@@ -949,6 +951,7 @@ class AdminController extends Controller
             "suspend" => null
         ]);
 
+        Cache::flush();
         return response("Ok", 200);
     }
 
@@ -971,6 +974,7 @@ class AdminController extends Controller
         Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
+        Cache::flush();
         return response("Ok",200); 
     }
     

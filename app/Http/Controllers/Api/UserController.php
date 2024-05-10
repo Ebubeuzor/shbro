@@ -1204,7 +1204,7 @@ class UserController extends Controller
 
         $cacheKey = "hostCohost{$host->id}";
 
-        return Cache::remember($cacheKey, now()->addWeek(), function () {
+        return Cache::remember($cacheKey, now()->addWeek(), function () use($cohostData) {
             return response()->json(['cohosts' => $cohostData ?? []], 200); 
         });
     }

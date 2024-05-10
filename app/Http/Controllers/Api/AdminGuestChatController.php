@@ -415,13 +415,13 @@ class AdminGuestChatController extends Controller
         $latestChatsSubquery = AdminGuestChat::selectRaw('MAX(id) as latest_id')
             ->whereNull('admin_id')
             ->whereNull('start_convo')
-            ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
-            ->select('admin_guest_chats.*', 'users.name as user_name')
             ->groupBy('session_id');
     
         // Use the subquery to get the full rows of the latest chats
         $unattendedChats = AdminGuestChat::whereIn('id', $latestChatsSubquery)
-            ->get();
+        ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
+        ->select('admin_guest_chats.*', 'users.name as user_name')
+        ->get();
     
         return response()->json(['unattended_chats' => $unattendedChats]);
     }

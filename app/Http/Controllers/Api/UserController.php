@@ -727,7 +727,7 @@ class UserController extends Controller
 
                 $cacheKey = "userWishlistContainersAndItems{$user->id}";
                 $cacheKey2 = "user_wishlist" . auth()->id();
-                $cacheKey3 = "userWishlistContainerItems{$user->id}";
+                $cacheKey3 = "userWishlistContainerItems{$user->id}ContainerId{$wishlistContainer->id}";
                 Cache::forget($cacheKey);
                 Cache::forget($cacheKey2);
                 Cache::forget($cacheKey3);
@@ -748,7 +748,7 @@ class UserController extends Controller
                 $wishlistContainerItem->save();
 
                 $cacheKey = "userWishlistContainersAndItems{$user->id}";
-                $cacheKey2 = "userWishlistContainerItems{$user->id}";
+                $cacheKey2 = "userWishlistContainerItems{$user->id}ContainerId{$data['wishcontainerid']}";
                 Cache::forget($cacheKey);
                 Cache::forget($cacheKey2);
                 return response("Ok", 201);
@@ -816,7 +816,7 @@ class UserController extends Controller
             
             $cacheKey = "user_wishlist".auth()->id();
             $cacheKey2 = "userWishlistContainersAndItems{$userId}";
-            $cacheKey3 = "userWishlistContainerItems{$userId}";
+            $cacheKey3 = "userWishlistContainerItems{$userId}ContainerId{$wishlistItem->wishlistcontainer_id}";
 
             Cache::forget($cacheKey);
             Cache::forget($cacheKey2);
@@ -900,7 +900,7 @@ class UserController extends Controller
     public function getWishlistContainerItems($wishlistContainerId)
     {
         $userId = auth()->id();
-        $cacheKey = "userWishlistContainerItems{$userId}";
+        $cacheKey = "userWishlistContainerItems{$userId}ContainerId{$wishlistContainerId}";
         return Cache::remember($cacheKey, now()->addWeek() , function() use($wishlistContainerId) {
             // Find the wishlist container
             $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);

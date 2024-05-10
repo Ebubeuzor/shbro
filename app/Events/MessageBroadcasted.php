@@ -58,11 +58,25 @@ class MessageBroadcasted implements ShouldBroadcast
         if ($this->receiverId == null) {
             $unattendedChats = AdminGuestChat::whereNull('admin_id')
             ->whereNull('start_convo')
-            ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
-            ->select('admin_guest_chats.*', 'users.name as user_name')
             ->get();
-
-            return ['unattended_chats' => $unattendedChats];
+            
+            $mappedUnattendedChats = $unattendedChats->map(function ($chat) {
+                return [
+                    'id' => $chat->id,
+                    'admin_id' => $chat->admin_id,
+                    'user_id' => $chat->user_id,
+                    'message' => $chat->message,
+                    'image' => $chat->image,
+                    'session_id' => $chat->session_id,
+                    'status' => $chat->status,
+                    'start_convo' => $chat->start_convo,
+                    'end_convo' => $chat->end_convo,
+                    // You may need to adjust this if the user relationship is not directly available
+                    'user_name' => $chat->user->name,
+                ];
+            });
+        
+            return response()->json(['unattended_chats' => $mappedUnattendedChats]);
         }else {
             if ($this->userStatus == "guest" || $this->userStatus == "cohost" || $this->userStatus == "host") {
                 $query = AdminGuestChat::where('user_id', $this->user->id)

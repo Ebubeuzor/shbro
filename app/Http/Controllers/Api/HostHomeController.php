@@ -1469,6 +1469,7 @@ class HostHomeController extends Controller
             "host" => 1,
         ]);
         
+        Cache::clear();
         return response()->json(['message'=>'approved'],200);
     }
     

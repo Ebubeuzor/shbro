@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\AdminGuestChat;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -57,6 +58,8 @@ class MessageBroadcasted implements ShouldBroadcast
         if ($this->receiverId == null) {
             $unattendedChats = AdminGuestChat::whereNull('admin_id')
             ->whereNull('start_convo')
+            ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
+            ->select('admin_guest_chats.*', 'users.name as user_name')
             ->get();
 
             return ['unattended_chats' => $unattendedChats];
@@ -88,6 +91,7 @@ class MessageBroadcasted implements ShouldBroadcast
             }else {
                 return [
                     'user_id' => $this->receiverId,
+                    'user_nams' => User::find($this->receiverId)->name,
                     'message' => $this->message,
                     'image' => $this->image != null ? url($this->image) : null,
                     'admin_id' => $this->user->id,

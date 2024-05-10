@@ -33,12 +33,15 @@ class HostHomeHostInfoResource extends JsonResource
         $mappedReviews = $reviews->map(function ($review) {
             
             $hosthome = HostHome::find($review->host_home_id);
+            $user = User::find($review->user_id);
 
             $photoUrl = $hosthome->hosthomephotos->isNotEmpty()
                 ? url($hosthome->hosthomephotos->first()->image)
                 : null;
 
             return [
+                'hosthome_id' => $hosthome->id,
+                'user_name' => $user->name,
                 'review_id' => $review->id,
                 'ratings' => $review->ratings,
                 'title' => $review->title,

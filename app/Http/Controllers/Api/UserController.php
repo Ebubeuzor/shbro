@@ -2298,7 +2298,9 @@ class UserController extends Controller
         $host = User::find(intval($hostId));
 
         $cacheKey = "hostReview{$hostId}";
-        return Cache::remember($cacheKey, now()->addWeek() ,fn() => new HostHomeHostInfoResource($host));
+        return Cache::remember($cacheKey, now()->addWeek() ,function() use($host) {
+            return new HostHomeHostInfoResource($host);
+        });
         
     }
 

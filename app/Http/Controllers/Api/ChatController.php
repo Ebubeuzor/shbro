@@ -153,14 +153,16 @@ class ChatController extends Controller
         $sender = User::find($senderId);
 
         if ($receiver->cohosts()->exists()) {
+            info("receivercalled");
             $cohosts = $receiver->cohosts()->with('user')->get();
             $uniqueCohosts = $cohosts->unique('user.email');
-
+            
             // Queue messages to cohosts in batch for efficiency
             foreach ($uniqueCohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false);
             }
         }elseif ($sender->cohosts()->exists()) {
+            info("sendercalled");
             $cohosts = $sender->cohosts()->with('user')->get();
             $uniqueCohosts = $cohosts->unique('user.email');
 

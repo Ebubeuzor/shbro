@@ -412,17 +412,20 @@ class AdminGuestChatController extends Controller
     */
     public function getUnattendedChats()
     {
-        $latestChatsSubquery = AdminGuestChat::selectRaw('MAX(admin_guest_chats.id) as latest_id')
+        $latestChatsSubquery = AdminGuestChat::selectRaw('MAX(id) as latest_id')
         ->whereNull('admin_id')
         ->whereNull('start_convo')
         ->groupBy('session_id');
-    
-        // Use the subquery to get the full rows of the latest chats
-        $unattendedChats = AdminGuestChat::whereIn('id', $latestChatsSubquery)
-        ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
-        ->select('admin_guest_chats.*', 'users.name as user_name')
-        ->get();
-    
+
+        // Get the IDs from the subquery result
+        $latestIds = $latestChatsSubquery->pluck('latest_id');
+
+        // Fetch the unattended chats using the extracted IDs
+        $unattendedChats = AdminGuestChat::whereIn('id', $latestIds)
+            ->join('users', 'admin_guest_chats.user_id', '=', 'users.id')
+            ->select('admin_guest_chats.*', 'users.name as user_name')
+            ->get();
+
         return response()->json(['unattended_chats' => $unattendedChats]);
     }
     

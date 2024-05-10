@@ -725,13 +725,13 @@ class UserController extends Controller
                 $wishlistContainerItem->host_home_id = $hosthome->id;
                 $wishlistContainerItem->save();
 
-                return response("Ok", 201);
                 $cacheKey = "userWishlistContainersAndItems{$user->id}";
                 $cacheKey2 = "user_wishlist" . auth()->id();
                 $cacheKey3 = "userWishlistContainerItems{$user->id}";
                 Cache::forget($cacheKey);
                 Cache::forget($cacheKey2);
                 Cache::forget($cacheKey3);
+                return response("Ok", 201);
 
             } else {
                 return response("Item already exists in the wishlist container", 422);
@@ -747,11 +747,11 @@ class UserController extends Controller
                 $wishlistContainerItem->host_home_id = $hosthome->id;
                 $wishlistContainerItem->save();
 
-                return response("Ok", 201);
                 $cacheKey = "userWishlistContainersAndItems{$user->id}";
                 $cacheKey2 = "userWishlistContainerItems{$user->id}";
                 Cache::forget($cacheKey);
                 Cache::forget($cacheKey2);
+                return response("Ok", 201);
 
             } else {
                 return response("Item already exists in the wishlist container", 422);

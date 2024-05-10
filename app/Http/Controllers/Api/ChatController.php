@@ -153,7 +153,6 @@ class ChatController extends Controller
         $sender = User::find($senderId);
 
         if ($receiver->cohosts()->exists()) {
-            info("receivercalled");
             $cohosts = $receiver->cohosts()->with('user')->get();
             $uniqueCohosts = $cohosts->unique('user.email');
             
@@ -163,7 +162,6 @@ class ChatController extends Controller
             }
         }
         if ($sender->cohosts()->exists()) {
-            info("sendercalled");
             $cohosts = $sender->cohosts()->with('user')->get();
             $uniqueCohosts = $cohosts->unique('user.email');
 

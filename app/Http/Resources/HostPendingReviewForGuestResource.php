@@ -31,6 +31,7 @@ class HostPendingReviewForGuestResource extends JsonResource
             'bookingid' => $this->booking_id,
             'guestName' => $guest->name,
             'guestid' => $guest->id,
+            'guestProfilePicture' => $guest->profilePicture != null ? url($guest->profilePicture) : null,
             'hostid' => $host->id,
             'title' => $hosthome->title,
             'hosthomeid' => $hosthome->id,

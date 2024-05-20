@@ -134,6 +134,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::middleware('role:admin,super admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
+        Route::post("createSocialMediaLink", [AdminController::class, 'createSocialMediaLink']);
         Route::post("createAdmin", [AdminController::class, 'createAdmin']);
         Route::post("removeAdminStatus/{userid}", [AdminController::class, 'removeAdminStatus']);
         Route::put("updateAdminStatus/{userid}", [AdminController::class, 'updateAdminStatus']);
@@ -262,3 +263,5 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
     Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
+
+    Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);

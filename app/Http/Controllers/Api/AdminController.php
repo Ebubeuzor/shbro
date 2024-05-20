@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignRolesToAdminRequest;
 use App\Http\Requests\SignupRequest;
+use App\Http\Requests\StoreSocialMediaLink;
 use App\Http\Resources\AllBookingsResource;
 use App\Http\Resources\AllReviewssResource;
 use App\Http\Resources\CancelTripsResource;
@@ -16,6 +17,7 @@ use App\Models\Canceltrip;
 use App\Models\HostHome;
 use App\Models\Review;
 use App\Models\Servicecharge;
+use App\Models\SocialMedia;
 use App\Models\User;
 use App\Models\UserRequestPay;
 use App\Models\UserWallet;
@@ -377,6 +379,43 @@ class AdminController extends Controller
     
     /**
      * @lrd:start
+     * this is to create social media link and store them
+     * @lrd:end
+     */
+    public function createSocialMediaLink(StoreSocialMediaLink $request) {
+
+        $data = $request->validated();
+        
+        $socialLinks = [];
+        $socialLinks['instagram_url'] = $data['instagram_url'];
+        $socialLinks['twitter_url'] = $data['twitter_url'];
+        $socialLinks['facebook_url'] = $data['facebook_url'];
+        SocialMedia::updateOrCreate([], $socialLinks);
+        $cacheKey = "socialLinks";
+        Cache::forget( $cacheKey );
+        return response("Links Saved", 200);
+
+    }
+    
+    
+    /**
+     * @lrd:start
+     * this is to return social media links
+     * @lrd:end
+     */
+    public function returnSocialMediaLink() {
+
+        $cacheKey = "socialLinks";
+
+        return Cache::remember($cacheKey, 60, function () {
+            return SocialMedia::all();
+        });
+
+    }
+    
+    
+    /**
+     * @lrd:start
      * this gets all the bookings that has been checked out for the admin
      * @lrd:end
      */
@@ -385,7 +424,7 @@ class AdminController extends Controller
         // Get the current date and time
         $now = Carbon::now();
 
-        $checkedOutBookings = Booking::where('check_out', '>=', $now->toDateString())
+        $checkedOutBookings = Booking::whereNotNull('checkOutNotification')
             ->where('paymentStatus', 'success')
             ->get();
 

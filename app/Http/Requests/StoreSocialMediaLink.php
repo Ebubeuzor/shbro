@@ -24,9 +24,9 @@ class StoreSocialMediaLink extends FormRequest
     public function rules()
     {
         return [
-            'instagram_url' => 'nullable',
-            'twitter_url' => 'nullable',
-            'facebook_url' => 'nullable',
+            'instagram_url' => 'required',
+            'twitter_url' => 'required',
+            'facebook_url' => 'required',
         ];
     }
 }

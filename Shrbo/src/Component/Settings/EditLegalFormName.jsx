@@ -1,34 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { useStateContext } from "../../context/ContextProvider";
-import axiosClient from "../../axoisClient";
+import React, { useState } from "react";
 
 const EditLegalNameForm = ({ onCancel, onSave }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const {user,setUser,token} = useStateContext();
-  
-  const getUserInfo = () => {
-    axiosClient.get('user')
-    .then((data) => {
-      setUser(data.data);
-      const fullName = user.name;
-      const [userFirstName, userLastName] = fullName.split(' ');
-      setFirstName(userFirstName);
-      setLastName(userLastName);
-    })
-  }
-  
-  useEffect(() => {
-    getUserInfo();
-  },[]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
    
     onSave({ firstName, lastName });
   };
-
-  console.log(user.name);
 
   return (
     <form name="legalName" onSubmit={handleSubmit}>

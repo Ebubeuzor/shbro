@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Spatie\ImageOptimizer\OptimizerChainFactory;
 
 class AdminGuestChatController extends Controller
 {
@@ -39,18 +40,23 @@ class AdminGuestChatController extends Controller
         }
 
         $dir = 'images/';
-        $file = Str::random() . '.' . $imageType;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
+        $fileName = Str::random() . '.' . $imageType;
+        $absolutePath = storage_path('app/' . $dir);
+        $relativePath = $dir . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
         // Save the decoded image to the file
-        if (!file_put_contents($relativePath, $decodedImage)) {
+        $filePath = $absolutePath . '/' . $fileName;
+        if (!file_put_contents($filePath, $decodedImage)) {
             throw new \Exception('Failed to save image');
         }
+
+        // Optimize the saved image
+        $optimizerChain = OptimizerChainFactory::create();
+        $optimizerChain->optimize($filePath);
 
         return $relativePath;
     }

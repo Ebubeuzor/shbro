@@ -1,47 +1,74 @@
+import 'react-phone-number-input/style.css'
+import PhoneInput, {isValidPhoneNumber } from 'react-phone-number-input';
 
-import React, { useEffect, useState } from "react";
-import { useStateContext } from "../../context/ContextProvider";
-import axiosClient from "../../axoisClient";
+
+import React, { useState } from "react";
 
 const EditPhoneNumber = ({ onCancel, onSave }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
-  const {user,setUser,token} = useStateContext();
-  
-  const getUserInfo = () => {
-    axiosClient.get('user')
-    .then((data) => {
-      setUser(data.data);
-      setPhoneNumber(user.phone);
-    })
-  }
-  
-  useEffect(() => {
-    getUserInfo();
-  },[]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if(phoneNumber.length===0){
+      return
+    }
   
-    onSave({ "phone":phoneNumber });
+    onSave({ phoneNumber });
   };
 
   return (
     <form name="legalName" onSubmit={handleSubmit}>
-      <div className="mb-4">
-        <label htmlFor="first_name" className="block font-medium">
-          Phone Number
-        </label>
-        <input
-          type="text"
-          id="phone_number"
-          name="phone_number"
+     <PhoneNumberValidation phoneNumber={phoneNumber} onCancel={onCancel} setPhoneNumber={(a)=>{setPhoneNumber(a)}}/>
+    </form>
+  );
+};
+
+export default EditPhoneNumber;
+
+
+
+
+
+const PhoneNumberValidation = ({phoneNumber,setPhoneNumber,onCancel}) => {
+  // const [phoneNumber, setPhoneNumber] = useState('');
+  const [valid, setValid] = useState(true);
+
+  const handleChange = (value) => {
+    setPhoneNumber(value);
+    setValid(validatePhoneNumber(value));
+  };
+
+  const validatePhoneNumber = (phoneNumber) => {
+    const phoneNumberPattern = /^\+?[1-9]\d{1,14}$/;
+
+    return phoneNumberPattern.test(phoneNumber);
+  };
+
+  return (
+    <div>
+      <div >
+
+      <div className=' w-80'>
+        {/* Phone Number: */}
+        <PhoneInput
+            defaultCountry="NG"
+            className=' h-10'
+          placeholder={'00-000-00'}
+          international
+          countryCallingCodeEditable={false}
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          className="border rounded-md py-2 px-3 w-full"
-          required
-        />
+          onChange={handleChange}
+        
+          error={phoneNumber ? (isValidPhoneNumber(phoneNumber) ? undefined : 'Invalid phone number') : 'Phone number required'}
+          />
       </div>
-   
+      {!(phoneNumber && isValidPhoneNumber(phoneNumber)&&valid) && (
+        <p className=' text-red-600'>Please enter a valid phone number.</p>
+        )}
+
+        </div>
+
       <div className="text-right">
         <button
           type="button"
@@ -50,12 +77,10 @@ const EditPhoneNumber = ({ onCancel, onSave }) => {
         >
           Cancel
         </button>
-        <button type="submit" className="bg-orange-400 text-white rounded-md py-2 px-4">
+        <button disabled={(phoneNumber && isValidPhoneNumber(phoneNumber))?false:true} type="submit" className="bg-orange-400 disabled:cursor-not-allowed text-white rounded-md py-2 px-4">
           Save
         </button>
       </div>
-    </form>
+    </div>
   );
 };
-
-export default EditPhoneNumber;

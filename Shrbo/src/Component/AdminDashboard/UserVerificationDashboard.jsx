@@ -1,53 +1,29 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Table, Button, Modal } from "antd";
+import { Table, Button, Modal, Spin } from "antd";
 import AdminHeader from "./AdminNavigation/AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import { usePDF } from "react-to-pdf";
 import Logo from "../../assets/logo.png";
 import moment from "moment";
+import Axios from "../../Axios";
+import { DatePicker} from "antd";
+import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 
-import { DatePicker } from "antd";
-
-// Sample data for verified users
-const userData = [
-  {
-    key: "1",
-    userName: "John Doe",
-    email: "johndoe@example.com",
-    photo: "path/to/photo1.jpg",
-    selfiePhoto:
-      "https://media.istockphoto.com/id/1270987867/photo/close-up-young-smiling-man-in-casual-clothes-posing-isolated-on-blue-wall-background-studio.jpg?s=612x612&w=0&k=20&c=FXkui3WMnV8YY_aqt8VsSSXYznvm9Y3eMoHMYyW4za4=",
-    typeOfUser: "Host",
-    submissionDate: "2023-10-20",
-  },
-  {
-    key: "2",
-    userName: "Jane Smith",
-    email: "janesmith@example.com",
-    photo:
-      "https://independent.ng/wp-content/uploads/National-Identity-Number-NIN.jpg",
-    selfiePhoto:
-      "https://media.istockphoto.com/id/1270987867/photo/close-up-young-smiling-man-in-casual-clothes-posing-isolated-on-blue-wall-background-studio.jpg?s=612x612&w=0&k=20&c=FXkui3WMnV8YY_aqt8VsSSXYznvm9Y3eMoHMYyW4za4=",
-    typeOfUser: "Guest",
-
-    submissionDate: "2023-11-05",
-  },
-];
 
 const UserVerificationDashboard = () => {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [filteredData, setFilteredData] = useState(userData);
+  const [filteredData, setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ name: "", date: "" });
   const pdfRef = useRef();
-
   const { toPDF, targetRef } = usePDF({ filename: "user_verification.pdf" });
 
   const columns = [
     {
       title: "User Name",
-      dataIndex: "userName",
-      key: "userName",
+      dataIndex: "name",
+      key: "name",
     },
     {
       title: "Email Address",
@@ -69,6 +45,24 @@ const UserVerificationDashboard = () => {
       ),
     },
   ];
+
+  const fetchUnverifiedUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await Axios.get("/getVerifiedUsers");
+      setFilteredData(response.data.data);
+      console.log(response.data.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching unverified users:", error);
+      message.error("Failed to fetch unverified users");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnverifiedUsers();
+  }, []);
 
   const viewUserDetails = (user) => {
     setSelectedUser(user);
@@ -93,13 +87,14 @@ const UserVerificationDashboard = () => {
   };
 
   const applyFilters = () => {
-    let filtered = userData;
+    let filtered = filteredData;
 
     if (filters.name) {
       filtered = filtered.filter((user) =>
-        user.userName.toLowerCase().includes(filters.name.toLowerCase())
+        user.name.toLowerCase().includes(filters.name.toLowerCase())
       );
     }
+    
 
     if (filters.date) {
       filtered = filtered.filter(
@@ -120,7 +115,7 @@ const UserVerificationDashboard = () => {
         <AdminHeader />
 
         <div className="flex">
-          <div className="bg-orange-400 text-white hidden md:block md:w-1/5 h-[100vh] p-4">
+          <div className="bg-orange-400 overflow-scroll example text-white hidden md:block md:w-1/5 h-[100vh] p-4">
             <AdminSidebar />
           </div>
 
@@ -129,12 +124,8 @@ const UserVerificationDashboard = () => {
               User Verification Dashboard
             </h1>
 
-            <div className="flex space-x-4">
-              <input
-                placeholder="Filter by name"
-                value={filters.name}
-                onChange={(e) => handleFilterChange("name", e.target.value)}
-              />
+            <div className="flex space-x-4 mb-5">
+             
               <DatePicker
                 placeholder="Filter by date"
                 format="YYYY-MM-DD"
@@ -144,12 +135,32 @@ const UserVerificationDashboard = () => {
                 }
               />
             </div>
-            <Button onClick={applyFilters}>Apply Filters</Button>
 
             <div className="bg-white p-4 rounded shadow">
-              <div className="overflow-x-auto">
-                <Table columns={columns} dataSource={filteredData} />
+              <div className="mb-4">
+                <div className="text-gray-400 text-sm">
+                The User Verification Dashboard then displays a list of users who have successfully completed the verification process on your platform
+                </div>
               </div>
+              {loading ? (
+                  <div className="flex justify-center h-52 items-center">
+                  <Spin
+                    indicator={
+                      <LoadingOutlined
+                        style={{
+                          fontSize: 24,
+                        }}
+                        spin
+                      />
+                    }
+                  />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table columns={columns} dataSource={filteredData}   rowKey={(record) => record.id} // Assuming id is the unique identifier
+ />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -173,8 +184,17 @@ const UserVerificationDashboard = () => {
               <h2 className="text-base font-semibold mt-4 mb-2">
                 User Information:
               </h2>
-              <p>User Name: {selectedUser.userName}</p>
-              <p>Email: {selectedUser.email}</p>
+              <p>
+                <strong>User Name:</strong> {selectedUser.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedUser.email}
+              </p>
+              <p>
+                <strong>Verification Document:</strong>{" "}
+                {selectedUser.verification_type}
+              </p>
+
               <div>
                 <h1 className="font-bold text-xl my-5">Type of User</h1>
                 <p>{selectedUser.typeOfUser}</p>
@@ -189,9 +209,9 @@ const UserVerificationDashboard = () => {
                 />
               </p>
               <p className="text-base font-semibold mt-4 mb-2">
-                Selfie Photo:{" "}
+                Live Photo:{" "}
                 <img
-                  src={selectedUser.selfiePhoto}
+                  src={selectedUser.live_photo}
                   className="h-64"
                   alt="User Photo"
                 />

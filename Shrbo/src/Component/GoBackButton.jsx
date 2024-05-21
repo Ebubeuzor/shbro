@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IoIosArrowBack } from 'react-icons/io';
+import { FaArrowLeft } from 'react-icons/fa';
 
 function GoBackButton() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ function GoBackButton() {
 
   return (
     <button onClick={handleGoBack} className='md:hidden'>
-      <IoIosArrowBack /> 
+         <FaArrowLeft/>
     </button>
   );
 }

@@ -1,30 +1,19 @@
-import React, { useEffect, useState } from "react";
-import axiosClient from "../../axoisClient";
-import { useStateContext } from "../../context/ContextProvider";
+import React, { useState } from "react";
 
 const EditEmailAddress = ({ onCancel, onSave }) => {
   const [email, setEmail] = useState("");
-  const {user,setUser,token} = useStateContext();
-  
-  const getUserInfo = () => {
-    axiosClient.get('user')
-    .then((data) => {
-      setUser(data.data);
-      setEmail(user.email);
-    })
-  }
-  
-  useEffect(() => {
-    getUserInfo();
-  },[]);
 
   const handleSubmit = (e) => {
+
+   if(email===""){
+     return
+
+   } 
+
     e.preventDefault();
 
     onSave({ email });
   };
-
-  const disabled = user.google_id == null ? false : true;
 
   return (
     <form name="legalName" onSubmit={handleSubmit}>
@@ -37,7 +26,6 @@ const EditEmailAddress = ({ onCancel, onSave }) => {
           id="email_address"
           name="email_address"
           value={email}
-          disabled={disabled}
           onChange={(e) => setEmail(e.target.value)}
           className="border rounded-md py-2 px-3 w-full"
           required

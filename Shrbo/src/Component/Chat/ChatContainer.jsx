@@ -5,6 +5,7 @@ import cancelButton from "../../assets/svg/close-line-icon.svg";
 import sendButton from "../../assets/svg/direction-arrow-top-icon.svg";
 import ChatErrorModal from "./ChatErrorModal";
 import emailValidator from "email-validator";
+import Axios from "../../Axios"
 
 export default function ChatContainer() {
   const [inputMessage, setInputMessage] = useState(""); // State to store the input message
@@ -281,6 +282,34 @@ export default function ChatContainer() {
     scrollToBottom();
   };
 
+
+  useEffect(() => {
+    const token = localStorage.getItem('tokens');
+    const receiverId = localStorage.getItem('receiverid');
+
+    const fetchMessages = async () => {
+      try {
+        const response = await Axios.get(`/chat/${receiverId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setMessages(response.data.messagesWithAUser);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchMessages();
+  }, [receiverId]);
+
+
+  const formatDate = (dateString) => {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+  
   return (
     <div className="h-[70vh]">
       {isModalOpen && (
@@ -411,32 +440,32 @@ export default function ChatContainer() {
             ref={chatContainerRef}
           >
             <div className="rounded-lg p-4 mb-10">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`${
-                    message.isUser1
-                      ? "bg-gray-300 text-white"
-                      : "bg-orange-400 text-white"
-                  } rounded-full p-2 mb-7 text-sm md:m-10`}
-                >
-                  <div className="flex space-x-4">
-                    {message.image && (
-                      <img
-                        src={message.image}
-                        alt={`${message.user}'s Image`}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    )}
+            {messages.map((message, index) => (
+        <div
+          key={index}
+          className={`${
+            message.isUser1
+              ? "bg-gray-300 text-white"
+              : "bg-orange-400 text-white"
+          } rounded-full p-2 mb-7 text-sm md:m-10`}
+        >
+          <div className="flex space-x-4">
+            {message.image && (
+              <img
+                src={message.image}
+                alt={`${message.user}'s Image`}
+                className="w-16 h-16 rounded-full object-cover"
+              />
+            )}
 
-                    <div>
-                      <span className="flex">{message.date}</span>
-                      {message.user}: {message.text}
-                      <div className="text-xs">time: {message.time}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <span className="flex">{message.date}</span>
+              {message.user}: {message.message}
+              <div className="text-xs">time: {message.updated_at}</div>
+            </div>
+          </div>
+        </div>
+      ))}
             </div>
 
             <div className=" mb-10 p-4">

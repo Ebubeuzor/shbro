@@ -45,11 +45,10 @@ import { Link } from "react-router-dom";
 
 const ChatOptions=({selectedOption})=>{
     
-const handleBookingQuestion = (e,question) => {
+const handleBookingQuestion = (question) => {
     // Handle booking question logic
     goTo.current.click();
 
-    e.preventDefault();
     console.log(`Booking Question Selected: ${question}`);
     // You can send a message or perform other actions based on the selected question
   };
@@ -73,7 +72,7 @@ const handleBookingQuestion = (e,question) => {
                         key={index}
                         type="button"
                         className={` ${cat.type===selectedOption?"block":"hidden"} transition-3 text-slate-800 hover:bg-gray-300 bg-gray-200  hover:bg-blend-darken  p-2 rounded-lg`}
-                        onClick={(e) => handleBookingQuestion(question, e)}
+                        onClick={(e) => { e.preventDefault();handleBookingQuestion(question)}}
                         
                     >
                         {question}

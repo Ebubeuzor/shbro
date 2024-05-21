@@ -2,26 +2,19 @@ import React from "react";
 
 export default function TopEarningApartments({ apartments }) {
   // Calculate total earnings for each apartment
-  const calculateTotalEarnings = () => {
-    return apartments.map((apartment) => {
-      const totalEarnings = apartment.earnings.reduce(
-        (total, earning) => total + earning.amount,
-        0
-      );
-      return { ...apartment, totalEarnings };
-    });
-  };
+
 
   // Sort apartments by total earnings in descending order
-  const sortedApartments = calculateTotalEarnings().sort(
-    (a, b) => b.totalEarnings - a.totalEarnings
-  );
+  // const sortedApartments = apartments.sort(
+  //   (a, b) => b.earnings - a.earnings
+  // );
+  console.table(apartments);
 
   return (
     <div>
       <h2 className="text-3xl mb-3">Total Earnings Apartments</h2>
       <ul className="h-[400px] overflow-auto example"> 
-        {sortedApartments.map((apartment, index) => (
+        {apartments.map((apartment, index) => (
           <li key={index} className="mb-4 bg-slate-50 shadow-md my-4 space-y-4 p-4 cursor-pointer">
             <div className="flex items-center">
               <img
@@ -32,7 +25,7 @@ export default function TopEarningApartments({ apartments }) {
               <div>
                 <h3 className="text-xl font-medium">{apartment.name}</h3>
                 <p>Date Posted: {apartment.datePosted}</p>
-                <p>Total Earnings: ${apartment.totalEarnings.toFixed(2)}</p>
+                <p>Total Earnings:  ₦{apartment.earnings}</p>
               </div>
             </div>
           </li>

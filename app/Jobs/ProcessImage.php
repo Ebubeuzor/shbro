@@ -14,6 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Spatie\ImageOptimizer\OptimizerChainFactory;
 
 class ProcessImage implements ShouldQueue
 {
@@ -44,7 +45,6 @@ class ProcessImage implements ShouldQueue
     public function handle()
     {
         $imageData = ['image' => $this->image, 'host_home_id' => $this->hostHomeId];
-        info($imageData);
         $this->createImages($imageData);
     }
 
@@ -63,7 +63,6 @@ class ProcessImage implements ShouldQueue
         }
 
         $data2 = $validator->validated();
-        info($data2);
         $data2['image'] = $this->saveImage($data2['image'], $data2['host_home_id']);
 
         return Hosthomephoto::create($data2);
@@ -81,31 +80,43 @@ class ProcessImage implements ShouldQueue
             $decodedImage = base64_decode($imageData);
 
             if ($decodedImage === false) {
-                $hosthome = HostHome::find($hosthomeid);
-                $hosthome->delete();
+                $this->deleteHostHome($hosthomeid);
                 throw new \Exception('Failed to decode image');
             }
         } else {
-            $hosthome = HostHome::find($hosthomeid);
-            $hosthome->delete();
+            $this->deleteHostHome($hosthomeid);
             throw new \Exception('Invalid image format');
         }
 
-        $dir = 'images/'; // Change this to the desired subdirectory in your public folder, if necessary
-        $file = Str::random() . '.' . $imageType;
-        $absolutePath = public_path($dir); // Adjust the path to the public folder
-        $relativePath = $dir . $file;
+        $dir = 'images/';
+        $fileName = Str::random() . '.' . $imageType;
+        $absolutePath = public_path($dir);
+        $relativePath = $dir . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
         // Save the decoded image to the file
-        if (!file_put_contents(public_path($relativePath), $decodedImage)) { // Adjust the path to the public folder
+        if (!file_put_contents($absolutePath . '/' . $fileName, $decodedImage)) {
+            $this->deleteHostHome($hosthomeid);
             throw new \Exception('Failed to save image');
         }
 
+        // Optimize the saved image
+        $optimizerChain = OptimizerChainFactory::create();
+        $optimizerChain->optimize($absolutePath . '/' . $fileName);
+
         return $relativePath;
     }
+
+    private function deleteHostHome($hosthomeid)
+    {
+        $hosthome = HostHome::find($hosthomeid);
+        if ($hosthome) {
+            $hosthome->delete();
+        }
+    }
+
 
 }

@@ -5,7 +5,8 @@ export default function Card(props) {
     <div>
       <div className="bg-white border h-40 rounded-lg shadow-md p-4  cursor-pointer">
         <div>
-          <img src={props.icon} alt="" className="w-7 h-7 mb-5" />
+
+          {!props.svg?<img src={props.icon} alt="" className="w-7 h-7 mb-5" />:props.svg}
         </div>
        <div>
        <div>

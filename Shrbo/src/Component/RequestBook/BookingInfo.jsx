@@ -7,19 +7,38 @@ import { Link } from "react-router-dom";
 import Popup from "../../hoc/Popup";
 import ContactInfo from "./ContactInfo";
 import CancellationPolicyTab from "../ListingInfo/CancellationPolicyTab";
-
+import { useDateContext } from "../../ContextProvider/BookingInfo";
 // import 'antd/dist/antd.css';
 
 const BookingInfo = () => {
-  const [checkInDate, setCheckInDate] = useState(null);
-  const [checkOutDate, setCheckOutDate] = useState(null);
+  // const [checkInDate, setCheckInDate] = useState(null);
+  // const [checkOutDate, setCheckOutDate] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [adults, setAdults] = useState(0);
-  const [children, setChildren] = useState(0);
-  const [pets, setPets] = useState(0);
-  const [infants, setInfants] = useState(0);
+  // const [adults, setAdults] = useState(0);
+  // const [pets, setPets] = useState(0);
+  
   const [show, setShow] = useState(false);
   const toggleShow = () => setShow(!show);
+  const {
+    checkInDate,
+    checkOutDate,
+    adults,
+    setAdults,
+    pets,
+    priceDetails,
+    setPriceDetails,
+    hostFees, 
+    serviceFee,
+    tax,
+    totalPrice, 
+    totalCost,
+    housePrice,
+    nights,
+    cancellationPolicy,
+    securityDeposit
+  } = useDateContext();
+
+  console.log(housePrice);
 
   function showModal(e) {
     e.preventDefault();
@@ -64,6 +83,8 @@ const BookingInfo = () => {
     return "";
   };
 
+  
+
   return (
     <div>
       <div className="reservation-input mb ">
@@ -84,8 +105,13 @@ const BookingInfo = () => {
                 id="checkInInput" // Assign an ID to the check-in input
                 selected={checkInDate}
                 onChange={handleCheckIn}
-                placeholderText="22/10/2023"
-                dateFormat="dd/MM/yyyy" // You can customize the date format
+                readOnly
+                placeholderText={
+                  checkInDate ? formatDate(checkInDate) : "Check-in"
+                }
+                dateFormat="dd/MM/yyyy"
+                startDate={checkInDate}
+                endDate={checkOutDate}
               />
 
               <div
@@ -107,9 +133,14 @@ const BookingInfo = () => {
                 id="checkOutInput" // Assign an ID to the check-out input
                 selected={checkOutDate}
                 onChange={handlecheckOut}
+                readOnly
                 className=""
-                placeholderText="28/10/2023"
-                dateFormat="dd/MM/yyyy" // You can customize the date format
+                placeholderText={
+                  checkOutDate ? formatDate(checkOutDate) : "Check-out"
+                }
+                dateFormat="dd/MM/yyyy"
+                startDate={checkInDate}
+                endDate={checkOutDate}
               />
               <div
                 onClick={() => toggleDatePicker("checkOutInput")} // Open the check-out datepicker when clicked
@@ -134,9 +165,7 @@ const BookingInfo = () => {
               {/* <input className=' border rounded text-base font-normal '/> */}
               <MyDropdown
                 adults={adults}
-                children={children}
                 pets={pets}
-                infants={infants}
               />
               {/* <MyPopover /> */}
 
@@ -169,10 +198,13 @@ const BookingInfo = () => {
             <div className=" mb-2 box-border block">
               <div className=" flex items-end justify-between break-words    ">
                 <div className=" block box-border">
-                  <span>$140.00 x 2 nights</span>
+                  <span>
+                    {" "}
+                    ₦ {housePrice} x {nights} nights
+                  </span>
                 </div>
                 <div className=" ml-4 whitespace-nowrap block box-border   ">
-                  $280.00
+                  ₦ {housePrice * nights}
                 </div>
               </div>
             </div>
@@ -212,7 +244,9 @@ const BookingInfo = () => {
                           </span>
                         </span>
                       </button>
-                      <div className=" ml-4 ">$194.00</div>
+                      <div className=" ml-4 ">
+                        ₦ {Number(hostFees).toLocaleString()}
+                      </div>
                     </div>
 
                     <div
@@ -241,17 +275,17 @@ const BookingInfo = () => {
                   <span>Service Fee</span>
                 </div>
                 <div className=" ml-4 whitespace-nowrap block box-border   ">
-                  $20.00
+                  ₦ {serviceFee}
                 </div>
               </div>
             </div>
             <div className=" mb-2 box-border block">
               <div className=" flex items-end justify-between break-words    ">
                 <div className=" block box-border">
-                  <span>Tax</span>
+                  <span>Security deposit</span>
                 </div>
                 <div className=" ml-4 whitespace-nowrap block box-border   ">
-                  $18.00
+                  ₦ {securityDeposit}
                 </div>
               </div>
             </div>
@@ -260,7 +294,10 @@ const BookingInfo = () => {
           <div className=" border-b py-4">
             <div className=" font-semibold text-lg flex items-end justify-between break-words    ">
               <span> Total </span>
-              <div className=" whitespace-nowrap break-normal ">$566.54</div>
+              <div className=" whitespace-nowrap break-normal ">
+                {" "}
+                ₦ {totalCost}
+              </div>
             </div>
           </div>
         </div>
@@ -276,14 +313,14 @@ const BookingInfo = () => {
                 </h3>
                 <div className="cancellation box-border gap-1  flex">
                   <span className=" font-medium text-base">
-                    Free cancellation
+                   {cancellationPolicy}
                   </span>
-                  <label>until</label>
+                  {/* <label>until</label> */}
                   <div
                     className=" inline-block relative font-medium text-blue-600 underline cursor-pointer  "
                     onClick={showModal}
                   >
-                    <span>Oct 10,2023</span>
+                    {/* <span>Oct 10,2023</span> */}
                   </div>
                 </div>
 
@@ -294,7 +331,7 @@ const BookingInfo = () => {
                   handleCancel={handleCancel}
                   title={"Cancellation policy"}
                 >
-                  <CancellationPolicyTab/>
+                  <CancellationPolicyTab />
                 </Popup>
               </div>
               <div className=" relative block box-border"></div>
@@ -308,21 +345,19 @@ const BookingInfo = () => {
 
 export default BookingInfo;
 
-function MyDropdown({ adults, children, pets, infants }) {
+function MyDropdown({ adults, pets }) {
   const [adultCount, setAdultCount] = useState(adults);
-  const [childCount, setChildCount] = useState(children);
   const [petCount, setPetCount] = useState(pets);
-  const [infantCount, setInfantCount] = useState(infants);
   const [visible, setVisible] = useState(false);
 
   const handleDecrease = (setter, value) => {
-    if (value > 0) {
-      setter(parseInt(value, 10) - 1);
-    }
+    // if (value > 0) {
+    //   setter(parseInt(value, 10) - 1);
+    // }
   };
 
   const handleIncrease = (setter, value) => {
-    setter(parseInt(value, 10) + 1);
+    // setter(parseInt(value, 10) + 1);
   };
 
   const handleSubmit = () => {
@@ -331,99 +366,9 @@ function MyDropdown({ adults, children, pets, infants }) {
   };
 
   const items = [
-    <div
-      key={1}
-      className="flex md:p-8 p-4 gap-2  lg:w-[520px] flex-col space-y-4"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex-col">
-          <span className="text-lg">Adults:</span> <br />
-          <p className="text-gray-400">Ages 13 or above</p>
-        </div>
-        <div className="space-x-2">
-          <Button
-            shape="circle"
-            onClick={() => handleDecrease(setAdultCount, adultCount)}
-          >
-            -
-          </Button>
-          <span>{adultCount}</span>
-          <Button
-            shape="circle"
-            onClick={() => handleIncrease(setAdultCount, adultCount)}
-          >
-            +
-          </Button>
-        </div>
+      <div>
+
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex-col">
-          <span className="text-lg">Children:</span>
-          <p className="text-gray-400">Ages 2–12</p>
-        </div>
-        <div className="space-x-2">
-          <Button
-            shape="circle"
-            onClick={() => handleDecrease(setChildCount, childCount)}
-          >
-            -
-          </Button>
-          <span>{childCount}</span>
-          <Button
-            shape="circle"
-            onClick={() => handleIncrease(setChildCount, childCount)}
-          >
-            +
-          </Button>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex-col">
-          <span className="text-lg">Pets:</span>
-          <p>
-            <Link className="text-gray-400 underline">
-              Bringing a service animal?
-            </Link>
-          </p>
-        </div>
-        <div className="space-x-2">
-          <Button
-            shape="circle"
-            onClick={() => handleDecrease(setPetCount, petCount)}
-          >
-            -
-          </Button>
-          <span>{petCount}</span>
-          <Button
-            shape="circle"
-            onClick={() => handleIncrease(setPetCount, petCount)}
-          >
-            +
-          </Button>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex-col">
-          <span className="text-lg">Infants:</span>
-          <p className="text-gray-400">Under 2</p>
-        </div>
-        <div className="space-x-2">
-          <Button
-            shape="circle"
-            onClick={() => handleDecrease(setInfantCount, infantCount)}
-          >
-            -
-          </Button>
-          <span>{infantCount}</span>
-          <Button
-            shape="circle"
-            onClick={() => handleIncrease(setInfantCount, infantCount)}
-          >
-            +
-          </Button>
-        </div>
-      </div>
-    </div>,
   ];
 
   return (
@@ -433,7 +378,7 @@ function MyDropdown({ adults, children, pets, infants }) {
       open={visible}
       dropdownRender={(menu) => (
         <div className=" bg-white">
-          <Space className="p-2 flex-col w-full shadow-md">
+          {/* <Space className="p-2 flex-col w-full shadow-md">
             {items}
             <Button
               className="bg-orange-700"
@@ -443,19 +388,24 @@ function MyDropdown({ adults, children, pets, infants }) {
               {" "}
               Done
             </Button>
-          </Space>
+          </Space> */}
         </div>
       )}
     >
-      <Space className="w-full"   >
+      <Space className="w-full">
         <button
           type="button"
           className=" block m-4 cursor-pointer overflow-hidden text-ellipsis text-start whitespace-nowrap text-base font-normal w-full min-w-full      "
         >
-         <span className="block">Guests</span>
-         <span className="text-gray-500">
-               {(adultCount + childCount>1?`${adultCount + childCount} guests`:`${adultCount + childCount} guest`) }  {infantCount!=0&& (infantCount>1?`,${infantCount} infants`:`,${infantCount} infant`)}   {petCount!=0&& (petCount>1?`,${petCount} pets`:`,${petCount} pet`)} 
-           </span>
+          <span className="block">Guests</span>
+          <span className="text-gray-500">
+            {adultCount  > 1
+              ? `${adultCount } guests`
+              : `${adultCount } guest`}{" "}
+          
+            {petCount != 0 &&
+              (petCount > 1 ? `,${petCount} pets` : `,${petCount} pet`)}
+          </span>
         </button>
       </Space>
     </Dropdown>

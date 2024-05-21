@@ -1,6 +1,7 @@
 // BotComponent.jsx
 import React, { useState } from 'react';
 import {styles} from '../Style';
+import logo from '../../../assets/logo.png'
 
 
 
@@ -38,17 +39,17 @@ const OptionWindow = ({ selectedOption , close }) => {
 
                   <div className=' flex -space-x-4  ' >
                     <img
-                    src="https://tecdn.b-cdn.net/img/new/avatars/2.webp"
-                    className="w-10 rounded-full"
+                    src={logo}
+                    className="w-10 rounded-full bg-slate-100"
                     alt="Avatar" />
-                          <img
+                          {/* <img
                       src="https://tecdn.b-cdn.net/img/new/avatars/2.webp"
                       className="w-10 rounded-full"
                       alt="Avatar" />
                         <img
                       src="https://tecdn.b-cdn.net/img/new/avatars/2.webp"
                       className="w-10 rounded-full"
-                      alt="Avatar" />
+                      alt="Avatar" /> */}
 
                   </div>
                   {/* <svg xmlns="http://www.w3.org/2000/svg" width={"25px"} height={"25px"} fill='rgb(251,146,60)'  viewBox="0 0 24 24"><title>robot-happy-outline</title>

@@ -10,7 +10,7 @@ const ContactSupport = () => {
       <HelpNavigation/>
       <div className="container pt-24 md:w-[80%] h-[70vh]   mx-auto p-4">
      <div className='pb-32'>
-     <h1 className='text-4xl text-center my-10 font-semibold'>Hi Endi, how can we help?</h1>
+     <h1 className='text-4xl text-center my-10 font-semibold'>Hi Welcome, how can we help?</h1>
         <h1 className="text-2xl font-semibold my-4">Contact and Support Information</h1>
 
         <p>

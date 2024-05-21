@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import HostModal from "../Dashboard/HostModal";
 import Logo from "../../assets/logo.png"
+import { useStateContext } from "../../ContextProvider/ContextProvider";
 
 export default function HostHeader() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {coHost}=useStateContext();
 
   const toggleModal = () => {
     console.log("Menu clicked"); // Add this line to check if the click event is triggered
@@ -53,18 +55,18 @@ export default function HostHeader() {
           <Link to="/Hosting" className="text-white hover:text-gray-300 ml-4">
             Today
           </Link>
-          <Link to="/chat" className="text-white hover:text-gray-300 ml-4">
+          <Link to="/ChatAndNotifcationTab" className="text-white hover:text-gray-300 ml-4">
             Inbox
           </Link>
           <Link to="/HostAnalysis" className="text-white hover:text-gray-300 ml-4">
             Analysis
           </Link>
-          <Link to="/Schduler" className="text-white hover:text-gray-300 ml-4">
+          <Link to="/Scheduler" className="text-white hover:text-gray-300 ml-4">
             Calender
             </Link>
-            <Link to="/HostPayment" className="text-white hover:text-gray-300 ml-4">
+           {coHost!=1&& <Link to="/HostPayment" className="text-white hover:text-gray-300 ml-4">
             Payment
-            </Link>
+            </Link>}
         </nav>
         <div>
         <div
@@ -114,18 +116,25 @@ export default function HostHeader() {
                    Listings
                 </Link>
                 <Link
-                  to=""
+                  to="/ContactSupport"
                   className="block text-gray-800 hover:text-orange-400 p-2 cursor-pointer"
                 
                 >
                    Visit the help center
                 </Link>
-                <Link
+                {/* <Link
                   to=""
                   className="block text-gray-800 hover:text-orange-400 p-2 cursor-pointer"
                 
                 >
                    Get help with a safety issue
+                </Link> */}
+                <Link
+                  to="/ReportDamage"
+                  className="block text-gray-800 hover:text-orange-400 p-2 cursor-pointer"
+                
+                >
+                   Report Damages
                 </Link>
 
                 <Link

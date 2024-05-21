@@ -5,7 +5,7 @@ import FilterIcon from "../../assets/svg/sliders-icon.svg";
 import close from "../../assets/svg/close-line-icon.svg"
 
 
-export default function FilterModal() {
+export default function FilterModal({search,clearAll}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [selectedBedroom, setSelectedBedroom] = useState(null);
@@ -18,8 +18,8 @@ export default function FilterModal() {
     setIsModalOpen(!isModalOpen);
   };
 
-  const Min = 100;
-  const Max = 20000;
+  const Min = 5000;
+  const Max = 1000000;
 
   const [values, setValues] = useState([Min, Max]);
 
@@ -99,6 +99,8 @@ export default function FilterModal() {
     setSelectedAmenities([]);
     setValues([Min, Max]);
     setShowAllAmenities(false);
+    clearAll();
+    toggleModal()
   };
 
   const handleSubmit = (e) => {
@@ -112,13 +114,30 @@ export default function FilterModal() {
       priceRange: values,
     };
     console.log(selectedFilters);
+
+    search(selectedFilters,toggleModal);
+
   };
+
+  function formatAmountWithCommas(amount) {
+    // Convert the amount to a string and split it into integer and decimal parts
+    const [integerPart, decimalPart] = amount.toString().split('.');
+
+    // Add commas to the integer part
+    const formattedIntegerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Combine the integer and decimal parts with a dot if there is a decimal part
+    const formattedAmount = decimalPart ? `${formattedIntegerPart}.${decimalPart}` : formattedIntegerPart;
+
+    return formattedAmount;
+}
+
 
   return (
     <div className="flex">
       <button
         onClick={toggleModal}
-        className="border text-black font-bold p-2 px-4  space-x-3 text-white rounded-full  flex items-center justify-between"
+        className="border  font-bold p-2 px-4  space-x-3 text-white rounded-full  flex items-center justify-between"
       >
         <div className=" w-4">
           <img src={FilterIcon} alt="" />
@@ -151,17 +170,17 @@ export default function FilterModal() {
                   </p>
                   <div className="flex justify-between items-center">
                     <div className="border w-[40%] p-2">
-                      <span>Min</span>
-                      <input type="text" placeholder={`${values[0]}`} />
+                      <span className=" text-slate-300" >Min</span>
+                      <input type="text" readOnly  placeholder={`₦ ${formatAmountWithCommas(values[0])}`} />
                     </div>{" "}
                     -{" "}
                     <div className="border w-[40%] p-2">
-                      Max
-                      <input type="text" placeholder={`${values[1]}`} />
+                    <span className=" text-slate-300" >Max</span>
+                      <input type="text" readOnly placeholder={`₦ ${formatAmountWithCommas(values[1])}`} />
                     </div>{" "}
                   </div>
                   <small>
-                    Current Range: ${values[0]} - ${values[1]}
+                    Current Range: ₦{values[0]} - ₦{values[1]}
                   </small>
 
                   <Slider
@@ -173,10 +192,10 @@ export default function FilterModal() {
                   />
 
                   <div className="space-y-4">
-                    <h3 className="text-2xl text-black">Rooms & Beds</h3>
+                    <h3 className="text-2xl">Rooms & Beds</h3>
 
                     <div className="room-options ">
-                      <h3 className="text-xl text-black">Beds</h3>
+                      <h3 className="text-xl text-slate-700">Beds</h3>
                       <div className="flex space-x-3 flex-wrap">
                         {["Any", 1, 2, 3, 4, 5, 6, 7, "8+"].map((num) => (
                           <div
@@ -210,7 +229,7 @@ export default function FilterModal() {
                     </div>
 
                     <div className="room-options">
-                      <h3 className="text-xl text-black">Bedrooms</h3>
+                      <h3 className="text-xl text-slate-700">Bedrooms</h3>
                       <div className="flex space-x-3 flex-wrap">
                         {["Any", 1, 2, 3, 4, 5, 6, 7, "8+"].map((num) => (
                           <div
@@ -244,7 +263,7 @@ export default function FilterModal() {
                     </div>
 
                     <div className="room-options">
-                      <h3 className="text-xl text-black">Bathrooms</h3>
+                      <h3 className="text-xl text-slate-700">Bathrooms</h3>
                       <div className="flex space-x-3 flex-wrap">
                         {["Any", 1, 2, 3, 4, 5, 6, 7, "8+"].map((num) => (
                           <div
@@ -278,7 +297,7 @@ export default function FilterModal() {
                     </div>
 
                     <div className=" space-y-4">
-                      <h3 className="text-xl font-semibold text-black">Property Types</h3>
+                      <h3 className="text-xl font-semibold ">Property Types</h3>
                       <div className="flex flex-wrap   w-full">
                         {propertyTypes.map((type) => (
                           <div
@@ -298,7 +317,7 @@ export default function FilterModal() {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-2xl text-black">Amenities</h3>
+                      <h3 className="text-2xl">Amenities</h3>
                       <div className="flex flex-wrap w-full">
                         {showAllAmenities
                           ? amenitiesList.map((amenity) => (

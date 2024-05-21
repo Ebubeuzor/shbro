@@ -11,7 +11,7 @@
     <div>{{$guestmessage}}</div>
     @if ($status == "accept")
         <div>
-            <a href="http://127.0.0.1:5173/ListingInfoMain/{{$hosthomeid}}">Click to book your apartment</a>
+            <a href="https://shortletbooking.com/ListingInfoMain/{{$hosthomeid}}">Click to book your apartment</a>
         </div>
     @endif
 </body>

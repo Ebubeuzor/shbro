@@ -12,7 +12,7 @@ const SliderFull = () => {
   }, [slider1, slider2]);
 
   return (
-    <div className="  w-full relative pt-6 gap-[10px]  flex flex-col justify-between  ">
+    <div className="  w-full relative pt-6 gap-[10px]  h-full flex flex-col justify-between  ">
       <MainSlider slider1={slider1} />
       <ThumbnailSlider slider2={slider2} />
     </div>

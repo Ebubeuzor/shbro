@@ -8,13 +8,52 @@ import BottomNavigation from "../Component/Navigation/BottomNavigation";
 import { useNavigate } from "react-router-dom";
 import Rating from "../Component/ListingInfo/Ratings";
 import ContactInfo from "../Component/RequestBook/ContactInfo";
+import { useDateContext } from "../ContextProvider/BookingInfo";
+
 const RequestBook = () => {
   const navigate = useNavigate();
+
+  const {
+    checkInDate,
+    checkOutDate,
+    adults,
+    setAdults,
+    pets,
+    priceDetails,
+    setPriceDetails,
+    hostFees,
+    serviceFee,
+    tax,
+    totalPrice,
+    totalCost,
+    housePrice,
+    cancellationPolicy,
+    title,
+    address,
+    photo,
+    securityDeposit,
+    discounts,
+  } = useDateContext();
+
+  console.log("checkInDate:", checkInDate);
+  console.log("checkOutDate:", checkOutDate);
+  console.log("adults:", adults);
+  console.log("pets:", pets);
+  console.log("priceDetails:", priceDetails);
+
+  // Log host fees, service fee, tax, total price, and total cost
+  console.log("hostFees:", hostFees);
+  console.log("serviceFee:", serviceFee);
+  console.log("tax:", tax);
+  console.log("totalPrice:", totalPrice);
+  console.log("totalCost:", totalCost);
+  console.log("house price:", housePrice);
 
   // Takes you back to previous page
   const handleGoBack = () => {
     navigate(-1);
   };
+
   return (
     <div>
       <Header />
@@ -72,38 +111,34 @@ const RequestBook = () => {
           </div>
         </div>
 
-        {/* Listing photo location and details for mobile view only  */}
-        <div className="listing-preview w-full mb-4 gap-4 flex flex-row md:hidden  ">
-          <div className="image-preview  relative  ">
-            <div className="flex box-border ">
-              <div
-                className=" bg-cover bg-no-repeat overflow-hidden  bg-center rounded-lg  md:rounded-tl-lg md:grow h-[80px] 
-                                    "
-              >
-                <img
-                  className=" w-full h-full"
-                  src="https://a0.muscache.com/im/pictures/miso/Hosting-635437605163910390/original/eaf8887f-410f-41e4-be1b-88c2a74fbfcf.jpeg?aki_policy=large"
-                />
+        <div className="listing-preview w-full mb-4 gap-4 flex flex-col md:hidden  ">
+          <div className="flex justify-center gap-2">
+            {photo.slice(0, 3).map((item, index) => (
+              <div className="image-preview relative" key={index}>
+                <div className="flex box-border">
+                  <div
+                    className=" bg-cover bg-no-repeat overflow-hidden  bg-center rounded-lg  md:rounded-tl-lg md:grow h-[80px] 
+                          "
+                  >
+                    <img
+                      className=" w-full h-full"
+                      src={item.images}
+                      alt={`Image ${index}`}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-          <div className=" w-1/2 flex flex-col justify-between relative">
+          <div className=" w-full flex flex-col justify-between relative">
             <div className="booking-details w-full block box-border ">
               <div className=" block relative">
-                <h3 className=" whitespace-nowrap overflow-hidden text-ellipsis  text-sm font-medium ">
-                  South Range Vacation Home: 6 Mi to Lake Superior!
-                </h3>
+                <h3 className="    text-sm font-medium ">{title}</h3>
               </div>
             </div>
             <div className=" text-xs">
-              <span className="rating box-border block ">
-                <Rating rating={5.0} />
-              </span>
-              <span className="location box-border block  overflow-hidden text-ellipsis ">
-                host:Christi-ann
-              </span>
               <span className="location box-border block  overflow-hidden text-ellipsis  ">
-                South Range, Wisconsin,Us
+                {address}
               </span>
             </div>
           </div>

@@ -1,35 +1,38 @@
-import React, { useState } from "react";
-import { Table, Input, Select, Modal, Space, Dropdown } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Input, Select, Modal, Space, Dropdown, Spin, notification } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import AdminHeader from "./AdminNavigation/AdminHeader";
 import AdminSidebar from "./AdminSidebar";
-
+import Axios from "../../Axios"
 const { confirm } = Modal;
 
 export default function ReviewListings() {
   const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      rentalName: "Awesome Villa",
-      rating: 5,
-      emailAddress: "johndoe@example.com",
-      comments:
-        "     Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur similique aperiam, quasi hic commodi, voluptatum alias enim repellat odit deleniti sit itaque, deserunt impedit maiores rerum ipsam neque laborum tempore.",
-      dateAdded: "2023-10-01",
-      status: "Active",
-    },
-    {
-      id: 2,
-      rentalName: "Cozy Cabin",
-      rating: 4,
-      emailAddress: "janesmith@example.com",
-      comments: "lorem",
-
-      dateAdded: "2023-09-15",
-      status: "Not Active",
-    },
-    // Add more review data objects as needed
+  
   ]);
+
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await Axios.get("/getReviews");
+        setReviews(response.data.data); 
+        console.log(response.data.data);
+        setLoading(false); 
+
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        // Handle error, show error message, etc.
+        setLoading(false); // Set loading to false whether request succeeds or fails
+
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
 
   const [filters, setFilters] = useState({
     status: "Any",
@@ -47,57 +50,61 @@ export default function ReviewListings() {
     setSearchQuery(event.target.value);
   };
 
-  const handleDeleteReview = (reviewId) => {
-    confirm({
-      title: "Do you want to delete this review?",
-      icon: <ExclamationCircleOutlined />,
-      onOk() {
-        const updatedReviews = reviews.filter(
-          (review) => review.id !== reviewId
-        );
-        setReviews(updatedReviews);
-      },
-    });
+
+
+  const ConfirmDeleteReview = async (reviewId) => {
+    try {
+      await Axios.delete(`/deleteReviews/${reviewId}`);
+      const updatedReviews = reviews.filter((review) => review.id !== reviewId);
+      setReviews(updatedReviews);
+      notification.success({
+        message: "Review Deleted",
+        description: "The review has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      notification.error({
+        message: "Failed to Delete Review",
+        description: "An error occurred while deleting the review.",
+      });
+    }
   };
+  
 
   const columns = [
     {
       title: "Rental Name",
-      dataIndex: "rentalName",
-      key: "rentalName",
+      dataIndex: "propertyName",
+      key: "propertyName",
     },
     {
       title: "Rating",
-      dataIndex: "rating",
-      key: "rating",
+      dataIndex: "ratings",
+      key: "ratings",
     },
     {
       title: "Email Address",
-      dataIndex: "emailAddress",
-      key: "emailAddress",
+      dataIndex: "guestemail",
+      key: "guestemail",
     },
 
     {
       title: "Comments",
-      dataIndex: "comments",
-      key: "comments",
+      dataIndex: "comment",
+      key: "comment",
     },
     {
       title: "Date Added",
-      dataIndex: "dateAdded",
-      key: "dateAdded",
+      dataIndex: "created_at",
+      key: "created_at",
     },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-    },
+    
     {
       title: "Actions",
       key: "actions",
       render: (text, record) => (
         <div>
-          <Dropdown
+          {/* <Dropdown
             menu={{
               items: [
                 {
@@ -120,10 +127,10 @@ export default function ReviewListings() {
             trigger={["click"]}
           >
             <a onClick={(e) => e.preventDefault()}>Action</a>
-          </Dropdown>
+          </Dropdown> */}
           &nbsp;
           <span
-            onClick={() => handleDeleteReview(record.id)}
+            onClick={() => ConfirmDeleteReview(record.id)}
             className="cursor-pointer"
           >
             Delete
@@ -135,26 +142,32 @@ export default function ReviewListings() {
 
   const filteredReviews = reviews.filter((review) => {
     const { status } = filters;
-
+  
     const matchesStatus = status === "Any" || review.status === status;
-
+  
     const matchesSearch =
-      review.rentalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      review.emailAddress.toLowerCase().includes(searchQuery.toLowerCase());
-
+      (review.rentalName && review.rentalName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (review.emailAddress && review.emailAddress.toLowerCase().includes(searchQuery.toLowerCase()));
+  
     return matchesStatus && matchesSearch;
   });
+  
 
   return (
     <div className="bg-gray-100 h-[100vh]">
       <AdminHeader />
       <div className="flex">
-        <div className="hidden md:block bg-orange-400 text-white md:w-1/5 h-[100vh] p-4">
+        <div className="hidden md:block overflow-scroll example bg-orange-400 text-white md:w-1/5 h-[100vh] p-4">
           <AdminSidebar />
         </div>
         <div className="w-full md:w-4/5 p-4 h-[100vh] overflow-auto example">
           <h1 className="text-2xl font-semibold mb-4">Review Listings</h1>
           <div className="bg-white p-4 rounded shadow">
+            <div className="mb-4">
+              <div className="text-gray-400 text-sm">
+              The Review Listings section is designed to display reviews left by users on your platform. 
+              </div>
+            </div>
             <div className="mb-4 flex justify-end">
               <Input
                 type="text"
@@ -176,8 +189,11 @@ export default function ReviewListings() {
               </Select>
             </div>
             <div className="overflow-x-auto">
-              <Table columns={columns} dataSource={filteredReviews} />
-            </div>
+            {loading ? (
+                <Spin size="large" />
+              ) : (
+                <Table columns={columns} rowKey="id" dataSource={reviews} />
+              )}            </div>
           </div>
         </div>
       </div>

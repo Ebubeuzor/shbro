@@ -4,6 +4,7 @@ import CategoryHeader from "../Component/Navigation/CategoryHeader";
 import Listings from "../Component/ListingInfo/Listings";
 import Header from "../Component/Navigation/Header";
 import Hamburger from "../Component/Navigation/Hamburger";
+import { toast } from "react-toastify"; // Import toast
 import Modal from "../Component/SearchModal/Modal";
 import searchIcon from "../assets/svg/search-icon.svg";
 import BottomNavigation from "../Component/Navigation/BottomNavigation";
@@ -11,58 +12,35 @@ import Footer from "../Component/Navigation/Footer";
 import RateHouseModal from "../Component/RateHouseModal";
 import FilterModal from "../Component/Filter/FilterModal";
 import ChatSupport from "../Component/ChatBot/ChatSupport";
-import { useStateContext } from "../context/ContextProvider";
-import { Slider } from "antd";
 import CityCard from "../Component/CityCard";
-import axiosClient from "../axoisClient";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import axios from "../Axios";
+import Logo from "../assets/logo.png";
+import { useStateContext } from "../ContextProvider/ContextProvider";
+
 export default function Home() {
-  const {user,setUser,setToken,token} = useStateContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSearchButtonFixed, setIsSearchButtonFixed] = useState(false);
   const [houseDetails, setHouseDetails] = useState(null); // Store house details here
-  const [isRateHouseModalOpen, setIsRateHouseModalOpen] = useState(false);
-  const [homepageDetails, setHomepageDetails] = useState("");
+  const [isRateHouseModalOpen, setIsRateHouseModalOpen] = useState(true);
+  const { setUser, setToken, token, setHost, setAdminStatus, user ,setCoHost} =useStateContext();
+  const [loading, setLoading] = useState(true);
+  const [showMoreLoading, setShowMoreLoading] = useState(true);
+  const [listingLoading, setListingLoading] = useState(true);
+  const [homeImage, setHomeImage] = useState("");
+  const [homeTitle, setHomeTitle] = useState("");
+  const [homeSubTitle, setHomeSubTitle] = useState("");
+  const [listings, setListings] = useState();
+  const [category, setCategory] = useState();
+  const [listingType, setListingType] = useState(""); //I'm using this state to know what type of listing i'm getting based on the particular Api i'm making a request from
+  const [per_page, setPerPage] = useState(40); // handles the amount of listing that can show at a time
+  const [current_page, setCurrent_page] = useState();
+  const [last_page, setLast_page] = useState();
+  const [receiverId, setReceiverId] = useState(""); // Initial receiver ID is set to 1
 
-  const isVerified = new URLSearchParams(window.location.search).get('verified');
-  if (isVerified === 'true') {
-    const remToken = new URLSearchParams(window.location.search).get('remtoken');
-    const userToken = new URLSearchParams(window.location.search).get('ustoken');
-
-    console.log('Remember Token:', remToken);
-    console.log('User Token:', userToken);
-    useEffect(() => {
-      axiosClient.get(`verify-tokens/${remToken}/${userToken}`)
-      .then((data) => {
-        setUser(data.data.user);
-        setToken(data.data.token);
-      })
-      .catch((e) => console.log(e))
-    },[])
-  }
-
-  if (!isVerified) {
-    console.log("hi");
-    useEffect(()=>{
-      axiosClient.get('user')
-      .then((data) => {
-        setUser(data.data);
-        axiosClient.get('guests')
-        .then((data) => {
-          console.log(data);
-        })
-      })
-    }, []);
-    
-  }
-
-  useEffect(()=>{
-    axiosClient.get('homepage')
-    .then(({data}) => {
-      console.log(data.data[0]);
-      setHomepageDetails(data.data[0]);
-    })
-  }, []);
-
+  // const [pendingReview,setPendingReview]=useState([]);
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -76,8 +54,11 @@ export default function Home() {
   };
 
   const closeRateHouseModal = () => {
+    deletePendingReview(houseDetails[0].id);
     setIsRateHouseModalOpen(false);
   };
+
+  console.log(token);
 
   useEffect(() => {
     // Add an event listener to handle scrolling
@@ -99,6 +80,150 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Extract the parameters from the URL
+    const params = new URLSearchParams(window.location.search);
+    const verified = params.get("verified");
+    const remtoken = params.get("remtoken");
+    const ustoken = params.get("ustoken");
+
+    const fetchUserData = async () => {
+      try {
+
+        // Log out the parameters
+        console.log("Verified:", verified);
+        console.log("Remtoken:", remtoken);
+        console.log("Ustoken:", ustoken);
+
+        // Make a request to get the user data with parameters
+        const response = await axios.get(
+          `/verify-tokens/${remtoken}/${ustoken}`
+        );
+        console.log("Response Data:", response.data);
+        console.log(response.data.id);
+
+        // Set the user data in state
+        setUser(response.data.user);
+        console.log("User Data:", response.data);
+
+        // Set the host value in state context
+        setHost(response.data.user.host);
+        setCoHost(response.data.user.co_host)
+        console.log("Host:", response.data.host);
+        console.log("CoHost:", response.data.user.co_host);
+        setToken(ustoken);
+        setAdminStatus(response.data.user.adminStatus);
+
+        // Log 'yes' to the console
+        console.log("yes");
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        // Set loading to false regardless of success or error
+        setLoading(false);
+      }
+    };
+
+    // Call the fetchUserData function when the component mounts
+    if(verified&&remtoken&&ustoken){
+      setLoading(true);
+
+      fetchUserData();
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Make a request to get the user data
+        const response = await axios.get("/user"); // Adjust the endpoint based on your API
+
+        // Set the user data in state
+        setUser(response.data);
+        console.log(response.data.host);
+
+        console.log("yes", response.data);
+        setHost(response.data.host);
+        setAdminStatus(response.data.adminStatus);
+        setCoHost(response.data.co_host)
+        console.log("CoHost:", response.data.co_host);
+        localStorage.setItem('receiverid', response.data.id);
+
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        // Set loading to false regardless of success or error
+        setLoading(false);
+      }
+    };
+
+ 
+
+    if(token){
+      setLoading(true);
+      fetchUserData();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    const tokens = token;
+    const receiverid = receiverId;
+
+    localStorage.setItem('tokens', tokens);
+    localStorage.setItem('receiverid', receiverid);
+  }, []);
+
+  console.log();
+
+  // Home Page Data
+  const receiverIds = localStorage.getItem('receiverid');
+
+  console.log(receiverIds);
+
+  useEffect(() => {
+    const homePageData = async () => {
+      await axios
+        .get("/homepage")
+        .then((response) => {
+          console.log("HomePage", response.data.data[0]);
+          const homePageData = response.data.data[0];
+
+          setHomeImage(homePageData.image);
+          setHomeTitle(homePageData.title);
+          setHomeSubTitle(homePageData.subtitle);
+        })
+        .catch((error) => {
+          console.error(error);
+        }).finally(()=>{
+          if(!token){  // this is so the loader does not stop showing when the request to /user is being made
+            setLoading(false);
+
+          }
+
+        });
+    };
+
+    homePageData();
+  }, []);
+
+  // View Count (register visitors)
+
+  useEffect(() => {
+    const viewCount = async () => {
+      await axios
+        .get("/view-count")
+        .then((response) => {
+          console.log("view-Count", response);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    viewCount();
+  }, []);
+
+
+  useEffect(() => {
     // Simulate fetching house details after 5 seconds
     const timer = setTimeout(() => {
       setHouseDetails({
@@ -107,7 +232,7 @@ export default function Home() {
         // Add more house details here
       });
       openRateHouseModal(); // Show the RateHouseModal after fetching details
-    }, 500);
+    }, 500000000);
 
     return () => clearTimeout(timer); // Cleanup the timer on unmount
   }, []);
@@ -318,6 +443,153 @@ export default function Home() {
     },
   ];
 
+
+  const fetchListings = async () => {
+    setListingLoading(true);
+    await axios
+      .get(token ? `/hosthomesForAuthUser?per_page=${per_page}` : `/hosthomesForUnAuthUser?per_page=${per_page}`)
+      .then((response) => {
+        console.log("homeList", response.data.data);
+        const formattedHostHomes = response.data.data.map((item) => ({
+          id: item.id,
+          pictures: item.hosthomephotos,
+          location: item.address,
+          price: `₦${item.price} per night`,
+          date: item.created_on,
+          title: item.title,
+          rating: item.ratings,
+          link: "/ListingInfoMain",
+          isFavorite: item.addedToWishlist,
+        }));
+
+        setListingType("NoFilter");
+        setCurrent_page(response.data.meta.current_page);
+        setLast_page(response.data.meta.last_page);
+        setListings(formattedHostHomes);
+        console.log("HMMM", response);
+
+      })
+      .catch((err) => {
+        console.log("Listing", err);
+      })
+      .finally(() => setListingLoading(false));
+
+
+  }
+
+  const filterData = async (data, close) => {
+    setListingLoading(true);
+    close();
+    // data.priceRange[0]
+    const main = {
+      min_price: data.priceRange[0],
+      max_price: data.priceRange[1],
+      bedrooms: data.selectedRoom,
+      beds: data.selectedBedroom,
+      bathrooms: data.selectedBathroom,
+      property_type: data.selectedTypes,
+      amenities: data.selectedAmenities,
+    };
+    console.log(main);
+
+    await axios
+      .post(
+        token ? "/filterHomepageForAuthUser" : "/filterHomepageForUnAuthUser",
+        main
+      )
+      .then((response) => {
+        const formattedHostHomes = response.data.data.map((item) => ({
+          id: item.id,
+          pictures: item.hosthomephotos,
+          location: item.address,
+          price: `₦${item.price} per night`,
+          date: item.created_on,
+          title: item.title,
+          rating: item.ratings,
+          link: "/ListingInfoMain",
+          isFavorite: item.addedToWishlist,
+        }));
+
+        setListings(formattedHostHomes);
+        console.log("filter", response.data.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => setListingLoading(false));
+  };
+
+  const filterDataByDates = async (data) => {
+    setListingLoading(true);
+    const totalGuest = data.adults + data.infants + data.children;
+
+    const main = {
+      address: data.selectedOption ? data.selectedOption.value : "",
+      start_date: data.checkInDate,
+      end_date: data.checkOutDate,
+      guests: totalGuest,
+      allow_pets: data.pets > 0 ? "allow_pets" : "no_pets",
+    };
+    // console.log("Main", main);
+
+    await axios
+      .post(
+        token
+          ? "/filterHostHomesDatesForAuthUser"
+          : "/filterHostHomesDatesForUnAuthUser",
+        main
+      )
+      .then((response) => {
+        console.log("Main 2", response.data);
+        const formattedHostHomes = response.data.data.map((item) => ({
+          id: item.id,
+          pictures: item.hosthomephotos,
+          location: item.address,
+          price: `₦${item.price} per night`,
+          date: item.created_on,
+          title: item.title,
+          rating: item.ratings,
+          link: "/ListingInfoMain",
+          isFavorite: item.addedToWishlist,
+        }));
+
+        setListings(formattedHostHomes);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => setListingLoading(false));
+  };
+
+  const filterDataByCategories = async (data) => {
+    setCategory(data);
+    setListingLoading(true);
+
+    await axios.get(token ? `/searchHomeByProperty_typeForAuthUser/${data}?per_page=${per_page}` : `/searchHomeByProperty_typeForUnAuthUser/${data}?per_page=${per_page}`).then(response => {
+      const formattedHostHomes = response.data.data.map((item) => ({
+        id: item.id,
+        pictures: item.hosthomephotos,
+        location: item.address,
+        price: `₦${item.price} per night`,
+        date: item.created_on,
+        title: item.title,
+        rating: item.ratings,
+        link: "/ListingInfoMain",
+        isFavorite: item.addedToWishlist,
+      }));
+
+      setListingType("FilterbyPropertTypes");
+      setCurrent_page(response.data.meta.current_page);
+      setLast_page(response.data.meta.last_page);
+      setListings(formattedHostHomes);
+
+    }).catch((error) => {
+      console.log(error);
+    }).finally(() => setListingLoading(false));
+
+  };
+
+
   const settings = {
     dots: true,
     infinite: true,
@@ -341,90 +613,245 @@ export default function Home() {
     ],
   };
 
+  // Reviews
+
+  useEffect(() => {
+    if(user?.id){
+
+      console.log("GET PENDING REVIEWS")
+
+      axios.get("/getPendingReviews").then(response => {
+  
+        const formattedHostHomes = response.data.data.map((item) => ({
+          id: item.id,
+          location: item.address,
+          title: item.title,
+          bookingid: item.bookingid,
+          userid: item.userid,
+          hostid: item.hostid,
+          hosthomeid: item.hosthomeid,
+        }));
+        setHouseDetails(formattedHostHomes);
+        console.log("pendingReviews", response.data.data)
+  
+      }).catch(error => {
+  
+      });
+    }
+
+    
+  }, [user]);
+
+  useEffect(() => {
+
+    if (houseDetails != null) {
+      setIsRateHouseModalOpen(true);
+    }
+
+  }, [houseDetails]);
+
+  console.log("houseDetails", houseDetails)
+
+  const ReviewListing = async (data) => {
+
+    const reviewData = {
+      pendingreviewid: houseDetails[0].id,
+      ratings: data.rating,
+      bookingid: houseDetails[0].bookingid,
+      title: houseDetails[0].title,
+      host_id: houseDetails[0].hostid,
+      comment: data.comment,
+      user_id: houseDetails[0].userid,
+      host_home_id: houseDetails[0].hosthomeid
+    }
+
+    console.table(reviewData);
+
+    await axios.post(`/createReviews`, reviewData).then(respnse => {
+      toast.success("Thank you for commenting!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: true,
+      });
+
+    }).catch(error => {
+      console.log("createReview", error)
+
+    }).finally(() => { });
+
+  }
+  const deletePendingReview = async (id) => {
+
+    await axios.delete(`/deleteHostPendingReviews/${id}`).then(response => {
+      console.log("Deleted Pending Review Successfully", response.data)
+
+    }).catch(error => {
+      console.log("DeletePendingReview", error)
+    });
+
+
+  }
+
+
+  // Logic For the Pagination {START}
+  const showMoreListings = () => {
+    console.log("perPage", per_page)
+    setPerPage((prevPage) => prevPage + 10);
+
+
+  }
+
+  useEffect(() => {
+    setShowMoreLoading(true);
+    switch (listingType) {
+      case "NoFilter":
+        fetchListings().finally(() => setShowMoreLoading(false));
+        break;
+      case "FilterbyPropertTypes":
+        
+        filterDataByCategories(category).finally(() => setShowMoreLoading(false));
+        break;
+      default:
+        setShowMoreLoading(false);
+        fetchListings();
+    }
+    console.log("show", showMoreLoading);
+    // setShowMoreLoading(false)
+
+  }, [per_page]);
+
+
+
+  //{END}
+
+
+
+
+
   return (
     <div>
-      <Header />
-      {/* <Hamburger /> */}
-      <BottomNavigation />
-      <div
-        className={` md:w-2/5 mx-auto flex justify-center fixed z-[999] left-0 right-0 transition-all ${
-          isSearchButtonFixed ? "top-0" : "mt-6"
-        }`}
-      >
-        <div className="bg-orange-400 z-50 w-[90%] md:w-full flex items-center justify-between  py-3 px-5 rounded-full mt-6 text-white shadow-2xl">
-          <button onClick={openModal} className="flex  items-center w-3/4">
-            <div className="w-[20%]">
-              <img src={searchIcon} className="w-6" alt="" />
+      {loading ? (
+        <div>
+          <div className="h-screen flex justify-center items-center">
+            <div className="containerrr">
+              <div className="cube"></div>
             </div>
-            <div className="w-[100%] text-start">
-              <div className="">
-                <div className="text-base font-medium">Anywhere</div>
-                <div className=" text-[12px] flex">
-                  <div className="">Any week</div>
-                  <div className="mx-4">Add guests</div>
+
+            <img src={Logo} className="h-20 absolute" alt="" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <Header />
+          {/* <Hamburger /> */}
+
+          <BottomNavigation />
+          <div
+            className={` md:w-2/5 mx-auto flex justify-center fixed z-[999] left-0 right-0 transition-all ${isSearchButtonFixed ? "top-0" : "mt-6"
+              }`}
+          >
+            <div className="bg-orange-400 z-50 w-[90%] md:w-full flex items-center justify-between  py-3 px-5 rounded-full mt-6 text-white shadow-2xl">
+              <button onClick={openModal} className="flex  items-center w-3/4">
+                <div className="w-[20%]">
+                  <img src={searchIcon} className="w-6" alt="" />
+                </div>
+                <div className="w-[100%] text-start">
+                  <div className="">
+                    <div className="text-base font-medium">Anywhere</div>
+                    <div className=" text-[12px] flex">
+                      <div className="">Any week</div>
+                      <div className="mx-4">Add guests</div>
+                    </div>
+                  </div>
+                </div>
+              </button>
+              <div>
+                <FilterModal
+                  search={filterData}
+                  clearAll={() => {
+                    fetchListings()
+                  }}
+                />
+              </div>
+            </div>
+
+            <Modal
+              isOpen={isModalOpen}
+              onClose={closeModal}
+              search={filterDataByDates}
+            />
+          </div>
+          <div className="pageHeader"></div>
+          <div className="storeFrontHomeage">
+            <div>
+              <link
+                rel="preload"
+                as="image"
+                href={
+                  "https://forever.travel-assets.com/flex/flexmanager/images/2022/12/09/Exterior-Cabin_Privacy_Wrigley_VRBO_APFT2__Vancouver__Therin_8256x3960.jpg?impolicy=fcrop&w=1040&h=580&q=mediumHigh"
+                }
+              />
+
+              <div
+                className="hero-pattern relative bg-cover bg-center md:h-[70vh] h-[100vh] "
+                style={{ backgroundImage: `url(${homeImage})` }}
+              >
+                <div className="h-full flex flex-col justify-center items-center">
+                  <h1 className="text-white md:text-6xl text-5xl lg:text-6xl p-4 text-center z-50">
+                    {/* Unlock Comfort, Discover Adventure with Shrbo. */}{" "}
+                    {homeTitle}
+                  </h1>
+                  <div className="z-50">
+                    <p className="z-50 text-white  md:text-base text-center text-sm px-10">
+                      {/* Welcome to Shrbo, where comfort meets adventure. Find your
+                  perfect home away from home and embark on memorable journeys,
+                  one stay at a time. */}{" "}
+                      {homeSubTitle}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </button>
-          <div>
-            <FilterModal />
-          </div>
-        </div>
-
-        <Modal isOpen={isModalOpen} onClose={closeModal} />
-      </div>
-      <div className="pageHeader"></div>
-      <div className="storeFrontHomeage">
-        <div>
-          <div className="hero-pattern relative bg-cover bg-center md:h-[70vh] h-[100vh] bg-[url('https://forever.travel-assets.com/flex/flexmanager/images/2022/12/09/Exterior-Cabin_Privacy_Wrigley_VRBO_APFT2__Vancouver__Therin_8256x3960.jpg?impolicy=fcrop&w=1040&h=580&q=mediumHigh')]">
-            <div className="h-full flex flex-col justify-center items-center">
-              <h1 className="text-white md:text-6xl text-5xl lg:text-6xl p-4 text-center z-50">
-                Unlock Comfort, Discover Adventure with Shrbo.
-              </h1>
-              <div className="z-50">
-                <p className="z-50 text-white  md:text-base text-center text-sm px-10">
-                  Welcome to Shrbo, where comfort meets adventure. Find your
-                  perfect home away from home and embark on memorable journeys,
-                  one stay at a time.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          {/* <p>
+            <div>
+              {/* <p>
             Lorem ipsum dolor sit amet consectetur adipisicing elit. A, iste
             porro beatae asperiores sapiente dolorum dolor quod voluptatibus
             odit, numquam quasi illo doloremque harum aut rem eaque nesciunt,
             reiciendis nihil?
           </p> */}
-        </div>
+            </div>
 
-        <section className=" mx-auto justify-center w-[95%] md:w-[80%]">
-          <div className="justify-center flex">
-            <CategoryHeader />
-          </div>
+            <section className=" md:w-[80%] mx-auto">
+              <div className="justify-center flex">
+                <CategoryHeader filter={filterDataByCategories} />
+              </div>
+              <section className="mx-auto justify-center w-[90%] md:w-[%]">
 
-          <Listings />
-          <div className="pb-48 w-[90%] mx-auto ">
-            <h1 className="text-center text-4xl mb-10">
-              Learn About the Major Cities
-            </h1>
-            <Slider {...settings}>
-              {cities.map((city, index) => (
-                <CityCard key={index} {...city} />
-              ))}
-            </Slider>
+                <Listings user={user} homes={listings} loading={listingLoading} showMoreLoading={showMoreLoading} last_page={last_page} current_page={current_page} showMore={() => (showMoreListings())} />
+                <div className="pb-48 w-[90%] mx-auto ">
+                  <h1 className="text-center text-4xl mb-10">
+                    Learn About the Major Cities
+                  </h1>
+                  <Slider {...settings}>
+                    {cities.map((city, index) => (
+                      <CityCard key={index} {...city} />
+                    ))}
+                  </Slider>
+                </div>
+              </section>
+            </section>
+            <RateHouseModal
+              isOpen={isRateHouseModalOpen}
+              onClose={closeRateHouseModal}
+              houseDetails={houseDetails}
+              review={(data) => { ReviewListing(data) }}
+              type={true}
+            />
           </div>
-        </section>
-        <RateHouseModal
-          isOpen={isRateHouseModalOpen}
-          onClose={closeRateHouseModal}
-          houseDetails={houseDetails}
-        />
-      </div>
-      <ChatSupport />
-      <Footer />
+          <ChatSupport />
+          <Footer />
+        </>
+      )}
     </div>
   );
 }

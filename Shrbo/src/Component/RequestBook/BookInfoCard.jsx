@@ -1,8 +1,31 @@
 import React, { useState } from "react";
-
+import { useDateContext } from "../../ContextProvider/BookingInfo";
 const BookInfoCard = () => {
   const [show, setShow] = useState(false);
   const toggleShow = () => setShow(!show);
+
+  const {
+    checkInDate,
+    checkOutDate,
+    adults,
+    setAdults,
+    pets,
+    priceDetails,
+    setPriceDetails,
+    hostFees, 
+    serviceFee, 
+    tax, 
+    totalPrice, 
+    totalCost,
+    housePrice,
+    nights,
+    cancellationPolicy,
+    title,
+    address,
+    photo,
+    securityDeposit,
+    appliedDiscounts
+  } = useDateContext();
 
   return (
     <div className=" hidden mt-16 px-4 relative box-border md:block  ">
@@ -13,47 +36,34 @@ const BookInfoCard = () => {
               <span className=" absolute w-[1px] h-[1px] -m-[1px] overflow-hidden   ">
                 Booking information
               </span>
-              <div className="image-preview relative px-[20px] ">
-                <div className="flex box-border ">
+             <div className="flex gap-2 px-4">
+             {photo.slice(0, 3).map((item, index) => (
+              <div className="image-preview relative" key={index}>
+                <div className="flex box-border">
                   <div
-                    className=" bg-cover bg-no-repeat overflow-hidden  bg-center  rounded-tl-lg grow h-[110px] 
-                                "
+                    className=" bg-cover bg-no-repeat overflow-hidden  bg-center rounded-lg  md:rounded-tl-lg md:grow h-[80px] 
+                          "
                   >
                     <img
                       className=" w-full h-full"
-                      src="https://a0.muscache.com/im/pictures/miso/Hosting-635437605163910390/original/eaf8887f-410f-41e4-be1b-88c2a74fbfcf.jpeg?aki_policy=large"
-                    />
-                  </div>
-                  <div
-                    className=" bg-cover bg-no-repeat overflow-hidden px-1  bg-center   grow h-[110px] 
-                                "
-                  >
-                    <img
-                      className=" w-full h-full"
-                      src="https://a0.muscache.com/im/pictures/miso/Hosting-635437605163910390/original/eaf8887f-410f-41e4-be1b-88c2a74fbfcf.jpeg?aki_policy=large"
-                    />
-                  </div>
-                  <div
-                    className=" bg-cover bg-no-repeat overflow-hidden  bg-center  rounded-tr-lg grow h-[110px] 
-                                "
-                  >
-                    <img
-                      className=" w-full h-full"
-                      src="https://a0.muscache.com/im/pictures/miso/Hosting-635437605163910390/original/eaf8887f-410f-41e4-be1b-88c2a74fbfcf.jpeg?aki_policy=large"
+                      src={item.images}
+                      alt={`Image ${index}`}
                     />
                   </div>
                 </div>
               </div>
+            ))}
+             </div>
               <div className=" p-[30px] relative">
                 <div className="booking-details block box-border ">
                   <div className=" block relative">
                     <h3 className=" whitespace-nowrap overflow-hidden text-ellipsis text-lg font-medium ">
-                      South Range Vacation Home: 6 Mi to Lake Superior!
-                    </h3>
+                        {title}
+                        </h3>
                   </div>
                 </div>
                 <span className="location box-border block ">
-                  South Range, Wisconsin,Us
+                 {address}
                 </span>
               </div>
               <div className=" px-[30px] pb-[30px]">
@@ -63,10 +73,10 @@ const BookInfoCard = () => {
                     <div className=" mb-2 box-border block">
                       <div className=" flex items-end justify-between break-words    ">
                         <div className=" block box-border">
-                          <span>$140.00 x 2 nights</span>
+                          <span>   ₦ {housePrice} x {nights} nights</span>
                         </div>
                         <div className=" ml-4 whitespace-nowrap block box-border   ">
-                          $280.00
+                        ₦ {housePrice * nights}
                         </div>
                       </div>
                     </div>
@@ -74,7 +84,7 @@ const BookInfoCard = () => {
                     <div className=" mb-2 box-border block">
                       <div className=" relative box-border ">
                         <div className=" overflow-hidden max-h-24 relative   ">
-                          <div className=" ">
+                          {/* <div className=" ">
                             <div className=" mb-2 flex justify-between items-end break-words  ">
                               <button
                                 className=" overflow-visible m-0 bg-transparent cursor-pointer outline-none   "
@@ -106,7 +116,7 @@ const BookInfoCard = () => {
                                   </span>
                                 </span>
                               </button>
-                              <div className=" ml-4 ">$194.00</div>
+                              <div className=" ml-4 ">₦ {Number(hostFees).toLocaleString()}</div>
                             </div>
 
                             <div
@@ -127,40 +137,52 @@ const BookInfoCard = () => {
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>
-                    <div className=" mb-2 box-border block">
+                    {/* <div className=" mb-2 box-border block">
                       <div className=" flex items-end justify-between break-words    ">
                         <div className=" block box-border">
                           <span>Service Fee</span>
                         </div>
                         <div className=" ml-4 whitespace-nowrap block box-border   ">
-                          $20.00
+                        ₦  {serviceFee}
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                     <div className=" mb-2 box-border block">
                       <div className=" flex items-end justify-between break-words    ">
                         <div className=" block box-border">
-                          <span>Tax</span>
+                          <span>Secuirty Depsoit</span>
                         </div>
                         <div className=" ml-4 whitespace-nowrap block box-border   ">
-                          $18.00
+                        ₦  {securityDeposit}
                         </div>
                       </div>
+                      
+                    </div>
+                    <div className=" mb-2 box-border block italic text-sm text-gray-400">
+                      <div className=" flex items-end justify-between break-words    ">
+                        <div className=" block box-border">
+                          <span>Applied Discount</span>
+                        </div>
+                        <div className=" ml-4 whitespace-nowrap block box-border   ">
+                          {appliedDiscounts}
+                        </div>
+                      </div>
+                      
                     </div>
                   </div>
-                  {/* Total */}
                   <div className=" border-b py-4">
                     <div className=" font-bold text-lg flex items-end justify-between break-words    ">
                       <span> Total </span>
                       <div className=" whitespace-nowrap break-normal ">
-                        $566.54
+                      ₦ {totalCost}
                       </div>
                     </div>
                   </div>
+                  
                 </div>
               </div>
             </div>

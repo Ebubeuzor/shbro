@@ -9,10 +9,12 @@ import GuestIcon from "../../assets/svg/couple-icon.svg";
 import { DatePicker, Space } from "antd";
 import moment from "moment";
 import { AutoComplete, Input } from "antd";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser, faUsers } from "@fortawesome/free-solid-svg-icons";
 
 const { RangePicker } = DatePicker;
 
-const SearchModal = ({ isOpen, onClose }) => {
+const SearchModal = ({ isOpen, onClose,search }) => {
   const [location, setLocation] = useState("");
   const [checkInDate, setCheckInDate] = useState(null);
   const [checkOutDate, setCheckOutDate] = useState(null);
@@ -21,6 +23,7 @@ const SearchModal = ({ isOpen, onClose }) => {
   const [children, setChildren] = useState(0);
   const [pets, setPets] = useState(0);
   const [infants, setInfants] = useState(0);
+  const [error, setError] = useState(null);
   const [guestCounts, setGuestCounts] = useState({
     adults,
     children,
@@ -73,10 +76,21 @@ const SearchModal = ({ isOpen, onClose }) => {
   const handleSubmit = () => {
     // Check if checkInDate and checkOutDate are valid Date objects
     const formattedCheckInDate =
-      checkInDate instanceof Date ? checkInDate.toLocaleDateString() : "N/A";
+    checkInDate instanceof Date
+    ? checkInDate.toLocaleDateString().split('/').reverse().join('-')
+    : "N/A";
     const formattedCheckOutDate =
-      checkOutDate instanceof Date ? checkOutDate.toLocaleDateString() : "N/A";
+      checkOutDate instanceof Date
+        ? checkOutDate.toLocaleDateString().split('/').reverse().join('-')
+        : "N/A";
+    
+    if(formattedCheckInDate==="N/A"||formattedCheckOutDate==="N/A"){
+      setError("Dates can't be left empty")
 
+      return; //
+    }
+
+      setError("");
     // Create an object with the details you want to log
     const details = {
       location,
@@ -94,9 +108,26 @@ const SearchModal = ({ isOpen, onClose }) => {
 
     // Handle form submission here, e.g., send data to the server
 
+    search(details);
+
     // Close the modal
     onClose();
   };
+
+  const handleCancel = () => {
+
+    setLocation("");
+    setCheckInDate(null);
+    setCheckOutDate(null);
+    setGuestModalVisible(false);
+    setAdults(0);
+    setChildren(0);
+    setPets(0);
+    setInfants(0);
+
+    onClose();
+
+  }
 
   function GuestModal({
     visible,
@@ -176,7 +207,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex-col">
                 <span className="text-lg">Children:</span>
                 <p className="text-gray-400">Ages 2–12</p>
@@ -196,14 +227,15 @@ const SearchModal = ({ isOpen, onClose }) => {
                   +
                 </Button>
               </div>
-            </div>
+            </div> */}
             <div className="flex items-center justify-between">
               <div className="flex-col">
                 <span className="text-lg">Pets:</span>
                 <p>
-                  <Link className="text-gray-400 underline">
+                  <Link className="text-gray-400 underline"title="Service animals are allowed without extra charges.">
                     Bringing a service animal?
                   </Link>
+                  
                 </p>
               </div>
               <div className="space-x-2">
@@ -222,7 +254,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex-col">
                 <span className="text-lg">Infants:</span>
                 <p className="text-gray-400">Under 2</p>
@@ -242,7 +274,7 @@ const SearchModal = ({ isOpen, onClose }) => {
                   +
                 </Button>
               </div>
-            </div>
+            </div> */}
 
             <button type="submit">submit</button>
           </div>
@@ -267,16 +299,15 @@ const SearchModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 z-50 w-full h-[100vh] overflow-auto md:h-full flex items-center justify-center bg-slate-900  bg-opacity-90 ${
-        isOpen ? "visible " : "invisible"
-      }`}
+      className={`fixed top-0 left-0 z-50 w-full h-[100vh] overflow-auto md:h-full items-center justify-center bg-slate-900  bg-opacity-90 ${isOpen ? "flex " : "hidden"
+        }`}
     >
       <div className=" relative bg-white p-4  w-full h-[100vh] overflow-auto md:h-[70vh] md:w-[50%] md:rounded-xl">
         <header>
-          <h1 className="text-center text-2xl mb-4">Lorem Ipsum</h1>
+        <h1 className="text-center text-2xl mb-4">Find Your Perfect Stay: Choose Location, Dates, and Guests</h1>
         </header>
         <div className=" md:h-2/6">
-          <div className="mb-4 border p-4">
+          <div className="mb-4 border p-2">
             <Select
               className="text-black"
               defaultValue={selectedOption}
@@ -286,10 +317,11 @@ const SearchModal = ({ isOpen, onClose }) => {
               components={{ DropdownIndicator }}
             />
           </div>
-          <div className="mb-4 overflow-scroll">
-            <Space direction="vertical" size={12}>
-              <RangePicker
-                className="custom-picker"
+          <div className="mb-4 overflow-scroll example w-full">
+            {/* <Space direction="vertical " > */}
+              <RangePicker  className="full-width" placeholder={['Check in', 'Check out']}
+                // className="custom-picker"
+                disabledDate={(current) => current && current < moment().startOf('day')}
                 value={
                   checkInDate && checkOutDate
                     ? [moment(checkInDate), moment(checkOutDate)]
@@ -307,23 +339,26 @@ const SearchModal = ({ isOpen, onClose }) => {
                   }
                 }}
               />
-            </Space>
+            {/* </Space> */}
+            
           </div>
-
+          <div className=" text-red-500">{error}</div>
           <div className="mb-4">
             <div
               onClick={() => setGuestModalVisible(true)}
               className="w-full text-start  py-4"
             >
-              <label className=" bg-orange-400 rounded-2xl py-2 text-white px-2">
+              <label className=" bg-orange-400  py-4 text-white px-10 cursor-pointer">
+              <FontAwesomeIcon icon={faUsers} className="mr-2" />
+
                 {displayGuestData.adults +
                   displayGuestData.children +
                   displayGuestData.pets +
                   displayGuestData.infants ===
-                0
+                  0
                   ? "Add Guests"
                   : "Guests"}
-                :
+                
               </label>
               <br />
               {displayGuestData.adults +
@@ -331,15 +366,15 @@ const SearchModal = ({ isOpen, onClose }) => {
                 displayGuestData.pets +
                 displayGuestData.infants >
                 0 && (
-                <>
-                  <div className="mt-5 text-gray-500">
-                    {displayGuestData.adults} Adults,{" "}
-                    {displayGuestData.children} Children,{" "}
-                    {displayGuestData.pets} Pets, {displayGuestData.infants}{" "}
-                    Infants
-                  </div>
-                </>
-              )}
+                  <>
+                    <div className="mt-5 text-gray-500">
+                      {displayGuestData.adults} Adults,{" "}
+                      {displayGuestData.children} Children,{" "}
+                      {displayGuestData.pets} Pets, {displayGuestData.infants}{" "}
+                      Infants
+                    </div>
+                  </>
+                )}
             </div>
 
             <GuestModal
@@ -361,7 +396,7 @@ const SearchModal = ({ isOpen, onClose }) => {
               Check Availability
             </button>
             <button
-              onClick={onClose}
+              onClick={handleCancel}
               className="w-full  text-gray-700 font-semibold py-2 border rounded-lg hover:bg-gray-100 transition duration-300"
             >
               Cancel

@@ -17,6 +17,7 @@ const Map = () => {
       <GoogleMap
         mapContainerStyle={mapStyles}
         zoom={10}
+        
         center={defaultCenter}
       >
         {/* Add markers or other map components here */}

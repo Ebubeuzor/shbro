@@ -99,13 +99,13 @@ export const styles = {
     },
     loadingDiv: { 
         position: 'absolute', 
-        height: '100%', 
-        width: '100%', 
+        // height: '100%', 
+        // width: '100%', 
         textAlign: 'center', 
         backgroundColor: 'white',
     },
     loadingIcon: { 
-        color: 'rgb(31,41,55)' ,
+        color: 'rgb(251,146,60)' ,
         position: 'absolute', 
         top: 'calc(50% - 51px)', 
         left: 'calc(50% - 51px)',  

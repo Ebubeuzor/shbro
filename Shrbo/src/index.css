@@ -10,6 +10,121 @@
   padding: 0;
 }
 
+.full-width {
+  width: 100%;
+}
+
+  .containerrr {
+    --uib-size: 120px;
+    --uib-color: orange;
+    --uib-speed: 1.65s;
+    --uib-cube-size: calc(var(--uib-size) / 10.5);
+    --uib-arc-1: -80deg;
+    --uib-arc-2: 80deg;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: var(--uib-size);
+    height: calc(var(--uib-size) * 0.51);
+  }
+
+  .cube {
+    width: var(--uib-cube-size);
+    height: calc(var(--uib-size) * 0.5);
+    transform-origin: center bottom;
+    transform: rotate(var(var(--uib-arc-1)));
+    animation: metronome var(--uib-speed) linear infinite;
+
+    /* &::after {
+      content: '';
+      display: block;
+      width: var(--uib-cube-size);
+      height: var(--uib-cube-size);
+      background-color: var(--uib-color);
+      border-radius: 25%;
+      animation: morph var(--uib-speed) linear infinite;
+      transition: background-color 0.3s ease;
+    } */
+  }
+
+  @keyframes metronome {
+    0% {
+      transform: rotate(var(--uib-arc-1));
+    }
+
+    5% {
+      transform: rotate(var(--uib-arc-1));
+      animation-timing-function: ease-out;
+    }
+
+    50% {
+      transform: rotate(var(--uib-arc-2));
+    }
+
+    55% {
+      transform: rotate(var(--uib-arc-2));
+      animation-timing-function: ease-out;
+    }
+
+    100% {
+      transform: rotate(var(--uib-arc-1));
+    }
+  }
+
+  @keyframes morph {
+    0%,
+    5% {
+      transform: scaleX(0.75) scaleY(1.25);
+      transform-origin: center left;
+    }
+
+    12.5% {
+      transform: scaleX(1.5);
+      transform-origin: center left;
+    }
+
+    27.5% {
+      transform: scaleX(1);
+      transform-origin: center left;
+    }
+
+    27.5001%,
+    42.5% {
+      transform: scaleX(1);
+      transform-origin: center right;
+    }
+
+    50%,
+    52.5% {
+      transform: scaleX(0.75) scaleY(1.25);
+      transform-origin: center right;
+      animation-timing-function: ease-in;
+    }
+
+    65% {
+      transform: scaleX(1.5);
+      transform-origin: center right;
+    }
+
+    77.5% {
+      transform: scaleX(1);
+      transform-origin: center right;
+    }
+
+    77.5001%,
+    95% {
+      transform: scaleX(1);
+      transform-origin: center left;
+    }
+
+    100% {
+      transform: scaleX(0.75) scaleY(1.25);
+      transform-origin: center left;
+    }
+  }
+
+
+
 
 .switch {
     position: relative;
@@ -165,12 +280,13 @@
 
 
 .fc-h-event {
-  background: orange !important;
+  /* background: orange !important; */
   border: black;
 }
 .fc-daygrid-event{
   padding: 10px;
   width: 100%;
+  cursor: pointer;
 }
 
 /* Custom CSS */
@@ -193,6 +309,78 @@
 }
 
 
-.ant-spin-spinning{
-  color: orange;
+
+.selected{
+  background: none;
 }
+
+:where(.css-dev-only-do-not-override-3mqfnx).ant-spin-lg .ant-spin-dot{
+ color: orange;
+}
+
+/* .skeleton-loader {
+  background: linear-gradient(
+    90deg,
+    rgba(219, 219, 219, 0) 0%,
+    rgba(219, 219, 219, 0.5) 50%,
+    rgba(219, 219, 219, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+} */
+
+
+
+/* // round Spinner */
+
+  .containerld {
+    --uib-size: 30px;
+    --uib-color: orange;
+    --uib-speed: .9s;
+    --uib-stroke: 5px;
+    --mask-size: calc(var(--uib-size) / 2 - var(--uib-stroke));
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: var(--uib-size);
+    width: var(--uib-size);
+    -webkit-mask: radial-gradient(
+      circle var(--mask-size),
+      transparent 99%,
+      #000 100%
+    );
+    mask: radial-gradient(circle var(--mask-size), transparent 99%, #000 100%);
+    background-image: conic-gradient(transparent 25%, var(--uib-color));
+    animation: spin calc(var(--uib-speed)) linear infinite;
+    border-radius: 50%;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .splide__arrow {
+    z-index: 0;
+  }
+
+
+
+
+
+  

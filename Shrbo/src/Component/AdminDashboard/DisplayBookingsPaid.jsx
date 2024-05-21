@@ -1,11 +1,14 @@
-import React, { useState, useRef } from "react";
-import { Table, Space, Input, DatePicker, Select, Dropdown, Modal } from "antd";
+import React, { useState, useRef, useEffect } from "react";
+import { Table, Space, Input, DatePicker, Select, Dropdown, Modal,Spin } from "antd";
 import AdminHeader from "./AdminNavigation/AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import { parse, isAfter } from "date-fns";
 import { usePDF } from "react-to-pdf";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import Logo from "../../assets/logo.png";
+import Axios from '../../Axios'
+import moment from 'moment'; // Import moment
+
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -19,38 +22,29 @@ const DisplayBookingsPaid = () => {
     dateRange: null,
   });
 
+
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [paymentData, setPaymentData] = useState([]);
+  const [loading, setLoading] = useState(false); // State to track loading status
 
-  const paymentData = [
-    {
-      id: 1,
-      username: "darwinnuez@gmail.com",
-      paymentDate: "2023-10-15",
-      bookingNo: "B001",
-      totalAmount: "$100",
-      paymentType: "Visa Card",
-      status: "Paid",
-    },
-    {
-      id: 2,
-      username: "kobiko@gmail.com",
-      paymentDate: "2023-10-14",
-      bookingNo: "B002",
-      totalAmount: "$150",
-      paymentType: "Transfer",
-      status: "Paid",
-    },
-    {
-      id: 3,
-      username: "myemailaddress123@gmail.com",
-      paymentDate: "2023-10-13",
-      bookingNo: "B003",
-      totalAmount: "$120",
-      paymentType: "Verve Card",
-      status: "Paid",
-    },
-  ];
+  useEffect(() => {
+    const fetchTransactionHistory = async () => {
+      setLoading(true); // Set loading to true when fetching data
+      try {
+        const response = await Axios.get("/paidPayments");
+        setPaymentData(response.data.data);
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching transaction history:", error);
+      } finally {
+        setLoading(false); // Set loading to false when data is fetched
+      }
+    };
+
+    fetchTransactionHistory();
+  }, []);
 
   const handleDeleteHost = () => {
     confirm({
@@ -98,63 +92,59 @@ const DisplayBookingsPaid = () => {
 
   const columns = [
     {
-      title: "Email",
-      dataIndex: "username",
-      key: "username",
+      title: 'Date',
+      dataIndex: 'paiddate',
+      key: 'paiddate',
+      
     },
     {
-      title: "Payment Date",
-      dataIndex: "paymentDate",
-      key: "paymentDate",
+      title: 'Id',
+      dataIndex: 'user_id',
+      key: 'user_id',
     },
     {
-      title: "Booking No",
-      dataIndex: "bookingNo",
-      key: "bookingNo",
+      title: 'Bank Name',
+      dataIndex: 'bank_name',
+      key: 'bank_name',
+    },
+
+    {
+      title: 'Account Number',
+      dataIndex: 'account_number',
+      key: 'account_number',
     },
     {
-      title: "Total Amount",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
+      title: "User Email",
+      dataIndex: "userEmail",
+      key: "userEmail",
     },
     {
-      title: "Payment Type",
-      dataIndex: "paymentType",
-      key: "paymentType",
+      title: "User ID",
+      dataIndex: "user_id",
+      key: "user_id",
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: "User Name",
+      dataIndex: "userName",
+      key: "userName",
     },
     {
-      title: "Actions",
-      key: "actions",
-      render: (text, record) => (
-        <div className=" flex space-x-4">
-          <Dropdown
-            menu={{
-              items,
-            }}
-            trigger={["click"]}
-          >
-            <a onClick={(e) => e.preventDefault()}>
-              <Space>Edit</Space>
-            </a>
-          </Dropdown>
-          <div onClick={() => handleDeleteHost()} className="cursor-pointer">
-            Delete
-          </div>
-          <div
-            onClick={() => handleViewDetails(record)}
-            className="cursor-pointer"
-          >
-            View Details
-          </div>{" "}
-          {/* Pass the record here */}
-        </div>
+      title: 'Amount',
+      dataIndex: 'amountPaid',
+      key: 'amountPaid',
+      render: (totalAmount) => (
+        <span>
+          ₦{new Intl.NumberFormat().format(totalAmount)}
+        </span>
       ),
     },
+    {
+      title: 'Account Name',
+      dataIndex: 'account_name',
+      key: 'account_name',
+    },
+   
+   
   ];
 
   const data = [
@@ -222,12 +212,18 @@ const DisplayBookingsPaid = () => {
     <div className="bg-gray-100 h-[100vh]">
       <AdminHeader />
       <div className="flex">
-        <div className="bg-orange-400 text-white hidden md:block md:w-1/5 h-[100vh] p-4">
+        <div className="bg-orange-400 overflow-scroll example text-white hidden md:block md:w-1/5 h-[100vh] p-4">
           <AdminSidebar />
         </div>
         <div className="w-full md:w-4/5 p-4 h-[100vh] overflow-auto example">
           <h1 className="text-2xl font-semibold mb-4">Paid Payments</h1>
           <div className="bg-white p-4 rounded shadow">
+            <div className="mb-4">
+              <p className="text-gray-400 text-sm">
+              Paid Payment section provides a record of all the payout requests that have been successfully processed and paid out to the hosts or guest.
+              </p>
+            </div>
+            
             <div className="mb-4 flex justify-end">
               <Input
                 placeholder="Filter by Email"
@@ -246,11 +242,13 @@ const DisplayBookingsPaid = () => {
               />
             </div>
             <div className="overflow-x-auto">
-              {filteredData.length > 0 ? (
-                <Table columns={columns} dataSource={filteredData} />
-              ) : (
-                <div>No data found.</div>
-              )}
+            <Spin spinning={loading}> {/* Use Spin component for loading */}
+                {filteredData.length > 0 ? (
+                  <Table columns={columns} dataSource={paymentData} rowKey="paymentId" />
+                ) : (
+                  <div>No data found.</div>
+                )}
+              </Spin>
             </div>
 
             <Modal
@@ -266,6 +264,11 @@ const DisplayBookingsPaid = () => {
                     className="bg-white p-4 border border-black w-full"
                     ref={targetRef}
                   >
+                    <div className="mb-4">
+                      <div className="text-gray-400 text-sm">
+
+                      </div>
+                    </div>
                     <img
                       src={Logo}
                       alt="Company Logo"
@@ -284,24 +287,21 @@ const DisplayBookingsPaid = () => {
                         </h2>
                         <div className="flex justify-between mb-2">
                           <span>Email:</span>
-                          <span>{selectedPayment.username}</span>
+                          <span>{selectedPayment.hostEmail}</span>
                         </div>
                         <div className="flex justify-between mb-2">
                           <span>Payment Date:</span>
-                          <span>{selectedPayment.paymentDate}</span>
+                          <span>{selectedPayment.paidHostdate}</span>
                         </div>
                         <div className="flex justify-between mb-2">
                           <span>Booking No:</span>
-                          <span>{selectedPayment.bookingNo}</span>
+                          <span>{selectedPayment.paymentId}</span>
                         </div>
                         <div className="flex justify-between mb-2">
                           <span>Total Amount:</span>
-                          <span>{selectedPayment.totalAmount}</span>
+                          <span>₦{selectedPayment.amountToHost.toLocaleString("en-NG")}</span>
                         </div>
-                        <div className="flex justify-between mb-2">
-                          <span>Payment Type:</span>
-                          <span>{selectedPayment.paymentType}</span>
-                        </div>
+                        
                         <div className="flex justify-between mb-2">
                           <span>Status:</span>
                           <span>{selectedPayment.status}</span>

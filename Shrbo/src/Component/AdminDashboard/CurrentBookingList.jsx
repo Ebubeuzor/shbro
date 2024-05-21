@@ -1,54 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AdminHeader from './AdminNavigation/AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import { Link } from 'react-router-dom';
-import { Table, Input, Select, Modal, Space, Dropdown } from "antd";
+import { Table, Input, Select, Modal, Space, Dropdown, Spin } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { LoadingOutlined } from "@ant-design/icons";
+
 const { Option } = Select;
+import Axios from "../../Axios"
+import moment from 'moment';
 
 export default function CurrentBookingsList() {
-  const bookingData = [
-    {
-      id: 1,
-      propertyName: 'Cozy Apartment',
-      guestName: 'John Doe',
-      total: 100,
-      startDate: '2023-10-01',
-      endDate: '2023-10-05',
-      status: 'Booked',
-      hostName:"Host"
-    },
-    {
-      id: 2,
-      propertyName: 'Luxury Villa',
-      guestName: 'Jane Smith',
-      total: 150,
-      startDate: '2023-10-06',
-      endDate: '2023-10-10',
-      status: 'Confirmed',
-      hostName:"First"
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    },
 
-    {
-        id: 3,
-        propertyName: 'Luxury Villa',
-        guestName: 'Jane Smith',
-        total: 150,
-        startDate: '2023-10-06',
-        endDate: '2023-10-10',
-        status: 'Confirmed',
-        hostName:"Host Name"
+  const fetchBookings = async () => {
+    try {
+      const response = await Axios.get('/bookings');
+      setBookings(response.data.data);
+      console.log(response.data.data);
+      setLoading(false); // Set loading to true before fetching data
 
-      },
-    // Add more booking data as needed
-  ];
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      setLoading(false); // Set loading to false after fetching data (whether successful or not)
+
+    }
+  };
+  
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+  
 
   const [filterStatus, setFilterStatus] = useState('All');
   const columns = [
     {
       title: 'Property Name',
-      dataIndex: 'propertyName',
+      dataIndex: 'property_name',
       key: 'propertyName',
       render: (text, record) => (
         <Link to={`/property/${record.propertyId}`}>{text}</Link>
@@ -64,24 +54,30 @@ export default function CurrentBookingsList() {
     },
     {
       title: 'Total',
-      dataIndex: 'total',
-      key: 'total',
+      dataIndex: 'totalamount',
+      key: 'totalamount',
     },
     {
     title: 'Host Name',
     dataIndex: 'hostName',
     key: 'hostName',
   },
-    {
-      title: 'Start Date',
-      dataIndex: 'startDate',
-      key: 'startDate',
-    },
-    {
-      title: 'End Date',
-      dataIndex: 'endDate',
-      key: 'endDate',
-    },
+  {
+    title: 'Start Date',
+    dataIndex: 'check-In',
+    key: 'check-In',
+    render: (text, record) => (
+      <span>{moment(record['check-In']).format('dddd, MMMM D YYYY')}</span>
+    ),
+  },
+  {
+    title: 'End Date',
+    dataIndex: 'check-out',
+    key: 'check-out',
+    render: (text, record) => (
+      <span>{moment(record['check-out']).format('dddd, MMMM D YYYY')}</span>
+    ),
+  },
     {
       title: 'Status',
       dataIndex: 'status',
@@ -130,18 +126,18 @@ export default function CurrentBookingsList() {
   ];
   
 
-  const filteredBookingData = bookingData.filter((booking) => {
-    if (filterStatus === 'All') {
-      return true;
-    }
-    return booking.status === filterStatus;
-  });
+  // const filteredBookingData = bookingData.filter((booking) => {
+  //   if (filterStatus === 'All') {
+  //     return true;
+  //   }
+  //   return booking.status === filterStatus;
+  // });
 
   return (
     <div className="bg-gray-100 h-[100vh]">
       <AdminHeader />
       <div className="flex">
-        <div className="bg-orange-400 hidden md:block text-white w-1/5 h-[100vh] p-4">
+        <div className="bg-orange-400 overflow-scroll example hidden md:block text-white w-1/5 h-[100vh] p-4">
           <AdminSidebar />
         </div>
 
@@ -165,11 +161,25 @@ export default function CurrentBookingsList() {
               </Select>
             </div>
             <div className="overflow-x-auto">
-
+            {loading ? ( // Display Spin component when loading is true
+            <div className="flex justify-center h-52 items-center">
+              <Spin
+                indicator={
+                  <LoadingOutlined
+                    style={{
+                      fontSize: 24,
+                    }}
+                    spin
+                  />
+                }
+              />
+            </div>
+          ) : (
             <Table
-              dataSource={filteredBookingData}
+              dataSource={bookings}
               columns={columns}
             />
+            )}
             </div>
           </div>
         </div>

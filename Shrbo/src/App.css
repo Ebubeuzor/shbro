@@ -244,18 +244,18 @@ The slider*/
   -moz-transition: all 0.66s ease;
 }
 
-
+/* 
 .ant-picker-panel-layout{
   width: 80%;
   height: 300px;
   flex-wrap: wrap !important;
   overflow: scroll;
-}
+} */
 
 
 
 
-.dot-pulse {
+.dot-pulse1 {
   --uib-size: 30px;
   --uib-speed: 1.3s;
   --uib-color: rgb(68, 67, 67);
@@ -268,9 +268,9 @@ The slider*/
   height: calc(var(--uib-size) * 0.27);
 }
 
-.dot-pulse__dot,
-.dot-pulse::before,
-.dot-pulse::after {
+.dot-pulse1__dot,
+.dot-pulse1::before,
+.dot-pulse1::after {
   content: '';
   display: block;
   height: calc(var(--uib-size) * 0.18);
@@ -280,21 +280,21 @@ The slider*/
   transform: scale(0);
 }
 
-.dot-pulse::before {
-  animation: pulse var(--uib-speed) ease-in-out infinite;
+.dot-pulse1::before {
+  animation: pulse1 var(--uib-speed) ease-in-out infinite;
 }
 
-.dot-pulse__dot {
-  animation: pulse var(--uib-speed) ease-in-out
+.dot-pulse1__dot {
+  animation: pulse1 var(--uib-speed) ease-in-out
     calc(var(--uib-speed) * 0.125) infinite both;
 }
 
-.dot-pulse::after {
-  animation: pulse var(--uib-speed) ease-in-out
+.dot-pulse1::after {
+  animation: pulse1 var(--uib-speed) ease-in-out
     calc(var(--uib-speed) * 0.25) infinite;
 }
 
-@keyframes pulse {
+@keyframes pulse1 {
   0%,
   100% {
     transform: scale(0);
@@ -360,11 +360,11 @@ The slider*/
 }
 
 
-
+/* 
 :where(.css-dev-only-do-not-override-3mqfnx).ant-picker-dropdown-range {
   padding: 10.666666666666666px 0;
   width: 80% !important;
-}
+} */
 
 
 .custom-table .ant-table-thead th {
@@ -387,13 +387,247 @@ The slider*/
   display: flex;
   justify-content:center;
   align-items:flex-end;
-  background-color: transparent;
+  /* background-color: transparent; */
   padding-bottom: 10px;
   cursor:not-allowed ;
+  
 }
+
+
+
+.fc-daygrid-day:has(.fc-daygrid-day-bg .blocked-dates) .fc-daygrid-day-top {
+  text-decoration: line-through;
+  color: #848383;
+}
+
+
+.available-dates{
+  color: rgb(0, 0, 0);
+  background-color: transparent;
+ 
+  cursor:pointer ;
+
+}
+.blocked-dates{
+  color: rgb(0, 0, 0);
+  background-color: transparent;
+ 
+  cursor:pointer ;
+
+}
+
+.fc-daygrid-day-frame :focus{
+  border-color: #000000;
+  border: 1px solid;
+  border-radius: 30px;
+
+  
+
+}
+
+
+
 
 
 /* .blockedDates{
  
    
 } */
+
+
+
+
+/* Media query for desktop screens */
+@media only screen and (min-width: 768px) {
+  /* Additional styles for desktop screens */
+ /* Common styles for both prev and next arrows */
+.splide__arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 60%;
+  transform: translateY(-50%);
+  z-index: 10;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.splide__arrow svg {
+  fill: white;
+  background-image: url('../../assets/Images/arrow-left.svg');
+}
+
+/* Styles for prev arrow */
+.splide__arrow.splide__arrow--prev {
+  background-color: rgb(255, 124, 17);
+  color: white;
+}
+
+/* Styles for next arrow */
+.splide__arrow.splide__arrow--next {
+  background-color: rgb(255, 124, 17);
+  color: white;
+  opacity: 1;
+}
+
+  /* Uncomment the following if you want a hover effect on desktop screens */
+  /*
+  .splide__arrow:hover {
+    background-color: #dddddd;
+  }
+  */
+}
+
+
+
+
+
+  .containerb {
+    --uib-size: 105px;
+    --uib-color: rgb(255, 124, 17);
+    --uib-speed: 2s;
+    position: relative;
+    height: var(--uib-size);
+    width: var(--uib-size);
+  }
+
+  .containerb::before,
+  .containerb::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+    background-color: var(--uib-color);
+    animation: pulse var(--uib-speed) linear infinite;
+    transform: scale(0);
+    opacity: 0;
+    transition: background-color 0.3s ease;
+  }
+
+  .containerb::after {
+    animation-delay: calc(var(--uib-speed) / -2);
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+
+
+
+  .skeleton-loader {
+    display: inline-block;
+    background: linear-gradient(
+      90deg,
+      rgba(219, 219, 219, 0) 0%,
+      rgba(219, 219, 219, 0.5) 50%,
+      rgba(219, 219, 219, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    /* border-radius: 2px; */
+    /* height: 18px; */
+    margin-bottom: 10px;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+
+
+
+
+/* Add border styles to your input */
+.PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+
+
+
+  .containerM {
+    --uib-size: 60px;
+    --uib-color: rgb(239, 134, 49);
+    --uib-speed: 2.5s;
+    --uib-dot-size: calc(var(--uib-size) * 0.18);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: var(--uib-size);
+    height: var(--uib-dot-size);
+  }
+
+  .dot {
+    position: absolute;
+    top: calc(50% - var(--uib-dot-size) / 2);
+    left: calc(0px - var(--uib-dot-size) / 2);
+    display: block;
+    height: var(--uib-dot-size);
+    width: var(--uib-dot-size);
+    border-radius: 50%;
+    background-color: var(--uib-color);
+    animation: stream var(--uib-speed) linear infinite both;
+    transition: background-color 0.3s ease;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: calc(var(--uib-speed) * -0.2);
+  }
+
+  .dot:nth-child(3) {
+    animation-delay: calc(var(--uib-speed) * -0.4);
+  }
+
+  .dot:nth-child(4) {
+    animation-delay: calc(var(--uib-speed) * -0.6);
+  }
+
+  .dot:nth-child(5) {
+    animation-delay: calc(var(--uib-speed) * -0.8);
+  }
+
+  @keyframes stream {
+    0%,
+    100% {
+      transform: translateX(0) scale(0);
+    }
+
+    50% {
+      transform: translateX(calc(var(--uib-size) * 0.5)) scale(1);
+    }
+
+    99.999% {
+      transform: translateX(calc(var(--uib-size))) scale(0);
+    }
+  }
+
+  
+
+
+
+
+ 

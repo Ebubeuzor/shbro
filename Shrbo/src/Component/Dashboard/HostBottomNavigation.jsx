@@ -56,7 +56,7 @@ export default function HostBottomNavigation() {
             Analysis
           </span>
         </Link>
-        <Link to="/Schduler" className="cursor-pointer flex flex-col items-center">
+        <Link to="/Scheduler" className="cursor-pointer flex flex-col items-center">
           <FaCalendar className={`text-2xl text-${getColor("/Schduler")}`} />
           <span className={`text-[10px] text-${getColor("/Schduler")}`}>
             Calender

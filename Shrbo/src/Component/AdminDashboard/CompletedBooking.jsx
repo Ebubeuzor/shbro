@@ -1,104 +1,38 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Table, Button, Modal } from "antd";
 import AdminHeader from "./AdminNavigation/AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import { usePDF } from "react-to-pdf";
 import Logo from "../../assets/logo.png";
-
-const sampleBookingDetails = {
-  guestName: "John Doe",
-  email: "johndoe@example.com",
-  numGuests: 2,
-  specialRequests: "Late check-in requested.",
-  propertyName: "Beachfront Villa",
-  propertyType: "Villa",
-  checkInDate: "2023-10-20",
-  checkOutDate: "2023-10-25",
-  roomsBedsRequired: "2 bedrooms, 2 beds",
-  amenities: "Private pool, beach access",
-  totalBookingCost: 500,
-  paymentMethod: "Credit Card",
-  paymentAmount: 500,
-  taxesFees: 50,
-  paymentConfirmation: "Payment confirmed",
-  addons: "Airport pickup, breakfast",
-  cancellationPolicy: "Free cancellation up to 7 days before check-in.",
-  refundPolicy: "Full refund within 24 hours of booking.",
-  confirmationNumber: "B123456789",
-  bookingDate: "2023-10-15",
-  bookingStatus: "Confirmed",
-  reviewAndRating: "4.5 out of 5 stars",
-  termsConditions: "Terms and conditions text...",
-  hostName: "My Name",
-  hostContact: "host@example.com",
-  hostReviews: "4.7 out of 5 stars",
-  propertyId: "ABC123",
-  guestComment: "lorem inpsum",
-  hostCommunicationOptions: "Email, Phone, Chat",
-  bookingSummary: "Summary of booking details...",
-};
-
-const sampleBookingDetails2 = {
-  guestName: "Jane Smith",
-  email: "janesmith@example.com",
-  numGuests: 3,
-  specialRequests: "Early check-in requested.",
-  propertyName: "Mountain Chalet",
-  propertyType: "Chalet",
-  checkInDate: "2023-11-05",
-  checkOutDate: "2023-11-10",
-  roomsBedsRequired: "3 bedrooms, 3 beds",
-  amenities: "Mountain view, fireplace",
-  totalBookingCost: 700,
-  paymentMethod: "PayPal",
-  paymentAmount: 700,
-  taxesFees: 70,
-  paymentConfirmation: "Payment confirmed",
-  addons: "Hiking tour, dinner",
-  cancellationPolicy: "Free cancellation up to 14 days before check-in.",
-  refundPolicy: "Full refund within 48 hours of booking.",
-  confirmationNumber: "C987654321",
-  bookingDate: "2023-10-18",
-  bookingStatus: "Confirmed",
-  reviewAndRating: "4.8 out of 5 stars",
-  termsConditions: "Terms and conditions text...",
-  hostName: "Host Name",
-  hostContact: "host@example.com",
-  hostReviews: "4.7 out of 5 stars",
-  hostCommunicationOptions: "Email, Phone, Chat",
-  bookingSummary: "Summary of booking details...",
-  propertyId: "XYZ789",
-  guestComment: "lorem inpsum",
-};
-
-const data = [
-  {
-    key: "1",
-    guestName: "John Doe",
-    email: "johndoe@example.com",
-    numGuests: 2,
-    propertyId: "ABC123",
-    paymentAmount: 100,
-    taxes: 10,
-    bookingDetails: sampleBookingDetails, // Add the booking details object
-  },
-  {
-    key: "2",
-    guestName: "Jane Smith",
-    email: "janesmith@example.com",
-    numGuests: 3,
-    propertyId: "XYZ789",
-    paymentAmount: 150,
-    taxes: 15,
-    bookingDetails: sampleBookingDetails2, // Add the booking details object
-  },
-  // Add more booking data as needed
-];
+import Axios from "../../Axios";
 
 const CompletedBooking = () => {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const pdfRef = useRef(); // Create a ref for the PDF content
+  const [completedBooking, setCompletedBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCompletedBookings() {
+      try {
+        const response = await Axios.get("/checkedOutBookings");
+        setCompletedBooking(response.data.data);
+        setLoading(false); // Set loading to false when data is fetched
+        console.log(response.data.data);
+      } catch (error) {
+        console.error("Error fetching host analytics:", error);
+        setLoading(false); // Set loading to false even if there's an error
+        setError("Error fetching data. Please try again."); // Set error message
+      }
+    }
+
+    fetchCompletedBookings();
+  }, []);
+
+  const checkInDate = selectedBooking ? new Date(selectedBooking["check-In"]).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "";
+  const checkOutDate = selectedBooking ? new Date(selectedBooking["check-out"]).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : "";
+  
 
   const { toPDF, targetRef } = usePDF({ filename: "page.pdf" });
 
@@ -109,30 +43,35 @@ const CompletedBooking = () => {
       key: "guestName",
     },
     {
-      title: "Email Address",
-      dataIndex: "email",
-      key: "email",
+      title: "Host Email Address",
+      dataIndex: "hostEmail",
+      key: "hostEmail",
     },
     {
       title: "Number of Guests",
-      dataIndex: "numGuests",
-      key: "numGuests",
+      dataIndex: "number_of_guest",
+      key: "number_of_guest",
     },
     {
-      title: "Property ID",
-      dataIndex: "propertyId",
-      key: "propertyId",
+      title: "Booking ID",
+      dataIndex: "paymentId",
+      key: "paymentId",
     },
     {
       title: "Payment Amount",
-      dataIndex: "paymentAmount",
-      key: "paymentAmount",
+      dataIndex: "totalamount",
+      key: "totalamount",
+      render: (totalamount) => (
+        <span>
+          ₦{new Intl.NumberFormat().format(totalamount)}
+        </span>
+      ),
     },
-    {
-      title: "Taxes",
-      dataIndex: "taxes",
-      key: "taxes",
-    },
+    // {
+    //   title: "Taxes",
+    //   dataIndex: "taxes",
+    //   key: "taxes",
+    // },
     {
       title: "Action",
       key: "action",
@@ -147,10 +86,10 @@ const CompletedBooking = () => {
   ];
 
   const viewBookingDetails = (booking) => {
-    // Find the booking details with the same email and property ID
-    const matchingBooking = data.find(
+    const matchingBooking = completedBooking.find(
       (item) =>
-        item.email === booking.email && item.propertyId === booking.propertyId
+        item.guestEmail === booking.guestEmail &&
+        item.homeName === booking.homeName
     );
 
     if (matchingBooking) {
@@ -166,11 +105,10 @@ const CompletedBooking = () => {
     if (selectedBooking) {
       toPDF(pdfRef, {
         unit: "mm",
-        format: "a4", // Set the format to A4 paper size
+        format: "a4",
       });
     }
   };
-
 
   return (
     <div>
@@ -178,16 +116,26 @@ const CompletedBooking = () => {
         <AdminHeader />
 
         <div className="flex">
-          <div className="bg-orange-400 text-white hidden md:block md:w-1/5 h-[100vh] p-4">
+          <div className="bg-orange-400 overflow-scroll example text-white hidden md:block md:w-1/5 h-[100vh] p-4">
             <AdminSidebar />
           </div>
           <div className="w-full md:w-4/5 p-4 h-[100vh] overflow-auto example">
             <h1 className="text-2xl font-semibold mb-4">Completed Booking</h1>
 
             <div className="bg-white p-4 rounded shadow">
-              <div className="overflow-x-auto">
-                <Table columns={columns} dataSource={data} />
+              <div className="mb-4">
+                <p className="text-sm text-gray-400">
+                The Completed Bookings section provides a comprehensive list of all the bookings for an apartment that have been successfully completed.
+                </p>
               </div>
+              {loading ? (
+                <div>Loading...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table columns={columns} dataSource={completedBooking}                   rowKey={(record) => record.id} // Set the rowKey to the guest's id
+ />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -197,18 +145,12 @@ const CompletedBooking = () => {
               <h2 className="text-base font-semibold mt-4 mb-2">
                 Guest Information:
               </h2>
-              <p>Guest Name: {selectedBooking.bookingDetails.guestName}</p>
-              <p>Email: {selectedBooking.bookingDetails.email}</p>
-              <p>
-                Number of Guests: {selectedBooking.bookingDetails.numGuests}
-              </p>
-              <p>
-                Special Requests:{" "}
-                {selectedBooking.bookingDetails.specialRequests}
-              </p>
-
+              <p>Guest Name: {selectedBooking.guestName}</p>
+              <p>Email: {selectedBooking.guestEmail}</p>
+              <p>Number of Guests: {selectedBooking.number_of_guest}</p>
+              <p>Check-In Date: {selectedBooking["check-In"]}</p>
+              <p>Check-Out Date: {selectedBooking["check-out"]}</p>
               {/* Include more booking details as needed... */}
-
               <button onClick={downloadPDF}>Download PDF</button>
             </div>
           )}
@@ -221,12 +163,8 @@ const CompletedBooking = () => {
           onCancel={handleDetailsClose}
         >
           {selectedBooking && (
-            <div
-              ref={targetRef}
-              className="p-4 bg-white border-2 border-black w-full h-full"
-            >
-          <div className="w-full" ref={pdfRef}>
-             <div className="mb-4">
+            <div className="p-4 bg-white border-2 border-black w-full h-full">
+              <div className="mb-4">
                 <img
                   src={Logo}
                   alt="Company Logo"
@@ -237,123 +175,42 @@ const CompletedBooking = () => {
               <h2 className="text-base font-semibold mt-4 mb-2">
                 Guest Information:
               </h2>
-              <table className="table-auto w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="pr-4">Guest Name:</td>
-                    <td>{selectedBooking.guestName}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Email:</td>
-                    <td>{selectedBooking.email}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Number of Guests:</td>
-                    <td>{selectedBooking.numGuests}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Special Requests:</td>
-                    <td>{selectedBooking.bookingDetails.specialRequests}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <p>Guest Name: {selectedBooking.guestName}</p>
+              <p>Email: {selectedBooking.guestEmail}</p>
+              <p>Number of Guests: {selectedBooking.number_of_guest}</p>
+              <p>Check-In Date: {checkInDate}</p>
+    <p>Check-Out Date: {checkOutDate}</p>
 
               <h2 className="text-base font-semibold mt-4 mb-2">
                 Host Information:
               </h2>
-              <table className="table-auto w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="pr-4">Host Name:</td>
-                    <td>{selectedBooking.bookingDetails.hostName}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Host Contact:</td>
-                    <td>{selectedBooking.bookingDetails.hostContact}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <p>Host Name: {selectedBooking.hostName}</p>
+              <p>Host Email: {selectedBooking.hostEmail}</p>
 
               <h2 className="text-base font-semibold mt-4 mb-2">
                 Property Selection:
               </h2>
-              <table className="table-auto w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="pr-4">Property Name:</td>
-                    <td>{selectedBooking.bookingDetails.propertyName}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Property Type:</td>
-                    <td>{selectedBooking.bookingDetails.propertyType}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Check-In Date:</td>
-                    <td>{selectedBooking.bookingDetails.checkInDate}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Checked Out Date:</td>
-                    <td>{selectedBooking.bookingDetails.checkOutDate}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Rooms and Beds:</td>
-                    <td>{selectedBooking.bookingDetails.roomsBedsRequired}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <p>Property Name: {selectedBooking.property_name}</p>
+              <p>Property Type: {selectedBooking.homeType}</p>
 
               <h2 className="text-base font-semibold mt-4 mb-2">
                 Pricing and Payments:
               </h2>
-              <table className="table-auto w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="pr-4">Total Booking Cost:</td>
-                    <td>${selectedBooking.bookingDetails.totalBookingCost}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Payment Method:</td>
-                    <td>{selectedBooking.bookingDetails.paymentMethod}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Payment Amount:</td>
-                    <td>${selectedBooking.bookingDetails.paymentAmount}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Taxes and Fees:</td>
-                    <td>${selectedBooking.bookingDetails.taxesFees}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">Payment Confirmation:</td>
-                    <td>
-                      {selectedBooking.bookingDetails.paymentConfirmation}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <p>Total Booking Cost: ₦{selectedBooking.totalamount.toLocaleString('en-US')}</p>
+              <p>Payment Type: {selectedBooking.paymentType}</p>
+              <p>Payment ID: {selectedBooking.paymentId}</p>
+              {/* <p>Tax: ${selectedBooking.tax}</p> */}
+              {/* <p>
+                Guest Service Charge: ${selectedBooking.guest_service_charge}
+              </p> */}
 
-              <h2 className="text-xl font-semibold mt-4 mb-2">
-                Guest Reviews and Ratings:
-              </h2>
-              <table className="table-auto w-full mb-4">
-                <tbody>
-                  <tr>
-                    <td className="pr-4">
-                      <strong>Review and Rating:</strong>
-                    </td>
-                    <td>{selectedBooking.bookingDetails.reviewAndRating}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-4">
-                      <strong>Guest Comment:</strong>
-                    </td>
-                    <td>{selectedBooking.bookingDetails.guestComment}</td>
-                  </tr>
-                </tbody>
-              </table>
-             </div>
               <button
-                onClick={downloadPDF}
+                onClick={() =>
+                  toPDF(pdfRef, {
+                    unit: "mm",
+                    format: "a4",
+                  })
+                }
                 className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-700 mt-4"
               >
                 Download PDF

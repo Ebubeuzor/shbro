@@ -17,6 +17,7 @@
         "pusher/pusher-php-server": "^7.2",
         "rakutentech/laravel-request-docs": "^2.27",
         "sadiqsalau/laravel-otp": "^1.0",
+        "spatie/laravel-image-optimizer": "^1.8",
         "symfony/css-selector": "^7.0",
         "symfony/event-dispatcher": "^7.0",
         "symfony/mailer": "^6.4",

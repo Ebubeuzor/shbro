@@ -1,30 +1,34 @@
-import React, { useState } from 'react';
-import { Modal, Button, Dropdown, Space  } from "antd";
+import React from 'react';
+import { Modal } from 'antd';
+import PopupFull from './PopupFull';
 
-const Popup = ({ isModalVisible, handleCancel, children ,title , className,centered,width}) => {
-  
-  return(
+const Popup = ({ isModalVisible, handleCancel, children, title, className, centered, width,drawer }) => {
+  // console.log('Modal Content:', children);
+
+  return (
     <div>
-        
-        <Modal
-            title={title}
-            open={isModalVisible}
-            onCancel={handleCancel}
-            // footer={null}
-            classNames={className}
-            centered={centered}
-            width={width}
-            
-           
-        > 
-          {children}
-        </Modal>
-
+      {!drawer?<Modal
+        title={title}
+        open={isModalVisible}
+        onCancel={handleCancel}
+        className={className}
+        centered={centered}
+        width={width}
+        footer={null}
+      >
+        <div className=''>
+        {children}
+        </div>
+      </Modal>
+      :
+      <PopupFull title={title} onClose={handleCancel} open={isModalVisible}>
+        <>
+       {children}
+        </>
+      </PopupFull>  
+    }
     </div>
-);
+  );
 };
 
 export default Popup;
-
-
-

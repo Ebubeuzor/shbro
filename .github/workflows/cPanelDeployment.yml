@@ -19,5 +19,4 @@ jobs:
         server: ${{ secrets.SERVER }}
         username: ${{ secrets.USERNAME }} 
         password: ${{ secrets.PASSWORD }}
-        exclude: "vendor/**"
         

@@ -1,14 +1,18 @@
-import React, { useState } from "react";
-import { Table, Space, Input, DatePicker, Select, Dropdown } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Space, Input, DatePicker, Select, Dropdown,Spin,notification } from "antd";
 import AdminHeader from "./AdminNavigation/AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import { parse, isAfter } from 'date-fns';
+import Axios from "../../Axios"
+import moment from "moment";
 
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const PendingPayment = () => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     hostName: "",
@@ -17,140 +21,125 @@ const PendingPayment = () => {
   });
 
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await Axios.get('/viewRequestsToApprove');
+        setData(response.data.payment_requests);
+        console.log(response.data.payment_requests);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const columns = [
+    // {
+    //   title: 'Date',
+    //   dataIndex: 'Date',
+    //   key: 'Date',
+      
+    // },
     {
-      title: "Host",
-      dataIndex: "hostName",
-      key: "hostName",
+      title: 'Id',
+      dataIndex: 'id',
+      key: 'id',
     },
     {
-      title: "Payment Date",
-      dataIndex: "paymentDate",
-      key: "paymentDate",
-    },
-    {
-      title: "Booking No",
-      dataIndex: "bookingNo",
-      key: "bookingNo",
-    },
-    {
-      title: "Total Amount",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-    },
-    {
-      title: "Payment Type",
-      dataIndex: "paymentType",
-      key: "paymentType",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
+      title: 'Bank Name',
+      dataIndex: 'bank_name',
+      key: 'bank_name',
     },
 
     {
-        title: 'Guest Service Charge',
-        dataIndex: 'guestServiceCharge',
-        key: 'guestServiceCharge',
-      },
-      {
-        title: 'Host Service Charge',
-        dataIndex: 'hostServiceCharge',
-        key: 'hostServiceCharge',
-      },
-      {
-        title: 'Net Profit',
-        dataIndex: 'netProfit',
-        key: 'netProfit',
-      },
-      {
-        title: 'Amount to Host',
-        dataIndex: 'amountToHost',
-        key: 'amountToHost',
-      },
+      title: 'Account Number',
+      dataIndex: 'account_number',
+      key: 'account_number',
+    },
+    {
+      title: "User Email",
+      dataIndex: ["user", "email"],
+      key: "user_email",
+    },
+    {
+      title: "User ID",
+      dataIndex: "user_id",
+      key: "user_id",
+    },
+    {
+      title: "User Name",
+      dataIndex: ["user", "name"],
+      key: "user_name",
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (totalAmount) => (
+        <span>
+          ₦{new Intl.NumberFormat().format(totalAmount)}
+        </span>
+      ),
+    },
+    {
+      title: 'Account Name',
+      dataIndex: 'account_name',
+      key: 'account_name',
+    },
+   
     {
       title: "Actions",
       key: "actions",
       render: (text, record) => (
         <Space>
-            <Dropdown
+          <Dropdown
             menu={{
-              items,
+              items: [
+                {
+                  label: <div>Approve</div>,
+                  key: "0",
+                  onClick: (e) => handleApprove(record.id),
+                },
+                // {
+                //   label: <div>Decline</div>,
+                //   key: "1",
+                // },
+              ],
             }}
             trigger={["click"]}
           >
-            <a onClick={(e) => e.preventDefault()}>
-              <Space>Edit</Space>
-            </a>
+            <a onClick={(e) => e.preventDefault()}>Edit</a>
           </Dropdown>
-          <a>Delete</a>
         </Space>
       ),
     },
   ];
 
-  const data = [
-    {
-      key: "1",
-      hostName: "Darwin Nuez",
-      paymentDate: "2023-10-15",
-      bookingNo: "B001",
-      totalAmount: "$100",
-      paymentType: "Visa Card",
-      status: "Pending",
-      guestServiceCharge: '$30',
-      hostServiceCharge: '$20',
-      netProfit: '$150',
-      amountToHost: '$180',
-    },
-    {
-      key: "2",
-      hostName: "kobiko",
-      paymentDate: "2023-10-14",
-      bookingNo: "B002",
-      totalAmount: "$150",
-      paymentType: "Transfer",
-      status: "Pending",
-      guestServiceCharge: '$40',
-      hostServiceCharge: '$30',
-      netProfit: '$180',
-      amountToHost: '$220',
-    },
-    {
-      key: "3",
-      hostName: "myemailaddress23",
-      paymentDate: "2023-10-13",
-      bookingNo: "B003",
-      totalAmount: "$120",
-      paymentType: "Verve Card",
-      status: "Pending",
-      guestServiceCharge: '$35',
-      hostServiceCharge: '$25',
-      netProfit: '$160',
-      amountToHost: '$195',
-    },
-  ];
 
-  const filteredData = data.filter((record) => {
-    const { hostName, amount, dateRange } = filters;
-    const paymentDate = parse(record.paymentDate, 'yyyy-MM-dd', new Date());
+
+  // const filteredData = data.filter((record) => {
+  //   const { hostName, amount, dateRange } = filters;
+  //   const paymentDate = parse(record.paymentDate, 'yyyy-MM-dd', new Date());
   
-    const matchesEmail = record.hostName.toLowerCase().includes(hostName.toLowerCase());
-    const matchesAmount = record.totalAmount.toLowerCase().includes(amount.toLowerCase());
+  //   const matchesEmail = record.hostName.toLowerCase().includes(hostName.toLowerCase());
+  //   const matchesAmount = record.totalAmount.toLowerCase().includes(amount.toLowerCase());
   
-    // Check if the payment date is within the selected date range
-    let matchesDate = true;
-    if (dateRange) {
-      const [startDate, endDate] = dateRange;
-      if (startDate && endDate) {
-        matchesDate =
-          isAfter(paymentDate, startDate) && isAfter(endDate, paymentDate);
-      }
-    }
+  //   // Check if the payment date is within the selected date range
+  //   let matchesDate = true;
+  //   if (dateRange) {
+  //     const [startDate, endDate] = dateRange;
+  //     if (startDate && endDate) {
+  //       matchesDate =
+  //         isAfter(paymentDate, startDate) && isAfter(endDate, paymentDate);
+  //     }
+  //   }
   
-    return matchesEmail && matchesAmount && matchesDate;
-  });
+  //   return matchesEmail && matchesAmount && matchesDate;
+  // });
   
 
   const handleFilterChange = (name, value) => {
@@ -164,6 +153,7 @@ const PendingPayment = () => {
     {
       label: <div>Approve</div>,
       key: "0",
+      onClick: (e) => handleApprove(e, record.paymentId),
     },
     {
       label: <div>Decline</div>,
@@ -172,16 +162,41 @@ const PendingPayment = () => {
   
   ];
 
+  const handleApprove = async (requestId) => {
+    try {
+      await Axios.get(`/approvePaymentRequest/${requestId}`);
+      notification.success({
+        message: 'Payment Approved',
+        description: 'The payment request has been approved successfully.',
+      });
+      // Assuming success means refreshing the data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error approving payment request:', error);
+      notification.error({
+        message: 'Error',
+        description: 'An error occurred while approving the payment request. Please try again later.',
+      });
+    }
+  };
+  
+  
+
   return (
     <div className="bg-gray-100 h-[100vh]">
       <AdminHeader />
       <div className="flex">
-        <div className="bg-orange-400 text-white hidden md:block md:w-1/5 h-[100vh] p-4">
+        <div className="bg-orange-400 overflow-scroll example text-white hidden md:block md:w-1/5 h-[100vh] p-4">
           <AdminSidebar />
         </div>
         <div className="w-full md:w-4/5 p-4 h-[100vh] overflow-auto example">
           <h1 className="text-2xl font-semibold mb-4">Pending Payments</h1>
           <div className="bg-white p-4 rounded shadow">
+            <div className="mb-4">
+              <div className="text-gray-400 text-sm">
+              The Pending Payment section is where you can manage and approve payout requests made by hosts.
+              </div>
+            </div>
             <div className="mb-4 flex justify-end">
               <Input
                 placeholder="Filter by Host Name"
@@ -200,11 +215,9 @@ const PendingPayment = () => {
               />
             </div>
             <div className="overflow-x-auto">
-              {filteredData.length > 0 ? (
-                <Table columns={columns} dataSource={filteredData} />
-              ) : (
-                <div>No data found.</div>
-              )}
+            <Spin spinning={loading}>
+                <Table columns={columns} dataSource={data} rowKey="paymentId" />
+              </Spin>
             </div>
           </div>
         </div>

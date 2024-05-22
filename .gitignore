@@ -1,6 +1,5 @@
 /node_modules
-/public/images
-/public/videos
+/public
 .env.backup
 .env.production
 .phpunit.result.cache

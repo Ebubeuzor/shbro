@@ -11,8 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class UpdateImage implements ShouldQueue
 {
@@ -77,44 +79,51 @@ class UpdateImage implements ShouldQueue
     }
 
     
-    private function saveImage($image, $hosthomeid)
+    private function saveImage($image)
     {
         // Check if image is base64 string
         if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
             $imageData = substr($image, strpos($image, ',') + 1);
             $imageType = strtolower($matches[1]);
 
-            // Check if file is an image
-            if (!in_array($imageType, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
-                throw new \Exception('Invalid image type');
-            }
-
             // Decode base64 image data
             $decodedImage = base64_decode($imageData);
 
             if ($decodedImage === false) {
-                $hosthome = HostHome::find($hosthomeid);
-                $hosthome->delete();
                 throw new \Exception('Failed to decode image');
             }
         } else {
-            $hosthome = HostHome::find($hosthomeid);
-            $hosthome->delete();
             throw new \Exception('Invalid image format');
         }
 
-        $dir = 'images/'; // Change this to the desired subdirectory in your public folder, if necessary
-        $file = Str::random() . '.' . $imageType;
-        $absolutePath = public_path($dir); // Adjust the path to the public folder
-        $relativePath = $dir . $file;
+        $tempDir = sys_get_temp_dir();
+        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
+
+        // Save the decoded image to the temp file
+        if (!file_put_contents($tempFile, $decodedImage)) {
+            throw new \Exception('Failed to save image to temp file');
+        }
+
+        // Optimize the image
+        try {
+            ImageOptimizer::optimize($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+
+        // Move the optimized image to the public directory
+        $dir = 'images/';
+        $fileName = Str::random() . '.' . $imageType;
+        $absolutePath = public_path($dir);
+        $relativePath = $dir . $fileName;
+        $filePath = $absolutePath . '/' . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Save the decoded image to the file
-        if (!file_put_contents(public_path($relativePath), $decodedImage)) { // Adjust the path to the public folder
-            throw new \Exception('Failed to save image');
+        if (!rename($tempFile, $filePath)) {
+            throw new \Exception('Failed to move optimized image to public directory');
         }
 
         return $relativePath;

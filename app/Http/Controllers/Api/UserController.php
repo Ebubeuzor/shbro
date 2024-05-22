@@ -62,6 +62,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Jlorente\Laravel\CreditCards\Facades\CreditCardValidator;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class UserController extends Controller
 {
@@ -324,18 +325,34 @@ class UserController extends Controller
             throw new \Exception('Invalid image format');
         }
 
+        $tempDir = sys_get_temp_dir();
+        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
+
+        // Save the decoded image to the temp file
+        if (!file_put_contents($tempFile, $decodedImage)) {
+            throw new \Exception('Failed to save image to temp file');
+        }
+
+        // Optimize the image
+        try {
+            ImageOptimizer::optimize($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+
+        // Move the optimized image to the public directory
         $dir = 'images/';
-        $file = Str::random() . '.' . $imageType;
+        $fileName = Str::random() . '.' . $imageType;
         $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
+        $relativePath = $dir . $fileName;
+        $filePath = $absolutePath . '/' . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Save the decoded image to the file
-        if (!file_put_contents($relativePath, $decodedImage)) {
-            throw new \Exception('Failed to save image');
+        if (!rename($tempFile, $filePath)) {
+            throw new \Exception('Failed to move optimized image to public directory');
         }
 
         return $relativePath;
@@ -1009,10 +1026,19 @@ class UserController extends Controller
             $wishlistcontainer->update([
                 'name' => $data['name']
             ]);
+            
+            $cacheKey = "user_wishlist".auth()->id();
+            $cacheKey2 = "userWishlistContainersAndItems{$user->id}";
+            $cacheKey3 = "userWishlistContainerItems{$user->id}ContainerId{$wishlistcontainer->id}";
+
+            Cache::forget($cacheKey);
+            Cache::forget($cacheKey2);
+            Cache::forget($cacheKey3);
         }
         return response()->json("Updated",200);
     }
     
+
     /**
      * @lrd:start
      * This is used to delete a user wishlist container 
@@ -1026,6 +1052,14 @@ class UserController extends Controller
             $wishlistcontainer = Wishlistcontainer::where('id',$id)->where('user_id',auth()->id())->first();
             $wishlistcontainer->items()->delete();
             $wishlistcontainer->delete();
+            
+            $cacheKey = "user_wishlist".auth()->id();
+            $cacheKey2 = "userWishlistContainersAndItems{$user->id}";
+            $cacheKey3 = "userWishlistContainerItems{$user->id}ContainerId{$wishlistcontainer->id}";
+
+            Cache::forget($cacheKey);
+            Cache::forget($cacheKey2);
+            Cache::forget($cacheKey3);
         }
         return response()->json("Deleted",200);
     }

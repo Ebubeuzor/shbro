@@ -14,9 +14,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class AdminGuestChatController extends Controller
 {
@@ -39,24 +41,35 @@ class AdminGuestChatController extends Controller
             throw new \Exception('Invalid image format');
         }
 
+        $tempDir = sys_get_temp_dir();
+        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
+
+        // Save the decoded image to the temp file
+        if (!file_put_contents($tempFile, $decodedImage)) {
+            throw new \Exception('Failed to save image to temp file');
+        }
+
+        // Optimize the image
+        try {
+            ImageOptimizer::optimize($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+
+        // Move the optimized image to the public directory
         $dir = 'images/';
         $fileName = Str::random() . '.' . $imageType;
-        $absolutePath = storage_path('app/' . $dir);
+        $absolutePath = public_path($dir);
         $relativePath = $dir . $fileName;
+        $filePath = $absolutePath . '/' . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Save the decoded image to the file
-        $filePath = $absolutePath . '/' . $fileName;
-        if (!file_put_contents($filePath, $decodedImage)) {
-            throw new \Exception('Failed to save image');
+        if (!rename($tempFile, $filePath)) {
+            throw new \Exception('Failed to move optimized image to public directory');
         }
-
-        // Optimize the saved image
-        $optimizerChain = OptimizerChainFactory::create();
-        $optimizerChain->optimize($filePath);
 
         return $relativePath;
     }

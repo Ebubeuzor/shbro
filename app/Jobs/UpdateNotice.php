@@ -65,8 +65,12 @@ class UpdateNotice implements ShouldQueue
         }
     
         $data2 = $validator->validated();
+
+        $existingNotice = Hosthomenotice::pluck("notice")->toArray();
     
-        return Hosthomenotice::create($data2);
+        if(!in_array($data2['notice'], $existingNotice)){
+            return Hosthomenotice::create($data2);
+        }
         
     }
 }

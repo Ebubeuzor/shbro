@@ -12,9 +12,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
+use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class ProcessImage implements ShouldQueue
 {
@@ -69,7 +71,7 @@ class ProcessImage implements ShouldQueue
     }
 
     
-    private function saveImage($image, $hosthomeid)
+    private function saveImage($image)
     {
         // Check if image is base64 string
         if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
@@ -80,32 +82,41 @@ class ProcessImage implements ShouldQueue
             $decodedImage = base64_decode($imageData);
 
             if ($decodedImage === false) {
-                $this->deleteHostHome($hosthomeid);
                 throw new \Exception('Failed to decode image');
             }
         } else {
-            $this->deleteHostHome($hosthomeid);
             throw new \Exception('Invalid image format');
         }
 
+        $tempDir = sys_get_temp_dir();
+        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
+
+        // Save the decoded image to the temp file
+        if (!file_put_contents($tempFile, $decodedImage)) {
+            throw new \Exception('Failed to save image to temp file');
+        }
+
+        // Optimize the image
+        try {
+            ImageOptimizer::optimize($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+
+        // Move the optimized image to the public directory
         $dir = 'images/';
         $fileName = Str::random() . '.' . $imageType;
         $absolutePath = public_path($dir);
         $relativePath = $dir . $fileName;
+        $filePath = $absolutePath . '/' . $fileName;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Save the decoded image to the file
-        if (!file_put_contents($absolutePath . '/' . $fileName, $decodedImage)) {
-            $this->deleteHostHome($hosthomeid);
-            throw new \Exception('Failed to save image');
+        if (!rename($tempFile, $filePath)) {
+            throw new \Exception('Failed to move optimized image to public directory');
         }
-
-        // Optimize the saved image
-        $optimizerChain = OptimizerChainFactory::create();
-        $optimizerChain->optimize($absolutePath . '/' . $fileName);
 
         return $relativePath;
     }

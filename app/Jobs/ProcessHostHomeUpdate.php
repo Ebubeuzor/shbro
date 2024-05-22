@@ -156,7 +156,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
             $host = User::find($hostHome->user_id);
             $cohost = Hosthomecohost::where('user_id',$this->user->id)->first();
             if ($cohost) {
-                $destination = "http://localhost:5173/EditHostHomes/$hostHome->id";
+                $destination = "https://shortletbooking.com/EditHostHomes/$hostHome->id";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$this->user,$destination));
                 $mainHost = User::find($cohost->host_id);
                 

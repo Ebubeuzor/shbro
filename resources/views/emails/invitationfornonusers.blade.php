@@ -8,7 +8,7 @@
 <body>
     
     <div>
-        <a href="http://localhost:5173/SignUp?hostremtoken={{$hostremToken}}&hostid={{$hostid}}&cohostemail={{$cohostemail}}">Click the link to sign up and become a co host</a>
+        <a href="https://shortletbooking.com/SignUp?hostremtoken={{$hostremToken}}&hostid={{$hostid}}&cohostemail={{$cohostemail}}">Click the link to sign up and become a co host</a>
     </div>
 
 </body>

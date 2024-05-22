@@ -8,7 +8,7 @@
 <body>
     <div>Hello {{$host->name}}</div>
     <div>Your cohost {{$cohost->name}} is trying to {{$cohostRequest}} an apartment please approve or decline</div>
-    <div><a href="http://localhost:5173/EditHostHomes/{{$hosthome->id}}">Click to view apartment</a></div>
+    <div><a href="https://shortletbooking.com/EditHostHomes/{{$hosthome->id}}">Click to view apartment</a></div>
     <div>
         @if ($cohostRequest == "create")
         <a href="{{ route('approveHomeForHost', ['hostid' => $host->id, 'hosthomeid' => $hosthome->id]) }}">Click to approve</a>

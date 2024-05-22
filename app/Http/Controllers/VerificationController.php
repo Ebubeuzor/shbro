@@ -24,16 +24,16 @@ class VerificationController extends Controller
 
                 $recentToken = $user->usertokens->last();
 
-                return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
-
+                
                 if ($user->host) {
                     $softDeletedHostHomes = $user->hosthomes()->onlyTrashed()->get();
-
+                    
                     foreach ($softDeletedHostHomes as $hostHome) {
                         $hostHome->restore();
                     }
                 }
-
+                
+                return redirect()->away('https://shortletbooking.com/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
             }    
             else{
                 abort(404);

@@ -133,7 +133,7 @@ body, h1, h2, h3, p, button, i {
             <div class="mt-4 flex justify-center">
                 <a href="/" class="text-blue-500">
                     <button class="btn">
-                    <a href="http://localhost:5173/">Back to Home</a>
+                    <a href="https://shortletbooking.com/">Back to Home</a>
                     </button>
                 </a>
             </div>

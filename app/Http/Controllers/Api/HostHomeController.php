@@ -777,7 +777,7 @@ class HostHomeController extends Controller
 
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -841,7 +841,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
@@ -882,7 +882,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -920,7 +920,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -957,7 +957,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
@@ -993,7 +993,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
@@ -1029,7 +1029,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
@@ -1065,7 +1065,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -1121,7 +1121,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -1178,7 +1178,7 @@ class HostHomeController extends Controller
         $host = User::find($hostHome->user_id);
         $cohost = Hosthomecohost::where('user_id',$user->id)->first();
         if ($cohost) {
-            $destination = "http://localhost:5173/Scheduler";
+            $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
@@ -1239,7 +1239,7 @@ class HostHomeController extends Controller
             $host = User::find($hostHome->user_id);
             $cohost = Hosthomecohost::where('user_id',$user->id)->first();
             if ($cohost) {
-                $destination = "http://localhost:5173/Scheduler";
+                $destination = "https://shortletbooking.com/Scheduler";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
             }
             
@@ -1353,7 +1353,7 @@ class HostHomeController extends Controller
             }
         }
         
-        return redirect()->away('http://localhost:5173');
+        return view('/');
 
     }
 

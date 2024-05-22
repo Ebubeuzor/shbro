@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Spatie\ImageOptimizer\OptimizerChainFactory;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class HomepageController extends Controller

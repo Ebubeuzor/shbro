@@ -1468,7 +1468,14 @@ class HostHomeController extends Controller
         $hostHome->user()->update([
             "host" => 1,
         ]);
-        
+
+        $user = User::find($hostHome->user_id);
+
+        $message = "Your home listing has been approved!.";
+        $title = "Home Listing Approved";
+    
+        Mail::to($user->email)->queue(new NotificationMail($user, $message, $title));
+    
         Cache::clear();
         return response()->json(['message'=>'approved'],200);
     }
@@ -1501,14 +1508,14 @@ class HostHomeController extends Controller
         $tip->url = "/EditHostHomes" . $hosthomeid;
         $tip->save();
 
-        $useremail = User::find($user);
+        $user = User::find($user);
         $hostHome = HostHome::find($hosthomeid);
 
         $hostHome->update([
             'disapproved' => 'disapproved'
         ]);
 
-        Mail::to($useremail->email)->send(new NotificationMail($useremail,$data['message'],$title));
+        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'],$title));
         
 
         return response()->json(['message'=>'disapproved'],200);

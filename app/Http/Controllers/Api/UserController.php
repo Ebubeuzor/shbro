@@ -1064,13 +1064,11 @@ class UserController extends Controller
         return response()->json("Deleted",200);
     }
     
-    
     /**
      * @lrd:start
      * This is a delete request and it is used to delete users wishlistContainers
      * @lrd:end
      */
-
     public function deleteUserWishlistContainers()
     {
         // Get the authenticated user

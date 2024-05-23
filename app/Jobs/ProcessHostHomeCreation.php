@@ -19,6 +19,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 
@@ -192,6 +193,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         Cache::flush();
     }
 
+    
     private function saveVideo($video)
     {
         // Check if video is base64 string
@@ -202,9 +204,6 @@ class ProcessHostHomeCreation implements ShouldQueue
             // Decode base64 video data
             $decodedVideo = base64_decode($videoData);
 
-            if ($decodedVideo === false) {
-                throw new \Exception('Failed to decode video');
-            }
         } else {
             throw new \Exception('Invalid video format');
         }
@@ -215,11 +214,14 @@ class ProcessHostHomeCreation implements ShouldQueue
         $relativePath = $dir . $file;
 
         if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
+            if (!File::makeDirectory($absolutePath, 0755, true)) {
+                throw new \Exception('Failed to create directory: ' . $absolutePath);
+            }
         }
 
         // Save the decoded video to the file
-        if (!file_put_contents($absolutePath . $file, $decodedVideo)) {
+        $filePath = $absolutePath . '/' . $file;
+        if (!file_put_contents($filePath, $decodedVideo)) {
             throw new \Exception('Failed to save video');
         }
 

@@ -230,6 +230,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
         return false;
     }
     
+    
     private function saveVideo($video)
     {
         // Check if video is base64 string
@@ -240,9 +241,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
             // Decode base64 video data
             $decodedVideo = base64_decode($videoData);
 
-            if ($decodedVideo === false) {
-                throw new \Exception('Failed to decode video');
-            }
         } else {
             throw new \Exception('Invalid video format');
         }
@@ -253,14 +251,18 @@ class ProcessHostHomeUpdate implements ShouldQueue
         $relativePath = $dir . $file;
 
         if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
+            if (!File::makeDirectory($absolutePath, 0755, true)) {
+                throw new \Exception('Failed to create directory: ' . $absolutePath);
+            }
         }
 
         // Save the decoded video to the file
-        if (!file_put_contents($absolutePath . $file, $decodedVideo)) {
+        $filePath = $absolutePath . '/' . $file;
+        if (!file_put_contents($filePath, $decodedVideo)) {
             throw new \Exception('Failed to save video');
         }
 
         return $relativePath;
     }
+    
 }

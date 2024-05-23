@@ -26,7 +26,7 @@ class NotifyController extends Controller
     {
         $user = Auth::user();
         return NotificationResource::collection(
-            User::whereId($user->id)->get()
+            Notification::where("user_id",$user->id)->get()
         );
     }
     

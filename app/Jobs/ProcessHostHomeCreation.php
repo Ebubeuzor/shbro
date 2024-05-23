@@ -160,32 +160,19 @@ class ProcessHostHomeCreation implements ShouldQueue
                     'needApproval' => true
                 ]);
                 Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
-                $coHost = Hosthomecohost::where('user_id',auth()->id())->first();
-                $mainHost = User::find($coHost->host_id);
                 
-                $cohosts = $mainHost->cohosts()->with('user')->get();
-                // Filter out duplicate co-hosts based on email
-                $uniqueCohosts = $cohosts->unique('user.email');
+                $this->clearAllCache();
 
             }
 
             if ($host->cohosts()->exists()) {
-                $coHosts = $host->cohosts;
+                $coHosts = $host->cohosts()->with('user')->get();
+                $uniqueCohosts = $coHosts->unique('user.email');
 
-                foreach ($coHosts as $coHost) {
-                    Hosthomecohost::create([
-                        'user_id' => $coHost->user_id,
-                        'host_id' => $coHost->host_id,
-                        'host_home_id' => $hostHome->id
-                    ]);
+                foreach ($uniqueCohosts as $coHost) {
+                    CreateHomesForCohosts::dispatch($coHost->user_id,$coHost->host_id,$hostHome->id);
                 }
-
-                $mainHost = User::find($this->userId);
                 
-                $cohosts = $mainHost->cohosts()->with('user')->get();
-                // Filter out duplicate co-hosts based on email
-                $uniqueCohosts = $cohosts->unique('user.email');
-
                 $this->clearAllCache();
 
             }

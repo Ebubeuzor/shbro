@@ -190,7 +190,7 @@ class ProcessHostHomeCreation implements ShouldQueue
 
     public function clearAllCache()
     {
-        Cache::flush();
+        Cache::clear();
     }
 
     

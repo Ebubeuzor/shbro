@@ -158,18 +158,8 @@ class ProcessHostHomeUpdate implements ShouldQueue
             if ($cohost) {
                 $destination = "https://shortletbooking.com/EditHostHomes/$hostHome->id";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$this->user,$destination));
-                $mainHost = User::find($cohost->host_id);
-                
-                $cohosts = $mainHost->cohosts()->with('user')->get();
-                // Filter out duplicate co-hosts based on email
-                $uniqueCohosts = $cohosts->unique('user.email');
-
-                $this->clearUserHostHomesCache($mainHost->id);
-
-                foreach ($uniqueCohosts as $cohost) {
-                    $this->clearUserHostHomesCache($cohost->user->id);
-                }
             }
+
             $message = "Your listing has been updated now awaiting admin approval";
             $title = "Listing updated Successfully.";
             
@@ -179,25 +169,15 @@ class ProcessHostHomeUpdate implements ShouldQueue
             $notification->save();
             
             event(new NewNotificationEvent($notification, $notification->id, $host->id));
-                
-            Mail::to($host->email)->queue(new NotificationMail($host,$message,$title));
-            $mainHost = User::find($this->user->id);
-                
-            $cohosts = $mainHost->cohosts()->with('user')->get();
-            // Filter out duplicate co-hosts based on email
-            $uniqueCohosts = $cohosts->unique('user.email');
-
-            foreach ($uniqueCohosts as $cohost) {
-                $this->clearUserHostHomesCache($cohost->user->id);
-            }
-
             
+            Mail::to($host->email)->queue(new NotificationMail($host,$message,$title));
+
+            $this->clearCacheForAllUsers();
+
             $admins = User::whereNotNull('adminStatus')->get();
             $message = "Attention Admins: An apartment update has been submitted by a user. Please review and take necessary action. Thank you!";
             $title = "Urgent: User Submitted Apartment Update Requires Admin Attention";
             NotifyAdmins::dispatch($admins,$message,$title);
-
-            $this->clearCacheForAllUsers();
 
         });
     }
@@ -205,16 +185,9 @@ class ProcessHostHomeUpdate implements ShouldQueue
     
     private function clearCacheForAllUsers()
     {
-        Cache::clear();
+        Cache::flush();
     }
     
-    public function clearUserHostHomesCache($userId)
-    {
-        $cacheKey = 'user_host_homes_' . $userId;
-        if ($cacheKey) {
-            Cache::forget($cacheKey);
-        }
-    }
 
     private function hasNewListingPromotionDiscount($hostHome)
     {

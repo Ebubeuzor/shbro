@@ -67,6 +67,12 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
         $total = $price + $service_fee + $tax;
 
+        // Check if $video is not an empty string before updating
+        if (!empty($video)) {
+            // Assuming the rest of your code remains unchanged
+            $hostHomeData['video'] = $this->saveVideo($video);
+        }
+
         $hostHomeData = [
             'property_type' => $data['property_type'],
             'guest_choice' => $data['guest_choice'],
@@ -75,7 +81,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'bedroom' => $data['bedrooms'],
             'beds' => $data['beds'],
             'bathrooms' => $data['bathrooms'],
-            'video' => $this->saveVideo($data['hosthomevideo']),
             'title' => $data['title'],
             'description' => $data['description'],
             'reservation' => $data['reservation'],

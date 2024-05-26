@@ -67,7 +67,8 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
         $total = $price + $service_fee + $tax;
 
-        
+        $video = $data['hosthomevideo'];
+
         $hostHomeData = [
             'property_type' => $data['property_type'],
             'guest_choice' => $data['guest_choice'],
@@ -76,7 +77,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'bedroom' => $data['bedrooms'],
             'beds' => $data['beds'],
             'bathrooms' => $data['bathrooms'],
-            'video' => $this->saveVideo($data['hosthomevideo']),
             'title' => $data['title'],
             'description' => $data['description'],
             'reservation' => $data['reservation'],
@@ -92,6 +92,12 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ];
+
+        // Check if $video is not an empty string before updating
+        if ($video != "") {
+            // Assuming the rest of your code remains unchanged
+            $hostHomeData['video'] = $this->saveVideo($video);
+        }
 
         DB::transaction(function () use ($hostHome, $hostHomeData,$data,$price) {
             $hostHome->update($hostHomeData);

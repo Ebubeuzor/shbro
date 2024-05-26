@@ -67,6 +67,8 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
         $total = $price + $service_fee + $tax;
 
+        $video = $data['hosthomevideo'];
+
         // Check if $video is not an empty string before updating
         if (!empty($video)) {
             // Assuming the rest of your code remains unchanged

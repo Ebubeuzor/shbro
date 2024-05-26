@@ -69,12 +69,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
         $video = $data['hosthomevideo'];
 
-        // Check if $video is not an empty string before updating
-        if (!empty($video)) {
-            // Assuming the rest of your code remains unchanged
-            $hostHomeData['video'] = $this->saveVideo($video);
-        }
-
         $hostHomeData = [
             'property_type' => $data['property_type'],
             'guest_choice' => $data['guest_choice'],
@@ -98,6 +92,12 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'cancellation_policy' => $data['cancelPolicy'],
             'security_deposit' => $data['securityDeposit']
         ];
+
+        // Check if $video is not an empty string before updating
+        if (!empty($video)) {
+            // Assuming the rest of your code remains unchanged
+            $hostHomeData['video'] = $this->saveVideo($video);
+        }
 
         DB::transaction(function () use ($hostHome, $hostHomeData,$data,$price) {
             $hostHome->update($hostHomeData);

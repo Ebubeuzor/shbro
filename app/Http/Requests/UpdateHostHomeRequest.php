@@ -24,8 +24,7 @@ class UpdateHostHomeRequest extends FormRequest
             'bathrooms' => "required",
             'amenities' => "array",
             'hosthomephotos' => "array",
-            'hosthomevideo' => [
-                'required'],
+            'hosthomevideo' => "nullable | string",
             'title' => "required",
             'hosthomedescriptions' => "required | array",
             'description' => "required",

@@ -94,7 +94,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
         ];
 
         // Check if $video is not an empty string before updating
-        if (!empty($video)) {
+        if ($video != "") {
             // Assuming the rest of your code remains unchanged
             $hostHomeData['video'] = $this->saveVideo($video);
         }

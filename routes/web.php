@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ForgotPassword;
 use App\Http\Controllers\Api\HostHomeController;
 use App\Http\Controllers\VerificationController;
+use App\Mail\NotificationMail;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -86,6 +88,19 @@ Route::get('myjsfile', function () {
         $headers
     );
 })->name('javascript.file');
+
+
+Route::get('/send-test-email', function () {
+    $recipient = 'nctest@namecheap.com';
+    $subject = 'Test Email';
+    $message = 'This is a test email.';
+
+    Mail::raw($message, function ($mail) use ($recipient, $subject) {
+        $mail->to($recipient)->subject($subject);
+    });
+
+    return 'Test email sent!';
+});
 
 
 Route::get('/{any}', function () {

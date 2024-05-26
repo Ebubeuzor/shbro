@@ -1460,7 +1460,9 @@ class HostHomeController extends Controller
     public function approveHome($id)
     {
         $hostHome = HostHome::where('id', $id)->first();
-
+        
+        $user = User::find($hostHome->user_id);
+        
         $hostHome->update([
             "verified" => 1,
         ]);
@@ -1469,7 +1471,6 @@ class HostHomeController extends Controller
             "host" => 1,
         ]);
 
-        $user = User::find($hostHome->user_id);
 
         $message = "Your home listing has been approved!.";
         $title = "Home Listing Approved";

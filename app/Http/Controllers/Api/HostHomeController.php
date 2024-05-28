@@ -1668,10 +1668,10 @@ class HostHomeController extends Controller
             $hostHome->hosthomerules()->delete();
             $hostHome->forceDelete();
             
+            $this->clearCacheForAllUsers();
         }
 
         
-        $this->clearCacheForAllUsers();
     }
     
     

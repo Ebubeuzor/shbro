@@ -1668,16 +1668,6 @@ class HostHomeController extends Controller
             $hostHome->hosthomerules()->delete();
             $hostHome->forceDelete();
             
-            $cohosts = $host->cohosts()->with('user')->get();
-            // Filter out duplicate co-hosts based on email
-            $uniqueCohosts = $cohosts->unique('user.email');
-
-            $this->clearUserHostHomesCache($host->id);
-
-            foreach ($uniqueCohosts as $cohost) {
-                $this->clearUserHostHomesCache($cohost->user->id);
-            }
-            return response('This home has been deleted',200);
         }
 
         
@@ -1695,6 +1685,6 @@ class HostHomeController extends Controller
 
     private function clearCacheForAllUsers()
     {
-        Cache::flush();
+        Cache::clear();
     }
 }

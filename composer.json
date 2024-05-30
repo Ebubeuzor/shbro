@@ -13,6 +13,7 @@
         "laravel/sanctum": "^3.0",
         "laravel/socialite": "^5.9",
         "laravel/tinker": "^2.7",
+        "php-ffmpeg/php-ffmpeg": "^1.2",
         "predis/predis": "^2.2",
         "pusher/pusher-php-server": "^7.2",
         "rakutentech/laravel-request-docs": "^2.27",

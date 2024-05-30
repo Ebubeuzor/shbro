@@ -52,6 +52,7 @@ use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
 use App\Otp\UserUpdateNumberOtp;
 use Carbon\Carbon;
+use FFMpeg\FFMpeg;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -2424,6 +2425,86 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function uploadBase64(Request $request)
+    {
+        $request->validate([
+            'video' => 'required|string', // Validate that the video is a base64 string
+        ]);
+
+        $videoBase64 = $request->input('video');
+        $videoPath = $this->saveVideo($videoBase64);
+
+        // Call a method to convert and compress the video
+        $convertedPath = $this->convertAndCompressVideo($videoPath);
+
+        // Optionally remove the original uncompressed file
+        File::delete(public_path($videoPath));
+
+        return response()->json(['path' => $convertedPath], 200);
+    }
+
+    private function saveVideo($video)
+    {
+        // Check if video is base64 string
+        if (preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
+            $videoData = substr($video, strpos($video, ',') + 1);
+            $videoType = strtolower($matches[1]);
+
+            // Decode base64 video data
+            $decodedVideo = base64_decode($videoData);
+        } else {
+            throw new \Exception('Invalid video format');
+        }
+
+        $dir = 'videos/';
+        $file = Str::random() . '.' . $videoType;
+        $absolutePath = public_path($dir);
+        $relativePath = $dir . $file;
+
+        if (!File::exists($absolutePath)) {
+            if (!File::makeDirectory($absolutePath, 0755, true)) {
+                throw new \Exception('Failed to create directory: ' . $absolutePath);
+            }
+        }
+
+        // Save the decoded video to the file
+        $filePath = $absolutePath . '/' . $file;
+        if (!file_put_contents($filePath, $decodedVideo)) {
+            throw new \Exception('Failed to save video');
+        }
+
+        return $relativePath;
+    }
+
+    private function convertAndCompressVideo($relativePath)
+    {
+        $absolutePath = public_path($relativePath);
+        $ffmpeg = FFMpeg::create([
+            'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
+            'ffprobe.binaries' => 'ffprobe', // Assuming ffprobe is in the system's PATH
+            'timeout'          => 3600, // The timeout for the underlying process
+            'ffmpeg.threads'   => 12,   // The number of threads that FFMpeg should use
+        ]);
+
+        $video = $ffmpeg->open($absolutePath);
+        $format = new \FFMpeg\Format\Video\WebM(); // WebM format
+
+        // Set lower bitrate for better compression
+        $format->setKiloBitrate(500); // Adjust as needed for better compression
+
+        // Resize the video to a lower resolution for compression
+        $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(640, 360))->synchronize(); // Resize to 640x360
+
+        // Define the output path and extension (always .webm)
+        $newPath = public_path('videos/' . Str::random() . '.webm');
+
+        $video->save($format, $newPath);
+
+        return 'videos/' . basename($newPath);
+    }
+
+
 
     /**
      * @lrd:start

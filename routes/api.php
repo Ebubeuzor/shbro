@@ -265,3 +265,5 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
 
     Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
+
+    Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');

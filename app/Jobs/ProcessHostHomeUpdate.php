@@ -11,6 +11,7 @@ use App\Models\Hosthomediscount;
 use App\Models\Hosthomerule;
 use App\Models\Notification;
 use App\Models\User;
+use FFMpeg\FFMpeg;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -210,6 +211,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
     }
     
     
+    
     private function saveVideo($video)
     {
         // Check if video is base64 string
@@ -219,7 +221,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
             // Decode base64 video data
             $decodedVideo = base64_decode($videoData);
-
         } else {
             throw new \Exception('Invalid video format');
         }
@@ -243,5 +244,33 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
         return $relativePath;
     }
+
+    private function convertAndCompressVideo($relativePath)
+    {
+        $absolutePath = public_path($relativePath);
+        $ffmpeg = FFMpeg::create([
+            'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
+            'ffprobe.binaries' => 'ffprobe', // Assuming ffprobe is in the system's PATH
+            'timeout'          => 3600, // The timeout for the underlying process
+            'ffmpeg.threads'   => 12,   // The number of threads that FFMpeg should use
+        ]);
+
+        $video = $ffmpeg->open($absolutePath);
+        $format = new \FFMpeg\Format\Video\WebM(); // WebM format
+
+        // Set lower bitrate for better compression
+        $format->setKiloBitrate(500); // Adjust as needed for better compression
+
+        // Resize the video to a lower resolution for compression
+        $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(640, 360))->synchronize(); // Resize to 640x360
+
+        // Define the output path and extension (always .webm)
+        $newPath = public_path('videos/' . Str::random() . '.webm');
+
+        $video->save($format, $newPath);
+
+        return 'videos/' . basename($newPath);
+    }
+
     
 }

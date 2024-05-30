@@ -97,7 +97,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
         // Check if $video is not an empty string before updating
         if ($video != "") {
             // Assuming the rest of your code remains unchanged
-            $hostHomeData['video'] = $this->saveVideo($video);
+            $hostHomeData['video'] = $this->uploadBase64($video);
         }
 
         DB::transaction(function () use ($hostHome, $hostHomeData,$data,$price) {
@@ -211,6 +211,19 @@ class ProcessHostHomeUpdate implements ShouldQueue
     }
     
     
+    public function uploadBase64($video)
+    {
+        $videoBase64 = $video;
+        $videoPath = $this->saveVideo($videoBase64);
+
+        // Call a method to convert and compress the video
+        $convertedPath = $this->convertAndCompressVideo($videoPath);
+
+        // Optionally remove the original uncompressed file
+        File::delete(public_path($videoPath));
+
+        return $convertedPath;
+    }
     
     private function saveVideo($video)
     {

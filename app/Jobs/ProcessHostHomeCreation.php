@@ -67,7 +67,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         $hostHome->bedroom = $data['bedrooms'];
         $hostHome->beds = $data['beds'];
         $hostHome->bathrooms = $data['bathrooms'];
-        $hostHome->video = $this->saveVideo($data['hosthomevideo']);
+        $hostHome->video = $this->uploadBase64($data['hosthomevideo']);
         $hostHome->title = $data['title'];
         $hostHome->description = $data['description'];
         $hostHome->reservation = $data['reservation'];
@@ -195,6 +195,20 @@ class ProcessHostHomeCreation implements ShouldQueue
     }
 
     
+    
+    public function uploadBase64($video)
+    {
+        $videoBase64 = $video;
+        $videoPath = $this->saveVideo($videoBase64);
+
+        // Call a method to convert and compress the video
+        $convertedPath = $this->convertAndCompressVideo($videoPath);
+
+        // Optionally remove the original uncompressed file
+        File::delete(public_path($videoPath));
+
+        return $convertedPath;
+    }
     
     private function saveVideo($video)
     {

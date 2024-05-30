@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Models\HostHome;
 use App\Http\Requests\StoreHostHomeRequest;
@@ -1474,7 +1475,12 @@ class HostHomeController extends Controller
 
         $message = "Your home listing has been approved!.";
         $title = "Home Listing Approved";
-    
+        $notification = new Notification();
+        $notification->user_id = $user->id;  // Assuming you want to save the user ID
+        $notification->Message = $message;
+        $notification->save();
+        // Broadcast the NewNotificationEvent to notify the WebSocket clients
+        event(new NewNotificationEvent($notification, $notification->id, $user->id));
         Mail::to($user->email)->queue(new NotificationMail($user, $message, $title));
     
         Cache::clear();
@@ -1515,6 +1521,14 @@ class HostHomeController extends Controller
         $hostHome->update([
             'disapproved' => 'disapproved'
         ]);
+
+        
+        $notification = new Notification();
+        $notification->user_id = $user->id;  // Assuming you want to save the user ID
+        $notification->Message = $data['message'];
+        $notification->save();
+        // Broadcast the NewNotificationEvent to notify the WebSocket clients
+        event(new NewNotificationEvent($notification, $notification->id, $user->id));
 
         Mail::to($user->email)->queue(new NotificationMail($user,$data['message'],$title));
         

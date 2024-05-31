@@ -80,6 +80,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'bathrooms' => $data['bathrooms'],
             'title' => $data['title'],
             'description' => $data['description'],
+            'disapproved' => null,
             'reservation' => $data['reservation'],
             'actualPrice' => $data['price'],
             'check_out_time' => $data['check_out_time'],

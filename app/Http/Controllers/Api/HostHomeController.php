@@ -1532,7 +1532,7 @@ class HostHomeController extends Controller
 
         Mail::to($user->email)->queue(new NotificationMail($user,$data['message'],$title));
         
-
+        Cache::clear();
         return response()->json(['message'=>'disapproved'],200);
     }
 

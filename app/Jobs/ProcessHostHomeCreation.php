@@ -247,20 +247,20 @@ class ProcessHostHomeCreation implements ShouldQueue
     {
         $absolutePath = public_path($relativePath);
         $ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
-            'ffprobe.binaries' => 'ffprobe', // Assuming ffprobe is in the system's PATH
+            'ffmpeg.binaries'  => '/usr/bin/ffmpeg', // Assuming ffmpeg is in the system's PATH
+            'ffprobe.binaries' => '/usr/bin/ffprobe', // Assuming ffprobe is in the system's PATH
             'timeout'          => 3600, // The timeout for the underlying process
-            'ffmpeg.threads'   => 12,   // The number of threads that FFMpeg should use
+            'ffmpeg.threads'   => 12,   // The number of threads that FFMpeg should use
         ]);
 
         $video = $ffmpeg->open($absolutePath);
         $format = new \FFMpeg\Format\Video\WebM(); // WebM format
 
         // Set lower bitrate for better compression
-        $format->setKiloBitrate(500); // Adjust as needed for better compression
+        $format->setKiloBitrate(700); // Adjust as needed for better compression
 
-        // Resize the video to a lower resolution for compression
-        $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(640, 360))->synchronize(); // Resize to 640x360
+        // Resize the video to maintain aspect ratio
+        $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(1280, 720), \FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_INSET)->synchronize();
 
         // Define the output path and extension (always .webm)
         $newPath = public_path('videos/' . Str::random() . '.webm');

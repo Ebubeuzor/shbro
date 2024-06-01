@@ -12,6 +12,7 @@ use App\Http\Resources\AdminDamageResource;
 use App\Http\Resources\HostHomeReportsResource;
 use App\Http\Resources\UserReportsResource;
 use App\Jobs\NotifyAdmins;
+use App\Jobs\SaveReportDamages;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\Hosthomecohost;
@@ -187,43 +188,12 @@ class ReportController extends Controller
 
             // Check if the booking is eligible for damage report
             if (!$this->isEligibleForDamageReport($booking)) {
-                // Create a new ReportPropertyDamage record
-                $reportDamage = new ReportPropertyDamage();
-                $reportDamage->booking_number = $data['booking_number'];
-                $reportDamage->host_id = auth()->id();
-                $reportDamage->damage_description = $data['description'];
-                $reportDamage->video = $this->saveVideo($data['video']);
-                $reportDamage->save();
-
-                // Iterate through each photo and create an Image record
-                $images = $data['photos'];
-                foreach ($images as $base64Image) {
-                    $imageData = [
-                        'photos' => $base64Image,
-                        'report_property_damage_id' => $reportDamage->id,
-                    ];
-                    $this->createImages($imageData);
-                }
-
-                // Update the booking's pauseSecurityDepositToGuest
-                $booking->pauseSecurityDepositToGuest = now();
-                $booking->save();
-
-                $guest = User::find($booking->user_id);
-                $guestMessage = "Important Notice: The host has reported damages to their apartment during your stay. Your security deposit has been paused from entering your wallet pending verification by admins. We will update you once the matter is resolved. Thank you for your cooperation.";
-                $guestTitle = "Notice: Host Report of Apartment Damage";
-                Mail::to($guest->email)->queue(new NotificationMail($guest, $guestMessage, $guestTitle));
                 
-                $admins = User::whereNotNull('adminStatus')->get();
-                $message = "Urgent: Host has reported damages to their apartment. Immediate attention required.";
-                $title = "Damage Report: Urgent Attention Needed";
-
-                NotifyAdmins::dispatch($admins,$message,$title);
+                SaveReportDamages::dispatch($data,$hostid,$booking);
 
                 // Provide a success response
                 return response()->json([
-                    'message' => 'Damage reported successfully.',
-                    'data' => $reportDamage,
+                    'message' => 'Damage reported successfully.'
                 ], 200);
             } else {
                 abort(400, 'Damage report not allowed after 24 hours of check-out.');
@@ -410,100 +380,6 @@ class ReportController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    
-    private function saveVideo($video)
-    {
-        // Check if video is base64 string
-        if (preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
-            $videoData = substr($video, strpos($video, ',') + 1);
-            $videoType = strtolower($matches[1]);
-            
-            // Decode base64 video data
-            $decodedVideo = base64_decode($videoData);
-
-            if ($decodedVideo === false) {
-                throw new \Exception('Failed to decode video');
-            }
-        } else {
-            throw new \Exception('Invalid video format');
-        }
-
-        $dir = 'videos/';
-        $file = Str::random() . '.' . $videoType;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
-
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-
-        // Save the decoded video to the file
-        if (!file_put_contents($absolutePath . $file, $decodedVideo, FILE_BINARY)) {
-            throw new \Exception('Failed to save video');
-        }
-
-        return $relativePath;
-    }
-    
-    public function createImages($data)
-    {
-        // Validate the input data
-        $validator = Validator::make($data, [
-            'photos' => ' required | string',
-            'report_property_damage_id' => 'exists:App\Models\ReportPropertyDamage,id'
-        ]);
-
-        // Check for validation errors
-        if ($validator->fails()) {
-            // Handle validation errors, you can return a response or throw an exception
-            return response(['error' => $validator->errors()], 422);
-        }
-
-        $data2 = $validator->validated();
-        $data2['photos'] = $this->saveImage($data2['photos'], $data2['report_property_damage_id']);
-
-        return ReportPropertyDamagePhotos::create($data2);
-    }
-
-    
-    private function saveImage($image,$report_property_damage_id)
-    {
-        // Check if image is base64 string
-        if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
-            $imageData = substr($image, strpos($image, ',') + 1);
-            $imageType = strtolower($matches[1]);
-
-            // Decode base64 image data
-            $decodedImage = base64_decode($imageData);
-
-            if ($decodedImage === false) {
-                $report_property_damage = ReportPropertyDamage::find($report_property_damage_id);
-                $report_property_damage->delete();
-                throw new \Exception('Failed to decode image');
-            }
-        } else {
-            $report_property_damage = ReportPropertyDamage::find($report_property_damage_id);
-            $report_property_damage->delete();
-            throw new \Exception('Invalid image format');
-        }
-
-        $dir = 'images/';
-        $file = Str::random() . '.' . $imageType;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
-
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-
-        // Save the decoded image to the file
-        if (!file_put_contents($relativePath, $decodedImage)) {
-            throw new \Exception('Failed to save image');
-        }
-
-        return $relativePath;
     }
     
     /**

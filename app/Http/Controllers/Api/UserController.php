@@ -1504,7 +1504,7 @@ class UserController extends Controller
             $minPrice = $data['min_price'];
             $maxPrice = $data['max_price'];
             $amenities = $data['amenities'];
-            $per_page = $data['per_page'] ?? 10;
+            $per_page = $data['per_page'] != "" ? $data['per_page'] : 10;
     
             // Start with a base query for filtering host homes
             $query = HostHome::where('verified', 1)
@@ -1576,7 +1576,7 @@ class UserController extends Controller
             $minPrice = $data['min_price'];
             $maxPrice = $data['max_price'];
             $amenities = $data['amenities'];
-            $per_page = $data['per_page'] ?? 10;
+            $per_page = $data['per_page'] != "" ? $data['per_page'] : 10;
 
             $query = HostHome::where('verified', 1)
                             ->whereNull('disapproved')

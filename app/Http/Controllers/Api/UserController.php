@@ -1534,11 +1534,11 @@ class UserController extends Controller
             }
     
             if (!empty($minPrice) && is_numeric($minPrice)) {
-                $query->where('price', '>=', $minPrice);
+                $query->where('actualPrice', '>=', $minPrice);
             }
     
             if (!empty($maxPrice) && is_numeric($maxPrice)) {
-                $query->where('price', '<=', $maxPrice);
+                $query->where('actualPrice', '<=', $maxPrice);
             }
     
             if (!empty($amenities) && is_array($amenities)) {
@@ -1600,11 +1600,11 @@ class UserController extends Controller
             }
             
             if (!empty($minPrice) && is_numeric($minPrice)) {
-                $query->where('price', '>=', $minPrice);
+                $query->where('actualPrice', '>=', $minPrice);
             }
         
             if (!empty($maxPrice) && is_numeric($maxPrice)) {
-                $query->where('price', '<=', $maxPrice);
+                $query->where('actualPrice', '<=', $maxPrice);
             }
 
             if (!empty($amenities) && is_array($amenities)) {

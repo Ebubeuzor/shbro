@@ -999,11 +999,13 @@ class UserController extends Controller
 
         $result = $filteredHostHomes->distinct()->paginate($per_page);
 
+        $resourceCollection = HostHomeResource::collection($result);
+
         // Cache the result with the defined cache key for future use
-        Cache::put($cacheKey, $result, now()->addHours(1)); // Adjust cache expiry time as needed
+        Cache::put($cacheKey, $resourceCollection, now()->addHours(1)); // Adjust cache expiry time as needed
 
         // Return the result
-        return HostHomeResource::collection($result);
+        return $resourceCollection;
     }
 
 

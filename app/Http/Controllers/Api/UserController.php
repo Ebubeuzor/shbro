@@ -2411,7 +2411,7 @@ class UserController extends Controller
             
             $title = "Withdrawal Requested";
             $message = "You have requested a pay of " . $amount . " from your account";
-            Mail::to($user->email)->send(new NotificationMail($user,$message,$title));
+            Mail::to($user->email)->queue(new NotificationMail($user,$message,$title));
 
             $admins = User::whereNotNull('adminStatus')->get();
             RequestPay::dispatch($admins);

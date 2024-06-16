@@ -219,7 +219,7 @@ class AuthController extends Controller
             }
             
             
-            return view('/');
+            return route('/');
         }else{
             abort(404);
         }

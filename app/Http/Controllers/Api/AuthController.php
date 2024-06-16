@@ -218,8 +218,7 @@ class AuthController extends Controller
                 }
             }
             
-            
-            return route('/');
+            return Redirect::away('https://shortletbooking.com/');
         }else{
             abort(404);
         }

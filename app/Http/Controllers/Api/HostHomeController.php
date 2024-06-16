@@ -34,6 +34,7 @@ use App\Mail\CohostUpdateForHost;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
+use App\Models\Cohost;
 use App\Models\HostHomeBlockedDate;
 use App\Models\Hosthomecohost;
 use App\Models\HostHomeCustomDiscount;
@@ -1379,7 +1380,7 @@ class HostHomeController extends Controller
             $user = User::findOrFail($userId);
 
             // Check if the user is a cohost for any host home
-            $coHosts = Hosthomecohost::where('user_id', $userId)->get();
+            $coHosts = Cohost::where('user_id', $userId)->get();
 
             // If the user is not a cohost for any host home, return a 404 error
             if ($coHosts->isEmpty()) {
@@ -1652,7 +1653,7 @@ class HostHomeController extends Controller
         
         $user = User::find(auth()->id());
 
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         $hostHome = HostHome::find($id); 
         $host = User::find($hostHome->user_id);
         if ($user->co_host == true) {
@@ -1662,15 +1663,7 @@ class HostHomeController extends Controller
                 'needApproval' => true
             ]);
             Mail::to($host->email)->queue(new ApartmentDeleteApprovalRequest($hostHome,$host,$user));
-            $cohosts = $host->cohosts()->with('user')->get();
-            // Filter out duplicate co-hosts based on email
-            $uniqueCohosts = $cohosts->unique('user.email');
-
-            $this->clearUserHostHomesCache($host->id);
-
-            foreach ($uniqueCohosts as $cohost) {
-                $this->clearUserHostHomesCache($cohost->user->id);
-            }
+            $this->clearCacheForAllUsers();
             return response('Request has been sent to host',200);
         }else{
             $hostHome->hosthomedescriptions()->delete();
@@ -1688,14 +1681,6 @@ class HostHomeController extends Controller
         
     }
     
-    
-    public function clearUserHostHomesCache($userId)
-    {
-        $cacheKey = 'user_host_homes_' . $userId;
-        if ($cacheKey) {
-            Cache::forget($cacheKey);
-        }
-    }
 
     private function clearCacheForAllUsers()
     {

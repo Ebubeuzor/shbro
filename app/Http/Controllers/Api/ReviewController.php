@@ -9,7 +9,7 @@ use App\Http\Resources\HostPendingReviewForGuestResource;
 use App\Http\Resources\HostPendingReviewResource;
 use App\Http\Resources\PendingReviewResource;
 use App\Http\Resources\ReviewResource;
-use App\Models\Hosthomecohost;
+use App\Models\Cohost;
 use App\Models\Hostpendingreviewforguest;
 use App\Models\Hostreviewforguest;
 use App\Models\Pendingreview;
@@ -124,7 +124,7 @@ class ReviewController extends Controller
 
         $hostId = $user->id;
 
-        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+        $cohost = Cohost::where('user_id',$hostId)->first();
 
         if ($cohost) {
             $hostId = $cohost->host_id;
@@ -150,7 +150,7 @@ class ReviewController extends Controller
 
         $hostId = $user->id;
 
-        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+        $cohost = Cohost::where('user_id',$hostId)->first();
 
         if ($cohost) {
             $hostId = $cohost->host_id;
@@ -177,7 +177,7 @@ class ReviewController extends Controller
 
         $hostId = $user->id;
 
-        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
+        $cohost = Cohost::where('user_id',$hostId)->first();
 
         if ($cohost) {
             $hostId = $cohost->host_id;

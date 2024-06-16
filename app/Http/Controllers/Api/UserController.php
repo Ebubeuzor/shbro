@@ -36,6 +36,7 @@ use App\Models\AboutUser;
 use App\Models\Adminrole;
 use App\Models\Booking;
 use App\Models\Canceltrip;
+use App\Models\Cohost;
 use App\Models\HostHome;
 use App\Models\Hosthomecohost;
 use App\Models\HostView;
@@ -574,7 +575,7 @@ class UserController extends Controller
 
         // If the authenticated user is a cohost, find the corresponding host
         if ($user->co_host == 1) {
-            $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+            $cohostOgHost = Cohost::where('user_id', $user->id)->first();
             $hostId = $cohostOgHost->host_id;
         } else {
             $hostId = $user->id;
@@ -632,7 +633,7 @@ class UserController extends Controller
 
         // If the authenticated user is a cohost, find the corresponding host
         if ($user->co_host) {
-            $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+            $cohostOgHost = Cohost::where('user_id', $user->id)->first();
             $hostId = $cohostOgHost->host_id;
         } else {
             $hostId = $user->id;
@@ -1222,13 +1223,10 @@ class UserController extends Controller
         // Get the authenticated host
         $host = User::find(auth()->id());
 
-        $cohosts = $host->cohosts()->with('user')->get();
-
-        // Filter out duplicate co-hosts based on email
-        $uniqueCohosts = $cohosts->unique('user.email');
+        $cohosts = $host->hostcohosts()->with('user')->get();
 
         // Transform the co-hosts data to the desired format
-        $cohostData = $uniqueCohosts->map(function ($cohost) {
+        $cohostData = $cohosts->map(function ($cohost) {
             return [
                 'id' => $cohost->user->id,
                 'name' => $cohost->user->name,
@@ -1654,7 +1652,7 @@ class UserController extends Controller
 
             // If the authenticated user is a cohost, find the corresponding host
             if ($user->co_host) {
-                $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+                $cohostOgHost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohostOgHost->host_id;
             } else {
                 $hostId = $user->id;
@@ -1711,7 +1709,7 @@ class UserController extends Controller
 
             // If the authenticated user is a cohost, find the corresponding host
             if ($user->co_host) {
-                $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+                $cohostOgHost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohostOgHost->host_id;
             } else {
                 $hostId = $user->id;
@@ -2242,7 +2240,7 @@ class UserController extends Controller
             $user = User::find(auth()->id());
 
             if ($user->co_host) {
-                $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+                $cohostOgHost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohostOgHost->host_id;
             } else {
                 $hostId = $user->id;
@@ -2288,7 +2286,7 @@ class UserController extends Controller
 
             // If the authenticated user is a cohost, find the corresponding host
             if ($user->co_host) {
-                $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+                $cohostOgHost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohostOgHost->host_id;
             } else {
                 $hostId = $user->id;
@@ -2323,12 +2321,6 @@ class UserController extends Controller
         $user = User::find($id);
 
         $hostId = $user->id;
-
-        $cohost = Hosthomecohost::where('user_id',$hostId)->first();
-
-        if ($cohost) {
-            $hostId = $cohost->host_id;
-        }
 
         $host = User::find(intval($hostId));
 

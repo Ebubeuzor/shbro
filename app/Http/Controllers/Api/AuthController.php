@@ -10,6 +10,7 @@ use App\Http\Requests\SignupRequest;
 use App\Mail\CoHostInvitation;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
+use App\Models\Cohost;
 use App\Models\HostHome;
 use App\Models\Hosthomecohost;
 use App\Models\User;
@@ -188,27 +189,40 @@ class AuthController extends Controller
     public function becomeACoHost($userId,$hostid)
     {
 
-        $hostHomes = HostHome::where('user_id', $hostid)->get();
 
-        // Iterate through each host home
-        foreach ($hostHomes as $hostHome) {
+        $existingCoHost = Cohost::where('user_id', $userId)->first();
+
+        if (!$existingCoHost) {
+            $cohost = new Cohost();
+            $cohost->user_id = $userId;
+            $cohost->host_id = $hostid;
+            $cohost->save();
+        
+        
+            $hostHomes = HostHome::where('user_id', $hostid)->get();
+        
+            // Iterate through each host home
+            foreach ($hostHomes as $hostHome) {
             // Check if the user is already a co-host for this home
-            $existingCoHost = Hosthomecohost::where('user_id', $userId)
+                $existingCoHost = Hosthomecohost::where('user_id', $userId)
                 ->where('host_home_id', $hostHome->id)
                 ->first();
 
-            // If the user is not already a co-host, create a co-host entry
-            if (!$existingCoHost) {
-                $hosthomeCoHost = new Hosthomecohost();
-                $hosthomeCoHost->user_id = $userId;
-                $hosthomeCoHost->host_id = $hostid;
-                $hosthomeCoHost->host_home_id = $hostHome->id;
-                $hosthomeCoHost->save();
+                // If the user is not already a co-host, create a co-host entry
+                if (!$existingCoHost) {
+                    $hosthomeCoHost = new Hosthomecohost();
+                    $hosthomeCoHost->user_id = $userId;
+                    $hosthomeCoHost->host_id = $hostid;
+                    $hosthomeCoHost->host_home_id = $hostHome->id;
+                    $hosthomeCoHost->save();
+                }
             }
+            
+            
+            return view('/');
+        }else{
+            abort(404);
         }
-        
-        
-        return view('/');
 
     }
 

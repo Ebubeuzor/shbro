@@ -7,7 +7,7 @@ use App\Events\Typing;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\NotificationMail;
-use App\Models\Hosthomecohost;
+use App\Models\Cohost;
 use App\Models\Message;
 use App\Models\User;
 use App\Repository\ChatRepository;
@@ -102,7 +102,7 @@ class ChatController extends Controller
 
         // If the user is a cohost, get the host user
         if ($user->co_host == true) {
-            $cohost = Hosthomecohost::where('user_id', $user->id)->first();
+            $cohost = Cohost::where('user_id', $user->id)->first();
             $user = User::find($cohost->host_id);
         }
 

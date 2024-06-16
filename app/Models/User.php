@@ -77,6 +77,10 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Hosthomecohost::class, 'host_id');
     }
 
+    public function hostcohosts(){
+        return $this->hasOne(Cohost::class, 'host_id');
+    }
+
     public function pendingReviews(){
         return $this->hasMany(Pendingreview::class);
     }

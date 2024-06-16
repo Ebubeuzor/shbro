@@ -15,7 +15,7 @@ use App\Jobs\NotifyAdmins;
 use App\Jobs\SaveReportDamages;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
-use App\Models\Hosthomecohost;
+use App\Models\Cohost;
 use App\Models\ReportPropertyDamage;
 use App\Models\ReportPropertyDamagePhotos;
 use App\Models\ReportUser;
@@ -162,7 +162,7 @@ class ReportController extends Controller
 
             $hostid = null;
 
-            $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+            $cohost = Cohost::where('user_id', auth()->id())->first();
 
             if ($cohost) {
                 $hostid = $cohost->host_id;
@@ -407,10 +407,13 @@ class ReportController extends Controller
      * @return \Illuminate\Http\JsonResponse
      * @lrd:end
     */
-    public function destroy(Reporthosthome $reporthosthome)
+    public function destroy($id)
     {
+
+        $reportHostHome = ReporthostHome::find($id);
+
         // Delete the specified Reporthosthome instance
-        $reporthosthome->delete();
+        $reportHostHome->delete();
 
         // Return a response indicating success
         return response()->json(['message' => 'Report deleted successfully'], 200);

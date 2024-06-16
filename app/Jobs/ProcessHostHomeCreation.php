@@ -5,8 +5,8 @@ namespace App\Jobs;
 use App\Events\NewNotificationEvent;
 use App\Mail\ApartmentCreationApprovalRequest;
 use App\Mail\NotificationMail;
+use App\Models\Cohost;
 use App\Models\HostHome;
-use App\Models\Hosthomecohost;
 use App\Models\Hosthomerule;
 use App\Models\Notification;
 use App\Models\User;
@@ -57,7 +57,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         $user = User::find($this->userId);
         $hostHome = new HostHome();
 
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
 
         $hostHome->user_id = $cohost ? $cohost->host_id : $user->id;
         $hostHome->property_type = $data['property_type'];

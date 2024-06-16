@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::create('cohosts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('host_id')->constrained('users','id')->onDelete('cascade');
             $table->timestamps();
         });
     }

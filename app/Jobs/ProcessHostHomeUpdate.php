@@ -5,8 +5,8 @@ namespace App\Jobs;
 use App\Events\NewNotificationEvent;
 use App\Mail\CohostUpdateForHost;
 use App\Mail\NotificationMail;
+use App\Models\Cohost;
 use App\Models\HostHome;
-use App\Models\Hosthomecohost;
 use App\Models\Hosthomediscount;
 use App\Models\Hosthomerule;
 use App\Models\Notification;
@@ -163,7 +163,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
             
             $host = User::find($hostHome->user_id);
-            $cohost = Hosthomecohost::where('user_id',$this->user->id)->first();
+            $cohost = Cohost::where('user_id',$this->user->id)->first();
             if ($cohost) {
                 $destination = "https://shortletbooking.com/EditHostHomes/$hostHome->id";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$this->user,$destination));

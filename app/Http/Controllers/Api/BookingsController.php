@@ -13,8 +13,8 @@ use App\Mail\NotificationMail;
 use App\Models\AcceptGuestRequest;
 use App\Models\Booking;
 use App\Models\Canceltrip;
+use App\Models\Cohost;
 use App\Models\HostHome;
-use App\Models\Hosthomecohost;
 use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomediscount;
 use App\Models\ReservedPricesForCertainDay;
@@ -84,7 +84,7 @@ class BookingsController extends Controller
     {
         $data = $request->validated();
 
-        $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+        $cohost = Cohost::where('user_id', auth()->id())->first();
 
         if ($cohost) {
             abort(400, "Cohost arent allowed to book");
@@ -474,7 +474,7 @@ class BookingsController extends Controller
     public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
     {
         
-        $cohost = Hosthomecohost::where('user_id', auth()->id())->first();
+        $cohost = Cohost::where('user_id', auth()->id())->first();
 
         if ($cohost) {
             abort(400, "Cohost arent allowed to make request to book");
@@ -558,7 +558,7 @@ class BookingsController extends Controller
     public function handleBookingRequest(int $requestId, int $host_home_id, int $host_id, int $guest_id, string $action)
     {
 
-        $cohost = Hosthomecohost::where('user_id',$host_id)->first();
+        $cohost = Cohost::where('user_id',$host_id)->first();
 
         if ($cohost) {
             $host_id = $cohost->host_id;

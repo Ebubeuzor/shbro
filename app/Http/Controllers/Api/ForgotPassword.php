@@ -20,7 +20,13 @@ class ForgotPassword extends Controller
      */
     public function sendPasswordResetEmail(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate(['email' => 'required']);
+
+        $user = User::whereEmail($request->email)->first();
+
+        if (!$user) {
+            abort(404, 'Not a user');
+        }
 
         $status = Password::sendResetLink(
             $request->only('email')

@@ -1376,22 +1376,18 @@ class HostHomeController extends Controller
     public function removeCoHost($userId)
     {
         try {
+
+            $cohost = User::find(auth()->id());
+
+            if ($cohost->co_host == true) {
+                abort(404, "Cohosts can't remove other cohosts");
+            }
+
             // Find the user
             $user = User::findOrFail($userId);
 
-            // Check if the user is a cohost for any host home
-            $coHosts = Cohost::where('user_id', $userId)->get();
-
-            // If the user is not a cohost for any host home, return a 404 error
-            if ($coHosts->isEmpty()) {
-                abort(404, "The User is not a cohost to any home");
-            }
-
-            // Delete cohost relationships for all host homes
-            foreach ($coHosts as $coHost) {
-                $coHost->delete();
-            }
-
+            $user->forceDelete();
+            
             // Return a success response
             return response("Cohost removed from all homes successfully", 200);
         } catch (\Exception $e) {

@@ -41,6 +41,7 @@ class HostHomeHostInfoResource extends JsonResource
 
             return [
                 'hosthome_id' => $hosthome->id,
+                'user_id' => $user->id,
                 'user_name' => $user->name,
                 'review_id' => $review->id,
                 'ratings' => $review->ratings,

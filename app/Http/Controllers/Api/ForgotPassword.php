@@ -28,6 +28,10 @@ class ForgotPassword extends Controller
             abort(404, 'Not a user');
         }
 
+        if ($user->google_id != null) {
+            abort(400, "This account wasn't registered with a password");
+        }
+
         $status = Password::sendResetLink(
             $request->only('email')
         );

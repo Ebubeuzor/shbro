@@ -182,24 +182,6 @@ class BookingsController extends Controller
             }
         }
 
-        $selectedUserCard = "";
-        if ($data['option'] == 1) {
-            $selectedUserCard = $user->userCards()->where('Selected', 'Selected')->first();
-            if (!$selectedUserCard) {
-                return response("No card selected", 400);
-            }
-        } elseif ($data['option'] == 2) {
-            $selectedUserCard = [
-                "card_number" => $data["card_number"],
-                "expiry_data" => $data["expiry_data"],
-                "CVV" => $data["CVV"],
-            ];
-        } else {
-            return response("Invalid option", 400);
-        }
-        if (!is_object($selectedUserCard)) {
-            $selectedUserCard = (object) $selectedUserCard;
-        }
 
         $booking = new Booking();
         if (!is_null($checkIn) && !is_null($checkOut)) {
@@ -325,12 +307,6 @@ class BookingsController extends Controller
                 'hostHomeId' => $hostHome->id
             ]),
             'channels' => ['card'],
-            'card' => [
-                'card_number' => $selectedUserCard->card_number,
-                'cvv' => $selectedUserCard->CVV,
-                'expiry_month' => substr($selectedUserCard->expiry_data, 0, 2),
-                'expiry_year' => '20' . substr($selectedUserCard->expiry_data, -2),
-            ],
         ];
 
         return response([

@@ -91,6 +91,15 @@ class BookingsController extends Controller
         }
 
         $user = User::find($userId);
+        
+        if ($user->verified == "Not Verified") {
+            abort(400, "Please verify your account by uploading a valid government ID.");
+        }
+        
+        if ($user->phone == null) {
+            abort(400, "Please verify your phone number to proceed.");
+        }
+
         $hostHome = HostHome::find($hostHomeId);
 
         $acceptRequest = AcceptGuestRequest::where('user_id',$userId)

@@ -401,7 +401,7 @@ class UserController extends Controller
         }
         elseif(trim(! empty($data['status']))){
             $user->update([
-                'verified' => $data['status']
+                'verified' => $data['status'] == "Verified" ? "Verified" : "Not Verified"
             ]);
             $notify = new Notification();
             $notify->user_id = $user->id;

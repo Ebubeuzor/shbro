@@ -234,36 +234,39 @@ class AuthController extends Controller
      * @lrd:end
      */
     public function authUserFromMain ($remToken, $userToken) {
+        // Find the user with the remember token
         $user = User::where('remember_token', $remToken)->first();
-    
+        
+        // Check if user is found
         if (!$user) {
             return response()->json(['error' => 'Invalid remember token'], 401);
         }
     
+        // Validate user token (this assumes you have a method to validate user tokens)
+        $recentToken = $user->tokens()->latest()->first();
+        
+        if (!$recentToken) {
+            return response()->json(['error' => 'User token not found'], 404);
+        }
+        
+        if (!hash_equals($recentToken->token, $userToken)) {
+            return response()->json(['error' => 'Invalid user token'], 403);
+        }
+        
+        // Authenticate the user
         Auth::login($user);
         
         if (Auth::check()) {
-            $recentToken = $user->tokens->last();
-    
-            if (!$recentToken) {
-                return response()->json(['error' => 'User token not found'], 401);
-            }
-            
-            if ($recentToken->token === $userToken) {
-                return response()->json([
-                    'user' => Auth::user(),
-                    'token' => $userToken
-                ]);
-            }
-            
-            // Token mismatch
-            return response()->json(['error' => 'Invalid user token'], 401);
+            return response()->json([
+                'user' => Auth::user(),
+                'token' => $userToken
+            ]);
         }
     
-        // Failed to authenticate the user
+        // If authentication fails
         return response()->json(['error' => 'User authentication failed'], 401);
     }
-
+    
     /**
      * @lrd:start
      * this is used to login a user and you must give an object with the following 

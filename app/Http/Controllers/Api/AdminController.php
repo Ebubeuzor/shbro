@@ -26,6 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
@@ -162,6 +163,7 @@ class AdminController extends Controller
         $user->adminStatus = strtolower($data['role']);
         $user->verified = "Verified";
         $user->email_verified_at = $now;
+        $user->remember_token = Str::random(40);
         $user->save();
 
         return response("User created successfully",201);

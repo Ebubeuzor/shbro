@@ -22,7 +22,7 @@ class ActivateAccount extends Mailable
 
     public function build()
     {
-        return $this->subject('Account your account')
+        return $this->subject('Reactivate your account')
         ->view('emails.activateaccount')
         ->with([
             'user' => $this->user

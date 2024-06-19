@@ -20,9 +20,7 @@ class VerificationController extends Controller
                 $user->is_active = true;
                 $user->save();
 
-                $user->createToken('main')->plainTextToken;
-
-                $recentToken = $user->usertokens->last();
+                $recentToken = $user->createToken('main')->plainTextToken;
 
                 
                 if ($user->host) {
@@ -33,7 +31,7 @@ class VerificationController extends Controller
                     }
                 }
                 
-                return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken->token);
+                return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken);
             }    
             else{
                 abort(404);

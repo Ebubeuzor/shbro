@@ -241,23 +241,30 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid remember token'], 401);
         }
     
-        // Step 2: Attempt to find the most recent token created by Sanctum
+        // Step 2: Retrieve the most recent personal access token
         $recentToken = $user->tokens()->latest()->first();
     
         if (!$recentToken) {
             return response()->json(['error' => 'User token not found'], 404);
         }
     
-        // Step 3: Validate the provided token
-        // Note: Sanctum hashes the tokens in the database. We need to verify the plainTextToken
-        if (!hash_equals($recentToken->token, hash('sha256', $userToken))) {
+        // Step 3: Hash the provided userToken to match the stored token
+        $hashedUserToken = hash('sha256', $userToken);
+    
+        // Debugging step: Log the hashedUserToken and the stored token
+        // Remove these in production, but useful for debugging
+        info('Provided Token Hash: ' . $hashedUserToken);
+        info('Stored Token Hash: ' . $recentToken->token);
+    
+        // Step 4: Validate the provided token against the stored token
+        if (!hash_equals($recentToken->token, $hashedUserToken)) {
             return response()->json(['error' => 'Invalid user token'], 403);
         }
     
-        // Step 4: Log the user in
+        // Step 5: Log the user in
         Auth::login($user);
     
-        // Step 5: Check if the user is authenticated
+        // Step 6: Check if the user is authenticated
         if (Auth::check()) {
             return response()->json([
                 'user' => Auth::user(),
@@ -265,9 +272,10 @@ class AuthController extends Controller
             ]);
         }
     
-        // Step 6: Handle authentication failure
+        // Step 7: Handle authentication failure
         return response()->json(['error' => 'User authentication failed'], 401);
     }
+    
     
     
     /**

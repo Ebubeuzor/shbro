@@ -56,12 +56,12 @@
         <div class="logo">
             <img src="https://shortletbooking.com/assets/logo-94e89628.png" alt="Shrbo Logo">
         </div>
-        <h1>Welcome Back to <a href="https://shrbo.com">Shrbo</a> – Reactivate Your Account</h1>
+        <h1>Welcome Back to <a href="{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token]) }}">Shrbo</a> – Reactivate Your Account</h1>
         <p>Hello {{$user->name}},</p>
         <p>We noticed that your account with us is currently inactive. If you'd like to reactivate your account and continue enjoying the benefits of being a Shrbo member, simply follow the link below.</p>
-        <p><strong>Reactivate Account:</strong> <a href="https://shrbo.com/reactivate">[Link to Reactivate]</a></p>
+        <p><strong>Reactivate Account:</strong> <a href="{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token]) }}">[Link to Reactivate]</a></p>
         <p>We look forward to having you back as part of our community. If you have any questions or need assistance during the reactivation process, please don't hesitate to reach out to us.</p>
-        <p>Welcome back to <a href="https://shrbo.com">Shrbo</a>!</p>
+        <p>Welcome back to <a href="https://shortletbooking.com">Shrbo</a>!</p>
         <p>Best regards,<br>The Shrbo Team.</p>
     </div>
     

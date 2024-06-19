@@ -31,7 +31,8 @@ class VerificationController extends Controller
                     }
                 }
                 
-                return redirect()->away('http://localhost:5173/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken);
+                return redirect()->away('https://shortletbooking.com/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken);
+
             }    
             else{
                 abort(404);

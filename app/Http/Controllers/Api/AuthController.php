@@ -261,10 +261,6 @@ class AuthController extends Controller
         // Step 4: Hash the provided PlainTextToken to match the stored token hash
         $hashedPlainTextToken = hash('sha256', $plainTextToken);
     
-        // Debugging step: Log the hashes for comparison
-        info('Provided PlainText Token Hash: ' . $hashedPlainTextToken);
-        info('Stored Token Hash: ' . $tokenRecord->token);
-    
         // Step 5: Validate the token hash against the stored token hash
         if (!hash_equals($tokenRecord->token, $hashedPlainTextToken)) {
             return response()->json(['error' => 'Invalid user token'], 403);

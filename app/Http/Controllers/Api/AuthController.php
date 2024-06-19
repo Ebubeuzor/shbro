@@ -233,29 +233,31 @@ class AuthController extends Controller
      * if it is correct it should return the current user info and the token which will be used to authenticate the user
      * @lrd:end
      */
-    public function authUserFromMain ($remToken, $userToken) {
-        // Find the user with the remember token
+    public function authUserFromMain($remToken, $userToken) {
+        // Step 1: Find the user by the remember token
         $user = User::where('remember_token', $remToken)->first();
-        
-        // Check if user is found
+    
         if (!$user) {
             return response()->json(['error' => 'Invalid remember token'], 401);
         }
     
-        // Validate user token (this assumes you have a method to validate user tokens)
+        // Step 2: Attempt to find the most recent token created by Sanctum
         $recentToken = $user->tokens()->latest()->first();
-        
+    
         if (!$recentToken) {
             return response()->json(['error' => 'User token not found'], 404);
         }
-        
-        if (!hash_equals($recentToken->token, $userToken)) {
+    
+        // Step 3: Validate the provided token
+        // Note: Sanctum hashes the tokens in the database. We need to verify the plainTextToken
+        if (!hash_equals($recentToken->token, hash('sha256', $userToken))) {
             return response()->json(['error' => 'Invalid user token'], 403);
         }
-        
-        // Authenticate the user
+    
+        // Step 4: Log the user in
         Auth::login($user);
-        
+    
+        // Step 5: Check if the user is authenticated
         if (Auth::check()) {
             return response()->json([
                 'user' => Auth::user(),
@@ -263,9 +265,10 @@ class AuthController extends Controller
             ]);
         }
     
-        // If authentication fails
+        // Step 6: Handle authentication failure
         return response()->json(['error' => 'User authentication failed'], 401);
     }
+    
     
     /**
      * @lrd:start

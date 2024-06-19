@@ -1466,7 +1466,7 @@ class UserController extends Controller
 
         if ($user) {
             
-            Mail::to($user->email)->send(new ActivateAccount($user));
+            Mail::to($user->email)->queue(new ActivateAccount($user));
             
             return response('Mail sent',204);
         }else {

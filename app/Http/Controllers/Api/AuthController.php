@@ -233,7 +233,7 @@ class AuthController extends Controller
      * if it is correct it should return the current user info and the token which will be used to authenticate the user
      * @lrd:end
      */
-    public function authUserFromMain($remToken, $userToken) {
+    public function authUserFromMain($remToken, $compositeToken) {
         // Step 1: Find the user by the remember token
         $user = User::where('remember_token', $remToken)->first();
     
@@ -241,40 +241,50 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid remember token'], 401);
         }
     
-        // Step 2: Retrieve the most recent personal access token
-        $recentToken = $user->tokens()->latest()->first();
+        // Step 2: Split the composite token into ID and PlainTextToken
+        $tokenParts = explode('|', $compositeToken);
     
-        if (!$recentToken) {
+        if (count($tokenParts) !== 2) {
+            return response()->json(['error' => 'Invalid token format'], 400);
+        }
+    
+        $tokenId = $tokenParts[0];
+        $plainTextToken = $tokenParts[1];
+    
+        // Step 3: Retrieve the token record using the token ID
+        $tokenRecord = $user->tokens()->where('id', $tokenId)->first();
+    
+        if (!$tokenRecord) {
             return response()->json(['error' => 'User token not found'], 404);
         }
     
-        // Step 3: Hash the provided userToken to match the stored token
-        $hashedUserToken = hash('sha256', $userToken);
+        // Step 4: Hash the provided PlainTextToken to match the stored token hash
+        $hashedPlainTextToken = hash('sha256', $plainTextToken);
     
-        // Debugging step: Log the hashedUserToken and the stored token
-        // Remove these in production, but useful for debugging
-        info('Provided Token Hash: ' . $hashedUserToken);
-        info('Stored Token Hash: ' . $recentToken->token);
+        // Debugging step: Log the hashes for comparison
+        info('Provided PlainText Token Hash: ' . $hashedPlainTextToken);
+        info('Stored Token Hash: ' . $tokenRecord->token);
     
-        // Step 4: Validate the provided token against the stored token
-        if (!hash_equals($recentToken->token, $hashedUserToken)) {
+        // Step 5: Validate the token hash against the stored token hash
+        if (!hash_equals($tokenRecord->token, $hashedPlainTextToken)) {
             return response()->json(['error' => 'Invalid user token'], 403);
         }
     
-        // Step 5: Log the user in
+        // Step 6: Log the user in
         Auth::login($user);
     
-        // Step 6: Check if the user is authenticated
+        // Step 7: Check if the user is authenticated
         if (Auth::check()) {
             return response()->json([
                 'user' => Auth::user(),
-                'token' => $userToken
+                'token' => $compositeToken
             ]);
         }
     
-        // Step 7: Handle authentication failure
+        // Step 8: Handle authentication failure
         return response()->json(['error' => 'User authentication failed'], 401);
     }
+    
     
     
     

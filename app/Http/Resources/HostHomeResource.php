@@ -49,8 +49,6 @@ class HostHomeResource extends JsonResource
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
         
         $cohosts = $this->cohosthomes;
-        
-        Log::info($cohosts);
 
         // Map each co-host to the corresponding HostHomeHostInfoResource
         $cohostResources = $cohosts->map(function ($cohost) {

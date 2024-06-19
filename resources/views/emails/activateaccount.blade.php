@@ -40,8 +40,9 @@
             background-color: #fff;
             text-align: center;
         }
-        .popup-notification button {
+        .popup-notification a {
             padding: 10px 20px;
+            text-decoration: none;
             color: #fff;
             background-color: rgb(251, 146, 60); /* Custom orange color */
             border: none;
@@ -67,12 +68,7 @@
     <div class="popup-notification">
         <p><strong>Account Reactivation Alert</strong></p>
         <p>Would you like to reactivate your account and rediscover the convenience of Shrbo?</p>
-        <button 
-            onclick="location.href=`{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token]) }}`"
-        >
-            Click here to get started.
-        </button>
-
+        <a href="{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token]) }}">Click here to get started.</a>
     </div>
 </body>
 </html>

@@ -1104,34 +1104,42 @@ class UserController extends Controller
     * - 200: Successfully retrieved the user's trips.
     * - 404: User not found.
      * @lrd:end
+     * @LRDparam per_page use|required
      */
-    public function userTrips()
+    public function userTrips(Request $request)
     {
-        $cacheKey = 'user_trips_' . auth()->id();
+        // Get the per_page parameter from the request, default to 10 if not provided
+        $perPage = $request->input('per_page', 10);
+        
+        // Define the cache key and duration
+        $cacheKey = 'user_trips_' . auth()->id() . '_page_' . $request->input('page', 1) . '_per_page_' . $perPage;
         $cacheDuration = 600; // Cache duration in seconds (10 minutes)
-    
-        $userTrips = Cache::remember($cacheKey, $cacheDuration, function () {
+
+        // Use caching to remember the results
+        $userTrips = Cache::remember($cacheKey, $cacheDuration, function () use ($perPage) {
             // Get the authenticated user
             $user = User::find(auth()->id());
-    
+
             if ($user) {
+                // Get the paginated trips for the user
                 return UserTripResource::collection(
                     UserTrip::where('user_id', $user->id)
                         ->distinct()
                         ->latest()
-                        ->get()
+                        ->paginate($perPage)
                 );
             }
-    
+
             return null;
         });
-    
+
         if ($userTrips) {
             return $userTrips;
         }
-    
+
         return response()->json(['message' => 'User not found'], 404);
     }
+
     
     
 

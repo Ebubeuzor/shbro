@@ -63,7 +63,7 @@
                                 </tr>
                                 <tr>
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
-                                        <p>Hello (($user->name)),</p>
+                                        <p>Hello {{$user->name}},</p>
                                         <p>Congratulations! Your email address has been successfully verified. You are now a valued member of the Shrbo community. Thank you for choosing us for your rental needs.</p>
                                         <p>Stay tuned for exciting listings and personalized recommendations tailored just for you. Start exploring fantastic rental options today!</p>
                                         <p>Warm regards,</p>

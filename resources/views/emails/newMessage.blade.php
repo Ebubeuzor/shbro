@@ -65,7 +65,7 @@
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
                                         <p>Hello {{$user->name}},</p>
                                         <p>You've just received a new message from another user in the Shrbo community!</p>
-                                        <p>To read the message and respond, please log in to your account: <a href="https://shortletbooking.com/ChatAndNotifcationTab" style="color: #4CAF50; text-decoration: none;">Link to Messages</a></p>
+                                        <p>To read the message and respond, please log in to your account: <a href="https://shortletbooking.com/ChatAndNotifcationTab" style="color: #4CAF50; text-decoration: none;">Click to view Messages</a></p>
                                         <p>Thank you for connecting with the Shrbo community. We hope you find your interactions enriching and helpful.</p>
                                         <p>Best regards,</p>
                                         <p>The Shrbo Team</p>

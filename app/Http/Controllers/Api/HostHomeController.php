@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateHostHomeRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Jobs\ClearCache;
+use App\Jobs\NotifyAdmins;
 use App\Jobs\ProcessDescription;
 use App\Jobs\ProcessDiscount;
 use App\Jobs\ProcessHostHomeCreation;
@@ -1565,8 +1566,25 @@ class HostHomeController extends Controller
         $hostHome->needApproval = false;
         $hostHome->save();
     
+        $host = User::find($hostid);
+        
         // Set flash message for approval
         Session::flash('status', 'Apartment has been approved successfully.');
+    
+        $chunkSize = 100;
+
+        $title = "New Apartment Created: Admin Action Required";
+
+        // Process admins in chunks
+        User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title, $host) {
+            try {
+                // Dispatch the notification job for the current chunk of admins
+                NotifyAdmins::dispatch($admins, $hostHome, $host, $title);
+            } catch (\Exception $e) {
+                // Optionally log any errors during the dispatch
+                Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+            }
+        });
     
         // Return the view
         return view('approveordecline', ['message' => 'Apartment has been approved successfully.']);

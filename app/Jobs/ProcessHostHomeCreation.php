@@ -180,20 +180,21 @@ class ProcessHostHomeCreation implements ShouldQueue
 
             }
 
-            $chunkSize = 100;
+            if (!$user->co_host) {
+                $chunkSize = 100;
+                $title = "New Apartment Created: Admin Action Required";
 
-            $title = "New Apartment Created: Admin Action Required";
-
-            // Process admins in chunks
-            User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title,$host) {
-                try {
-                    // Dispatch the notification job for the current chunk of admins
-                    NotifyAdmins::dispatch($admins,$hostHome,$host,$title);
-                } catch (\Exception $e) {
-                    // Optionally log any errors during the dispatch
-                    Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
-                }
-            });
+                // Process admins in chunks
+                User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title, $host) {
+                    try {
+                        // Dispatch the notification job for the current chunk of admins
+                        NotifyAdmins::dispatch($admins, $hostHome, $host, $title);
+                    } catch (\Exception $e) {
+                        // Optionally log any errors during the dispatch
+                        Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+                    }
+                });
+            }
 
         });
     }

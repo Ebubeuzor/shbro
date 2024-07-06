@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Events\NewNotificationEvent;
+use App\Mail\ApartmentListingUpdateReview;
 use App\Mail\CohostUpdateForHost;
 use App\Mail\NotificationMail;
 use App\Models\Cohost;
@@ -170,7 +171,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
             }
 
             $message = "Your listing has been updated now awaiting admin approval";
-            $title = "Listing updated Successfully.";
+            $title = "Listing updated successfully and is now awaiting admin approval.";
             
             $notification = new Notification();
             $notification->user_id = $host->id;  
@@ -179,14 +180,13 @@ class ProcessHostHomeUpdate implements ShouldQueue
             
             event(new NewNotificationEvent($notification, $notification->id, $host->id));
             
-            Mail::to($host->email)->queue(new NotificationMail($host,$message,$title));
+            Mail::to($host->email)->queue(new ApartmentListingUpdateReview($host,$hostHome,$title));
 
             $this->clearCacheForAllUsers();
 
             $admins = User::whereNotNull('adminStatus')->get();
-            $message = "Attention Admins: An apartment update has been submitted by a user. Please review and take necessary action. Thank you!";
             $title = "Urgent: User Submitted Apartment Update Requires Admin Attention";
-            NotifyAdmins::dispatch($admins,$message,$title);
+            NotifyAdmins::dispatch($admins,$hostHome,$host,$title);
 
         });
     }

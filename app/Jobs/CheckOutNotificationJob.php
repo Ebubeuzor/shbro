@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\GuestCheckedOut;
 use App\Mail\NotificationMail;
 use App\Models\HostHome;
 use App\Models\HostPendingReview;
@@ -46,9 +47,8 @@ class CheckOutNotificationJob implements ShouldQueue
             if ($currentTime >= $checkOutTime) {
                 info($this->booking);
                 // Perform actions for the check-out notification
-                Mail::to($this->booking->user->email)->send(new NotificationMail(
+                Mail::to($this->booking->user->email)->queue(new GuestCheckedOut(
                     $this->booking->user,
-                    "Check-out: You've been checked out",
                     "You've been checked out"
                 ));
 

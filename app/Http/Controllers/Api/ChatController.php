@@ -6,6 +6,7 @@ use App\Events\MessageSent;
 use App\Events\Typing;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendMailForChatToCohosts;
+use App\Mail\NewMessageMail;
 use App\Mail\NotificationMail;
 use App\Models\Cohost;
 use App\Models\Message;
@@ -129,7 +130,7 @@ class ChatController extends Controller
 
             // Send notification email to the receiver
             $receiver = User::find($receiverId);
-            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $user->name . ' sent a message', 'Sent a message'));
+            Mail::to($receiver->email)->queue(new NewMessageMail($receiver, 'You have a new message'));
 
             return response("ok", 200);
         } catch (\Throwable $th) {

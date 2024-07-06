@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,140 +6,100 @@
     <title>Payment Failed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-    <link rel="stylesheet" href="path/to/your/styles.css"> <!-- Include your own styles if needed -->
-</head>
-<body>
-
     <style>
         /* Reset some default styles */
-body, h1, h2, h3, p, button, i {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font-family: inherit;
-  vertical-align: baseline;
-  font-family: Arial, Helvetica, sans-serif;
-}
+        body, h1, h2, h3, p, button, i {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font-family: inherit;
+            vertical-align: baseline;
+            font-family: Arial, Helvetica, sans-serif;
+        }
 
-/* Apply basic styles */
-.flex {
-  display: flex;
-}
+        /* Apply basic styles */
+        .flex {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f7fafc;
+        }
 
-.items-center {
-  align-items: center;
-}
+        .p-8 {
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            margin: auto;
+        }
 
-.justify-center {
-  justify-content: center;
-}
+        .text-red-500 {
+            color: #f56565;
+        }
 
-.min-h-screen {
-  min-height: 100vh;
-}
+        .text-6xl {
+            font-size: 4rem;
+        }
 
-.bg-gray-100 {
-  background-color: #f7fafc;
-}
+        .text-3xl {
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
 
-.p-8 {
-  padding: 2rem;
-}
+        .text-gray-600 {
+            color: #718096;
+            margin-bottom: 1.5rem;
+        }
 
-.bg-white {
-  background-color: #ffffff;
-}
+        .btn {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f6ad55; /* Orange color */
+            color: #ffffff;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+        }
 
-.rounded {
-  border-radius: 0.25rem;
-}
+        .btn:hover {
+            background-color: #ed8936; /* Darker orange on hover */
+        }
 
-.shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
+        .fa {
+            font-size: 4rem; /* Adjusted size for better visibility */
+            margin-bottom: 1rem;
+        }
 
-.text-center {
-  text-align: center;
-}
-
-.text-green-500 {
-  color: #48bb78;
-}
-
-.text-6xl {
-  font-size: 4rem;
-}
-
-.text-3xl {
-  font-size: 1.875rem;
-}
-
-.font-semibold {
-  font-weight: 600;
-}
-
-.mb-2 {
-  margin-bottom: 0.5rem;
-}
-
-.text-gray-600 {
-  color: #718096;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.text-blue-500 {
-  color: #4299e1;
-}
-
-.btn{
-    padding: 20px;
-    border-radius: 10px;
-}
-
-.btn:hover{
-    background-color: black;
-    color: white;
-}
-
-/* Font Awesome icons */
-.fa {
-  font-size: 1.25rem;
-  margin-right: 0.5rem;
-}
-
-.mt-2{
-    margin-top: 20px;
-}
-
-/* Add any additional CSS here */
+        /* Add any additional CSS here */
 
     </style>
-    <div class="flex items-center justify-center min-h-screen bg-gray-100">
-        <div class="p-8 bg-white rounded shadow-md text-center">
-            <div class="mb-4">
-                <i class="fas fa-exclamation-triangle text-red-500 fa-6x"></i>
+</head>
+<body>
+    <div class="flex">
+        <div class="p-8">
+            <div class="text-red-500">
+                <i class="fas fa-exclamation-triangle fa"></i>
             </div>
-            <h2 class="text-3xl font-semibold mb-2 mt-2">Payment Failed</h2>
+            <h2 class="text-3xl">Payment Failed</h2>
             <p class="text-gray-600">
                 We're sorry, but there was an issue with your payment.
             </p>
             <p>Please try again later or contact our support.</p>
-
-            <div class="mt-4 flex justify-center">
-                <a href="/" class="text-blue-500">
-                    <button class="btn">
-                    <a href="https://shortletbooking.com/">Back to Home</a>
-                    </button>
-                </a>
+            
+            <div class="mt-4">
+                <a href="https://shortletbooking.com/" class="btn">Back to Home</a>
             </div>
         </div>
     </div>
-</body>
-</html>
-
 </body>
 </html>

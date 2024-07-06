@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\GuestCheckedIn;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\HostHome;
@@ -39,9 +40,11 @@ class CheckInNotificationJob implements ShouldQueue
             $currentTime = Carbon::now()->format('H:i A');
             if ($currentTime >= $checkInTime) {
                 
-                Mail::to($this->booking->user->email)->send(new NotificationMail(
+                $hosthome = HostHome::find($this->booking->host_home_id);
+                
+                Mail::to($this->booking->user->email)->queue(new GuestCheckedIn(
                     $this->booking->user,
-                    "Check-in: You've been checked in",
+                    $hosthome,
                     "You've been checked in. Enjoy your stay!"
                 ));
     

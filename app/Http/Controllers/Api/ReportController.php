@@ -122,7 +122,7 @@ class ReportController extends Controller
 
     /**
      * @lrd:start
-     * Report property d`amage for a booking.
+     * Report property damage for a booking.
      *
      * This method allows hosts to report property damage for a specific booking,
      * providing details about the damage along with optional photos and videos.

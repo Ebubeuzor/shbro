@@ -3,147 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirm Password</title>
+  <title>Forgot Password</title>
   <style>
     body {
-    margin: 0;
-    font-family: Arial, sans-serif;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+      color: #333;
     }
 
-    .flex {
-    display: flex;
+    .container {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .flex-col {
-    flex-direction: column;
+    h2 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      color: #333;
+      text-align: center;
     }
 
-    .h-screen {
-    height: 100vh;
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #555;
     }
 
-    .items-center {
-    align-items: center;
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
     }
 
-    .justify-center {
-    justify-content: center;
+    input[type="password"]:focus {
+      border-color: #ff9800;
+      outline: none;
     }
 
-    .mt-14 {
-    margin-top: 3.5rem;
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
     }
 
-    .text-2xl {
-    font-size: 1.5rem;
+    button {
+      background-color: #ff9800;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-transform: uppercase;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .font-bold {
-    font-weight: bold;
+    button:hover {
+      background-color: #e68a00;
     }
 
-    .mb-4 {
-    margin-bottom: 1rem;
+    #server_error {
+      font-size: 0.875rem;
+      color: red;
+      margin-bottom: 1rem;
+      text-align: center;
     }
 
-    .block {
-    display: block;
-    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 1.5rem;
+      }
 
-    .mb-2 {
-    margin-bottom: 0.5rem;
-    }
+      h2 {
+        font-size: 1.5rem;
+      }
 
-    .border {
-    border: 1px solid;
-    }
-
-    .border-gray-300 {
-    border-color: #ccc;
-    }
-
-    .rounded {
-    border-radius: 0.25rem;
-    }
-
-    .px-2 {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    }
-
-    .py-1 {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    }
-
-    .w-full {
-    width: 100%;
-    }
-
-    .bg-black {
-    background-color: black;
-    border: none;
-    padding: 10px;
-    }
-
-    .hover\:bg-black-700:hover {
-    background-color: #333;
-    }
-
-    .text-white {
-    color: white;
-    }
-
-    .uppercase {
-    text-transform: uppercase;
-    }
-
-    #server_error{
-        font-weight: 400;
-        font-size: 13px;
-        color: red;
+      button {
+        padding: 0.75rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="flex flex-col h-screen">
-    <div class="flex flex-col items-center justify-center flex-grow mt-14">
-      <h2 class="text-2xl font-bold mb-4 fontBold">Forgot Password</h2>
-      <form class="w-64" method="post" action="{{ route('changePassword') }}">
-        @csrf
-        
-        <input type="hidden" name="token" value="{{ request('token') }}">
-        <input type="hidden" name="email" value="{{ request('email') }}">
-        <label for="password" class="mb-2 block fontBold">
-          Password:
-        </label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          class="border border-gray-300 rounded px-2 py-1 mb-4 w-full"
-        />
-        <label for="confirm-password" class="mb-2 block fontBold">
-          Confirm Password:
-        </label>
-        <input
-          type="password"
-          id="confirm-password"
-          class="border border-gray-300 rounded px-2 py-1 mb-4 w-full"
-        />
-        <div id="server_error"> @error('password') {{ $message }} @enderror </div>
-        <div id="server_error"> @error('email') {{ $message }} @enderror </div>
-        
-        <div class="flex flex-col justify-between">
-            <button
-            type="submit"
-            class="bg-black hover:bg-black-700 text-white rounded px-4 py-2 uppercase"
-            >
-            Confirm Password
-        </button>
-    </div>
-      </form>
-    </div>
+  <div class="container">
+    <h2>Forgot Password</h2>
+    <form method="post" action="{{ route('changePassword') }}">
+      @csrf
+      <input type="hidden" name="token" value="{{ request('token') }}">
+      <input type="hidden" name="email" value="{{ request('email') }}">
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      <label for="confirm-password">Confirm Password:</label>
+      <input type="password" id="confirm-password" name="password_confirmation" required>
+      <div id="server_error"> 
+        @error('password') {{ $message }} @enderror 
+        @error('email') {{ $message }} @enderror 
+      </div>
+      <div class="button-container">
+        <button type="submit">Confirm Password</button>
+      </div>
+    </form>
   </div>
 </body>
 </html>

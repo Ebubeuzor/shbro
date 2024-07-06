@@ -7,6 +7,7 @@ use App\Events\LeaveChatEvent;
 use App\Events\MessageBroadcasted;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StartConversationRequest;
+use App\Mail\AdminGuestChatForAdminsNotification;
 use App\Mail\NotificationMail;
 use App\Models\AdminGuestChat;
 use App\Models\User;
@@ -303,14 +304,20 @@ class AdminGuestChatController extends Controller
         $imageUrl = !empty($chat->image) ? url($chat->image) : null;
 
         if (empty(isset($data['recipient_id']))) {
-            $users = User::all();
-            foreach ($users as $user) {
-
-                if ($user->adminStatus != null && $user->id != 1) {
-                    $message = $authUser->name . " has reqested assistant for a certain matter";
-                    Mail::to($user->email)->queue(new NotificationMail($authUser,$message,"A guest rquires Assistant"));
+            
+            $chunkSize = 100;
+            User::chunk($chunkSize, function ($users) use ($authUser) {
+                foreach ($users as $user) {
+                    // Check if the user has an adminStatus and is not the user with ID 1
+                    if ($user->adminStatus != null) {
+                        $message = $authUser->name . " has requested assistance for a certain matter";
+                        
+                        $formatedDate = now()->format('M j, Y h:ia');
+                        Mail::to($user->email)->queue(new AdminGuestChatForAdminsNotification($authUser, $message, "A guest requires Assistance",$formatedDate,$user));
+                    }
                 }
-            }
+            });
+
             event(new MessageBroadcasted($authUser, $data['message'], $imageUrl, $data['status'], null, $chat->id,$data['chat_session_id'], $chat->created_at));
 
             return response()->json([

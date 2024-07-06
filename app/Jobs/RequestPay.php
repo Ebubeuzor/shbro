@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\NotificationMail;
+use App\Mail\PaymentRequestByGuest;
 use App\Models\Adminrole;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -24,6 +25,8 @@ class RequestPay implements ShouldQueue
      */
     public function __construct(
         private $admins,
+        private $amount,
+        private $formatedDate,
     )
     {
         //
@@ -42,9 +45,8 @@ class RequestPay implements ShouldQueue
 
             if($adminrole){
                 $admin = User::find($admin->id);
-                $message = "A guest has requested payment please go and approve";
                 $title = "A guest has requested payment";
-                Mail::to($admin->email)->queue(new NotificationMail($admin, $message, $title));
+                Mail::to($admin->email)->queue(new PaymentRequestByGuest($admin, $this->amount, $this->formatedDate, $title));
             }
 
         }

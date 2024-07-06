@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\ApartmentListingApproval;
 use App\Mail\NotificationMail;
 use App\Models\Adminrole;
 use App\Models\User;
@@ -24,7 +25,8 @@ class NotifyAdmins implements ShouldQueue
      */
     public function __construct(
         private $admins,
-        private string $message,
+        private $hostHome,
+        private $host,
         private string $title,
     )
     {
@@ -44,7 +46,7 @@ class NotifyAdmins implements ShouldQueue
 
             if($adminrole){
                 $admin = User::find($admin->id);
-                Mail::to($admin->email)->queue(new NotificationMail($admin, $this->message, $this->title));
+                Mail::to($admin->email)->queue(new ApartmentListingApproval($admin, $this->hostHome, $this->host, $this->title));
             }
 
         }

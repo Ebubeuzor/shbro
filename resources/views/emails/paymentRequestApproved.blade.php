@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Back to Shrbo – Reactivate Your Account</title>
+    <title>Your Payment Request Has Been Approved</title>
     <style>
         body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -24,24 +24,9 @@
             .padding { padding: 10px 5% 15px 5% !important; }
             .section-padding { padding: 0 15px 50px 15px !important; }
         }
-        .button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body style="margin: 0 !important; padding: 0 !important; background-color: #f4f4f4;" bgcolor="#f4f4f4">
-    <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        Welcome Back to Shrbo – Reactivate Your Account
-    </div>
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
         <tr>
             <td bgcolor="#f4f4f4" align="center" style="padding: 10px 15px 30px 15px;" class="section-padding">
@@ -58,21 +43,29 @@
                                 </tr>
                                 <tr>
                                     <td align="center" style="font-size: 24px; font-family: Arial, sans-serif; color: #333333; padding-top: 30px; padding-bottom: 20px;" class="padding">
-                                        <strong>Welcome Back to Shrbo – Reactivate Your Account</strong>
+                                        <strong>Your Payment Request Has Been Approved</strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
-                                        <p>Hello [User Name],</p>
-                                        <p>We noticed that your account with us is currently inactive. If you'd like to reactivate your account and continue enjoying the benefits of being a Shrbo member, simply follow the link below.</p>
-                                        <p><strong>Reactivate Account:</strong> [Link to Reactivate]</p>
-                                        <p>We look forward to having you back as part of our community. If you have any questions or need assistance during the reactivation process, please don't hesitate to reach out to us.</p>
-                                        <p>Welcome back to Shrbo!</p>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td align="center" style="padding: 20px 0; font-family: Arial, sans-serif; font-size: 12px; line-height: 18px; color: #999999;">
-                                        <p style="margin: 0;">Shrbo | 3rd Avenue Gwarinpa, Abuja, FCT, Nigeria | Contact Information</p>
+                                        <p>Hello {{$user->name}},</p>
+                                        <p>We are pleased to inform you that your payment request has been successfully approved. We've processed the transaction for your upcoming stay at [Property Name], from [Check-in Date] to [Check-out Date].</p>
+                                        
+                                        <p><strong>Payment Details</strong></p>
+                                        <ul style="padding-left: 20px;">
+                                            <li><strong>Amount</strong>: {{$amount}}</li>
+                                            <li><strong>Payment Date</strong>: {{$paymentDate}}</li>
+                                        </ul>
+                                        
+                                        <p>This confirms your booking, and you're all set for your visit! You should receive a confirmation and receipt shortly. If you don't receive it within the next few hours, please check your spam folder or contact us for assistance.</p>
+                                        
+                                        <p>As your trip approaches, we encourage you to communicate with your host, [Host Name], regarding check-in times, key collection, and any other specific details or requests you might have for your stay.</p>
+                                        
+                                        <p>Should you have any questions or need further assistance regarding your booking or payment, feel free to reach out to our support team. We're here to ensure that your experience is smooth and enjoyable.</p>
+                                        
+                                        <p>Thank you for choosing Shrbo for your accommodation needs. We're excited to host you and hope you have a fantastic stay at [Property Name].</p>
+                                        
+                                        <p>Best regards,<br>The Shrbo Team</p>
                                     </td>
                                 </tr>
                             </table>

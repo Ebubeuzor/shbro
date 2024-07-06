@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Events\MessageSent;
+use App\Mail\NewBookingRequest;
+use App\Mail\NewMessageMail;
 use App\Mail\NotificationMail;
 use App\Models\User;
 use App\Repository\ChatRepository;
@@ -70,7 +72,7 @@ class SendMailForChatToCohosts implements ShouldQueue
             $receiver = User::find($receiverId);
             $sender = User::find($senderId);
 
-            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $sender->name . ' sent a message', 'Sent a message'));
+            Mail::to($receiver->email)->queue(new NewMessageMail($receiver, 'You have a new message'));
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }
@@ -95,7 +97,7 @@ class SendMailForChatToCohosts implements ShouldQueue
             $receiver = User::find($receiverId);
             $sender = User::find($senderId);
 
-            Mail::to($receiver->email)->queue(new NotificationMail($receiver, $this->message, "A Guest made a request"));
+            Mail::to($receiver->email)->queue(new NewBookingRequest($receiver, "A Guest made a request"));
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }

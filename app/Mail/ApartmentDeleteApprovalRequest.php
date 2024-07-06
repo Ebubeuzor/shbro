@@ -26,7 +26,7 @@ class ApartmentDeleteApprovalRequest extends Mailable
     public function build()
     {
         return $this->subject("Approval on deletion of an apartment")
-        ->view('emails.apartmentcreationapproval')
+        ->view('emails.apartmentdeletionapproval')
         ->with([
             'hosthome' => $this->hosthome,
             'host' => $this->host,

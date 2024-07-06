@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Events\NewNotificationEvent;
 use App\Mail\ApartmentCreationApprovalRequest;
+use App\Mail\NewApartmentpendingApproval;
 use App\Mail\NotificationMail;
 use App\Models\Cohost;
 use App\Models\HostHome;
@@ -143,7 +144,7 @@ class ProcessHostHomeCreation implements ShouldQueue
             if (!$cohost) {
                 $message = "Your listing has been created now awaiting admin approval";
                 $title = "Listing Created Successfully.";
-                Mail::to($host->email)->queue(new NotificationMail($host,$message,$title));
+                Mail::to($host->email)->queue(new NewApartmentpendingApproval($host,$hostHome,$title));
                         
                 // Create a new notification record in the database
                 $notification = new Notification();
@@ -179,12 +180,20 @@ class ProcessHostHomeCreation implements ShouldQueue
 
             }
 
-            $admins = User::whereNotNull('adminStatus')->get();
+            $chunkSize = 100;
 
-            $message = "Attention Admins: A new apartment has been created. Please review and take necessary action. Thank you!";
             $title = "New Apartment Created: Admin Action Required";
-            
-            NotifyAdmins::dispatch($admins,$message,$title);
+
+            // Process admins in chunks
+            User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title,$host) {
+                try {
+                    // Dispatch the notification job for the current chunk of admins
+                    NotifyAdmins::dispatch($admins,$hostHome,$host,$title);
+                } catch (\Exception $e) {
+                    // Optionally log any errors during the dispatch
+                    Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+                }
+            });
 
         });
     }

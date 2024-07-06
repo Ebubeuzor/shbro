@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignRolesToAdminRequest;
 use App\Http\Requests\SignupRequest;
@@ -10,11 +11,17 @@ use App\Http\Resources\AllBookingsResource;
 use App\Http\Resources\AllReviewssResource;
 use App\Http\Resources\CancelTripsResource;
 use App\Http\Resources\GuestsResource;
+use App\Mail\AccountNotice;
+use App\Mail\AdminToUsers;
 use App\Mail\NotificationMail;
+use App\Mail\PaymentRequestApproved;
+use App\Mail\RevisedServiceCharges;
 use App\Models\Adminrole;
 use App\Models\Booking;
 use App\Models\Canceltrip;
+use App\Models\Cohost;
 use App\Models\HostHome;
+use App\Models\Notification;
 use App\Models\Review;
 use App\Models\Servicecharge;
 use App\Models\SocialMedia;
@@ -85,9 +92,16 @@ class AdminController extends Controller
 
             $user = User::find($userId);
 
-            $title = "Payment successful";
-            $message = "Your requested a pay of " . $deductedAmount . " from your account has been successfully sent to your bank account ";
-            Mail::to($user->email)->send(new NotificationMail($user,$message,$title));
+            $title = "Payment successfully made";
+            $notification = new Notification();
+            $notification->user_id = $user->id;  
+            $notification->Message = $title;
+            $notification->save();
+            
+            event(new NewNotificationEvent($notification, $notification->id, $user->id));
+            
+            $formatedDate = $userWallet->updated_at->format('M j, Y h:ia');
+            Mail::to($user->email)->queue(new PaymentRequestApproved($user,$deductedAmount,$title,$formatedDate));
 
             return response()->json(['message' => 'Payment request approved successfully.']);
         } catch (\Exception $e) {
@@ -827,7 +841,9 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been banned from this company";
-        Mail::to($user->email)->send(new NotificationMail($user,$data['message'], $title));
+        $viewToUse = 'accountBanned';
+        $formatedDate = now()->format('M j, Y h:ia');
+        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         
         $user->update([
             "banned" => "banned"
@@ -836,6 +852,23 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "banned" => "banned"
         ]);
+
+        // Retrieve the cohosts linked to the user as a host
+        $cohosts = Cohost::where('host_id', $user->id)->get();
+
+        foreach ($cohosts as $cohost) {
+            $cohostUser = $cohost->user;
+
+            if ($cohostUser) {
+                // Update the banned status of the cohost's user
+                $cohostUser->update([
+                    "banned" => "banned"
+                ]);
+
+                // Send the ban notification email to the cohost's user
+                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+            }
+        }
 
         Cache::flush();
         return response("Ok",200);
@@ -875,13 +908,22 @@ class AdminController extends Controller
             ]
         );
 
-        $users = User::all();
-        foreach($users as $user){
-            $title = "A message for every one";
-            $message = "The service charges and guest service charge has been updated they are now $request->guest_services_charge% and $request->host_services_charge% of every booking 
-            and vat is now $request->tax%";
-            Mail::to($user->email)->queue(new NotificationMail($user,$message, $title));
-        }
+        
+        $formatedDate = now()->format('M j, Y h:ia');
+        User::chunk(100, function ($users) use ($request, $formatedDate) {
+            foreach ($users as $user) {
+                $title = "A message for everyone";
+                Mail::to($user->email)->queue(new RevisedServiceCharges(
+                    $user, 
+                    $title, 
+                    $request->guest_services_charge, 
+                    $request->host_services_charge, 
+                    $request->tax, 
+                    $formatedDate
+                ));
+            }
+        });
+        
 
         $this->clearAllCache();
         return response()->json(['message' => 'Service charges updated successfully']);
@@ -926,7 +968,10 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been suspended for 30 days";
-        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
+        
+        $formatedDate = now()->format('M j, Y h:ia');
+        $viewToUse = 'accountSuspension';
+        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         
         $user->update([
             "suspend" => "suspend"
@@ -935,6 +980,22 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "suspend" => "suspend"
         ]);
+
+        $cohosts = Cohost::where('host_id', $user->id)->get();
+
+        foreach ($cohosts as $cohost) {
+            $cohostUser = $cohost->user;
+
+            if ($cohostUser) {
+                // Update the banned status of the cohost's user
+                $cohostUser->update([
+                    "suspend" => "suspend"
+                ]);
+
+                // Send the ban notification email to the cohost's user
+                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+            }
+        }
         Cache::flush();
         return response("Ok",200);
     }
@@ -954,8 +1015,10 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been unbanned";
-        Mail::to($user->email)->queue(new NotificationMail($user, $data['message'], $title));
-
+        
+        $viewToUse = 'accountUnbanned';
+        $formatedDate = now()->format('M j, Y h:ia');
+        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         $user->update([
             "banned" => null
         ]);
@@ -963,6 +1026,24 @@ class AdminController extends Controller
         $user->hosthomes()->update([
             "banned" => null
         ]);
+
+        // Retrieve the cohosts linked to the user as a host
+        $cohosts = Cohost::where('host_id', $user->id)->get();
+
+        foreach ($cohosts as $cohost) {
+            $cohostUser = $cohost->user;
+
+            if ($cohostUser) {
+                // Update the banned status of the cohost's user
+                $cohostUser->update([
+                    "banned" => null
+                ]);
+
+                // Send the ban notification email to the cohost's user
+                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+            }
+        }
+
         Cache::flush();
         return response("Ok", 200);
     }
@@ -981,9 +1062,12 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
-        $title = "Your account has been unsuspended";
-        Mail::to($user->email)->queue(new NotificationMail($user, $data['message'], $title));
-
+        $title = "Your account has been unbanned";
+        
+        $viewToUse = 'accountUnbanned';
+        $formatedDate = now()->format('M j, Y h:ia');
+        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
+        
         $user->update([
             "suspend" => null
         ]);
@@ -1012,7 +1096,9 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been terminated";
-        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
+        $formatedDate = now()->format('M j, Y h:ia');
+        $viewToUse = 'emails.accountDeletion';
+        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title,$formatedDate,$viewToUse));
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
         Cache::flush();
@@ -1027,44 +1113,50 @@ class AdminController extends Controller
      * @LRDparam message use|required
      * @LRDparam usertype use|required
      */
-    public function sendEmail(Request $request) {
-
-        $data = $request->validate([ 
+    public function sendEmail(Request $request) 
+    {
+        $data = $request->validate([
             "usertype" => "required",
             "message" => "required"
         ]);
 
         $userType = $data['usertype'];
-        
+        $title = "";
+
+        // Define a closure to send emails, to avoid code repetition
+        $sendEmails = function($users) use ($data, &$title) {
+            foreach ($users as $user) {
+                Mail::to($user->email)->queue(new AdminToUsers($user, $data['message'], $title));
+            }
+        };
+
+        // Handling different user types
         if ($userType == "Host") {
-            $users = User::where('host', 1)->get();
-            foreach($users as $user){
-
-                $title = "A message for every host";
-                Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
-
-            }
-            return response("Ok",200);
+            $title = "A message for every host";
+            
+            // Process hosts in chunks
+            User::where('host', 1)->chunk(100, function($users) use ($sendEmails) {
+                $sendEmails($users);
+            });
+            
+            return response("Ok", 200);
         } 
+        elseif ($userType == "Guest" || $userType == "All") {
+            $title = "A message for every guest";
 
-        elseif($userType == "Guest" || $userType == "All") {
-            $users = User::all();
-            foreach($users as $user){
-                if ($user->is_guest == null) {
-                    $title = "A message for every one";
-                    Mail::to($user->email)->queue(new NotificationMail($user,$data['message'], $title));
-                }
-            }
-            return response("Ok",200);
-        }
-        
-        else {
+            // Process guests in chunks
+            User::where('is_guest', null)->chunk(100, function($users) use ($sendEmails) {
+                $sendEmails($users);
+            });
+
+            return response("Ok", 200);
+        } else {
             return response([
-                'error' => $data
-            ],422);
+                'error' => 'Invalid user type'
+            ], 422);
         }
-        
     }
+
 
 
     

@@ -31,6 +31,7 @@ use App\Http\Resources\WishlistContainerItemResource;
 use App\Jobs\RequestPay;
 use App\Mail\ActivateAccount;
 use App\Mail\NotificationMail;
+use App\Mail\RequestPayMail;
 use App\Mail\VerifyUser;
 use App\Models\AboutUser;
 use App\Models\Adminrole;
@@ -408,15 +409,18 @@ class UserController extends Controller
             $notify->Message = "You Government id is " . $data['status'];
             $notify->save();
             
-            if ($data['status'] != "Verified") {
+            if ($data['status'] == "Verified") {
+                Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"));
+            }else {
                 $tip = new Tip();
                 $tip->user_id = $user;
                 $tip->message = "You Government id is " . $data['status'];
                 $tip->url = "/AddGovvernmentId";
                 $tip->save();
+                Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.governementIDUnverified',"Government ID Verification Incomplete"));
+                
             }
             
-            Mail::to($user->email)->send(new VerifyUser($data['status']));
 
         }
         elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){
@@ -2412,11 +2416,19 @@ class UserController extends Controller
 
             
             $title = "Withdrawal Requested";
-            $message = "You have requested a pay of " . $amount . " from your account";
-            Mail::to($user->email)->queue(new NotificationMail($user,$message,$title));
+            Mail::to($user->email)->queue(new RequestPayMail($user,$amount,$title));
 
-            $admins = User::whereNotNull('adminStatus')->get();
-            RequestPay::dispatch($admins);
+            User::whereNotNull('adminStatus')->chunk(10, function ($admins) use($amount) {
+                try {
+                    // Dispatch the notification job for the current chunk of admins
+                    
+                    $formatedDate = now()->format('M j, Y h:ia');
+                    RequestPay::dispatch($admins, $amount, $formatedDate);
+                } catch (\Exception $e) {
+                    // Optionally log any errors during the dispatch
+                    Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+                }
+            });
 
             return response()->json(['message' => 'Payment request submitted successfully.']);
         } catch (\Exception $e) {

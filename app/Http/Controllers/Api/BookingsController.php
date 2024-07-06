@@ -9,7 +9,12 @@ use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
 use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\AcceptOrDeclineGuestMail;
+use App\Mail\BookingCancellation;
+use App\Mail\BookingRequestConfirmationEmail;
+use App\Mail\GuestBookingConfirmationReceipt;
+use App\Mail\NewBookingRequest;
 use App\Mail\NotificationMail;
+use App\Mail\SuccessfulBookingMessage;
 use App\Models\AcceptGuestRequest;
 use App\Models\Booking;
 use App\Models\Canceltrip;
@@ -497,7 +502,8 @@ class BookingsController extends Controller
         event(new MessageSent($messageToHost, $user->id, $receiverId));
         $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId);
         $userToReceive = User::whereId($receiverId)->first();
-        Mail::to($userToReceive->email)->queue(new NotificationMail($userToReceive, $messageToHost, "A Guest made a request"));
+        Mail::to($userToReceive->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
+        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive, "A Guest has made a request to book your apartment"));
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId)
@@ -506,17 +512,15 @@ class BookingsController extends Controller
         $sender = User::find($senderId);
 
         if ($receiver->cohosts()->exists()) {
-            $cohosts = $receiver->cohosts()->with('user')->get();
-            $uniqueCohosts = $cohosts->unique('user.email');
+            $cohosts = $receiver->hostcohosts()->with('user')->get();
 
-            foreach ($uniqueCohosts as $cohost) {
+            foreach ($cohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true);
             }
         }elseif ($sender->cohosts()->exists()) {
-            $cohosts = $sender->cohosts()->with('user')->get();
-            $uniqueCohosts = $cohosts->unique('user.email');
+            $cohosts = $sender->hostcohosts()->with('user')->get();
 
-            foreach ($uniqueCohosts as $cohost) {
+            foreach ($cohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message,$cohost->user_id, $senderId, true);
             }
         }
@@ -665,15 +669,10 @@ class BookingsController extends Controller
                         ]);
                     }
                     
-                    $checkInDateTime = Carbon::parse($booking->check_in . ' ' . $hostHome->check_in_time);
-                    $durationOfStay = $booking->duration_of_stay;
                     $checkouttime = $hostHome->check_out_time; 
                     $checkintime = $hostHome->check_in_time; 
                     $priceForANight = $hostHome->price; 
                     $amount = $data['data']['amount'];
-                    // $hostBalance = (intval($hostHome->price) * $durationOfStay) - ((intval($hostHome->price) * $durationOfStay) * 0.07);
-                    // $host_service_charge = (intval($hostHome->price) * $durationOfStay) - $hostBalance;
-                    $hostBalance = $booking->hostBalance;
                     $paymentType = $data['data']['authorization']['card_type'];
 
                     $booking->update([
@@ -698,18 +697,13 @@ class BookingsController extends Controller
                     Cache::forget($cacheKey);
 
                     // Notify host about the booking
-                    $message = $user->name . " has booked your apartment";
                     $host = User::find($hostHome->user_id);
-                    Mail::to($host->email)->send(new NotificationMail($host, $message, "Your apartment has been booked"));
                     $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
                     $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
-                    
                     $checkInTime = $hostHome->check_in_time;
-
-                    $guestMessage = "Your check-in date and time is " . $checkInDate . " " . $checkInTime . "\n";
-                    $guestMessage .= "Your checkout date and time is " . $checkOutDate . " " . $booking->check_out_time . "\n";
-
-                    Mail::to($user->email)->send(new NotificationMail($user, $guestMessage, "Your check-in and checkout time"));
+                    Mail::to($host->email)->queue(new SuccessfulBookingMessage($host, $user,$hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Your apartment has been booked"));
+                    
+                    Mail::to($user->email)->queue(new GuestBookingConfirmationReceipt($user, $hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Booking Confirmation Receipt"));
 
                     $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
                     ->where('host_home_id',$hostHomeId)
@@ -829,8 +823,14 @@ class BookingsController extends Controller
             'paymentStatus' => 'successButCancelled',
         ]);
 
-        $hostMessage = "Your apartment boooking has been cancelled " ;
-        Mail::to($host->email)->send(new NotificationMail($host, $hostMessage, $hostMessage));
+        $title = "Your apartment boooking has been cancelled ";
+        $formatedDate = now()->format('M j, Y h:ia');
+        $guest = User::find(auth()->id());
+        
+        $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
+        $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
+
+        Mail::to($host->email)->queue(new BookingCancellation($host, $guest, $hostHome, $formatedDate, $checkInDate, $checkOutDate, $title));
 
         // Save the Canceltrip record
         $cancelTrip->save();
@@ -910,9 +910,6 @@ class BookingsController extends Controller
                 'recipient' => $recipientCode,
                 'reason' => 'Payment for services', // Optional reason for the transfer
             ]);
-
-            // Log the transfer response for debugging
-            logger()->info('Transfer Response:', $transferResponse->json());
 
             // Check the status of the transfer
             if ($transferResponse['status'] === 'success') {

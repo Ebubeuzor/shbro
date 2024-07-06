@@ -13,18 +13,25 @@ class VerifyUser extends Mailable
 {
     use Queueable, SerializesModels;
 
+    protected $user;
     protected $status;
+    protected $viewToUse;
+    protected $title;
 
-    public function __construct($status)
+    public function __construct($user,$status,$viewToUse,$title)
     {
+        $this->user = $user;
         $this->status = $status;
+        $this->viewToUse = $viewToUse;
+        $this->title = $title;
     }
 
     public function build()
     {
-        return $this->subject("shbro")
-        ->view('emails.VerifyUser')
+        return $this->subject($this->title)
+        ->view($this->viewToUse)
         ->with([
+            'user' => $this->user,
             'status' => $this->status
         ])
         ;

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -33,6 +34,7 @@ class CoHostInvitationForNonUsers extends Mailable
             'cohostemail' => $encryptedCohostemail,
             'hostremToken' => $hostremToken,
             'hostid' => $this->hostid,
+            'host' => User::find($this->hostid),
         ])
         ;
     }

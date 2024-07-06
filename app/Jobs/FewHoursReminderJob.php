@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\FewHoursToCheckInUpdate;
 use App\Mail\NotificationMail;
 use App\Models\Booking;
 use App\Models\HostHome;
@@ -29,8 +30,6 @@ class FewHoursReminderJob implements ShouldQueue
     public function handle()
     {
         
-        Log::info("ebubestart3");
-        // Check if today is the check-in day
         $hosthome = HostHome::find($this->booking->host_home_id);
 
         // Convert the check-in time to 24-hour format
@@ -41,6 +40,8 @@ class FewHoursReminderJob implements ShouldQueue
         ->setTimezone(config('app.timezone'))
         ->setTimeFromTimeString($checkInTime);
 
+        $formattedCheckInDateTime = $checkInDateTime->format('M j Y h:i a');
+
         $now = Carbon::now()->setTimezone(config('app.timezone'));
 
         // Calculate the time difference in hours between now and the check-in time
@@ -50,10 +51,11 @@ class FewHoursReminderJob implements ShouldQueue
         if ($checkInDateTime->isSameDay($now) && $hoursDifference > 0 && $hoursDifference <= 6 && $this->booking->fewHoursReminder === null) {
 
             // Perform actions for the few hours reminder
-            Mail::to($this->booking->user->email)->send(new NotificationMail(
+            Mail::to($this->booking->user->email)->queue(new FewHoursToCheckInUpdate(
                 $this->booking->user,
-                "Reminder: Your check-in is in a few hours",
-                "Your check-in is approaching. Safe travels!"
+                $hosthome,
+                $formattedCheckInDateTime,
+                "Your check-in is approaching. Safe travels!",
             ));
 
             // Update the booking with the few hours reminder timestamp

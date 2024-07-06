@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\HostHome;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -40,13 +41,13 @@ class AcceptOrDeclineGuestMail extends Mailable
     {
 
         return $this->subject($this->title)
-        ->view('emails.acceptordeclineguest')
+        ->view('emails.bookingRequestResponse')
         ->with([
             'user' => $this->user,
             'guestmessage' => $this->message,
             'title' => $this->title,
-            'status' => $this->status,
-            'hosthomeid' => $this->hosthomeid
+            'status' => $this->status == 'accept' ? "Accepted" : "Declined",
+            'hosthome' => HostHome::find($this->hosthomeid)
         ]);
     }
 }

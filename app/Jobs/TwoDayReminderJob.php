@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\NotificationMail;
+use App\Mail\TwoDaysReminder;
 use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -29,15 +30,13 @@ class TwoDayReminderJob implements ShouldQueue
     public function handle()
     {
         
-        Log::info("ebubestart7");
         // Check if today is two days before the check-in day
         $checkInDate = Carbon::parse($this->booking->check_in);
         $twoDaysBefore = Carbon::today()->addDays(2);
 
         if ($checkInDate->isSameDay($twoDaysBefore) && is_null($this->booking->twoDayReminder)) {
-            Mail::to($this->booking->user->email)->send(new NotificationMail(
+            Mail::to($this->booking->user->email)->send(new TwoDaysReminder(
                 $this->booking->user,
-                "Reminder: Your check-in is in 2 days",
                 "You have a booking in 2 days. Get ready!"
             ));
 

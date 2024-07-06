@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Mail\NotificationMail;
+use App\Mail\SuspendedSecurtiyDeposit;
+use App\Models\HostHome;
 use App\Models\ReportPropertyDamage;
 use App\Models\ReportPropertyDamagePhotos;
 use App\Models\User;
@@ -33,7 +35,7 @@ class SaveReportDamages implements ShouldQueue
         private $data,
         private $hostId,
         private $booking,
-    )
+        )
     {
         
     }
@@ -67,15 +69,22 @@ class SaveReportDamages implements ShouldQueue
         $this->booking->save();
 
         $guest = User::find($this->booking->user_id);
-        $guestMessage = "Important Notice: The host has reported damages to their apartment during your stay. Your security deposit has been paused from entering your wallet pending verification by admins. We will update you once the matter is resolved. Thank you for your cooperation.";
+        $hosthome = HostHome::find($this->booking->host_home_id);
         $guestTitle = "Notice: Host Report of Apartment Damage";
-        Mail::to($guest->email)->queue(new NotificationMail($guest, $guestMessage, $guestTitle));
+        $formatedDate = now()->format('M j, Y h:ia');
+        Mail::to($guest->email)->queue(new SuspendedSecurtiyDeposit($guest, $hosthome,$this->data['description'],$formatedDate, $guestTitle));
         
-        $admins = User::whereNotNull('adminStatus')->get();
-        $message = "Urgent: Host has reported damages to their apartment. Immediate attention required.";
+        $host = User::find($this->booking->hostId);
+        $hosthome = HostHome::find($this->booking->host_home_id);
         $title = "Damage Report: Urgent Attention Needed";
 
-        NotifyAdmins::dispatch($admins,$message,$title);
+        User::whereNotNull('adminStatus')->chunk(100, function ($admins) use ($hosthome, $title,$host,$reportDamage) {
+            try {
+                NotifyAdminsAboutDamages::dispatch($admins,$hosthome,$host,$reportDamage,$title);
+            } catch (\Exception $e) {
+                Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+            }
+        });
     }
 
     

@@ -31,6 +31,8 @@ use App\Mail\ApartmentDeleteApprovalRequest;
 use App\Mail\CoHostInvitation;
 use App\Mail\CoHostInvitationForNonUsers;
 use App\Mail\CohostUpdateForHost;
+use App\Mail\DisapproveHostHome;
+use App\Mail\ListingApproved;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
@@ -777,7 +779,7 @@ class HostHomeController extends Controller
             $reservedDate->save();
         }
 
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -841,7 +843,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -882,7 +884,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -920,7 +922,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -957,7 +959,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -993,7 +995,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1029,7 +1031,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1065,7 +1067,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1121,7 +1123,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1178,7 +1180,7 @@ class HostHomeController extends Controller
 
         $user = User::find(auth()->id());
         $host = User::find($hostHome->user_id);
-        $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+        $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1239,7 +1241,7 @@ class HostHomeController extends Controller
 
             $user = User::find(auth()->id());
             $host = User::find($hostHome->user_id);
-            $cohost = Hosthomecohost::where('user_id',$user->id)->first();
+            $cohost = Cohost::where('user_id',$user->id)->first();
             if ($cohost) {
                 $destination = "https://shortletbooking.com/Scheduler";
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
@@ -1478,7 +1480,7 @@ class HostHomeController extends Controller
         $notification->save();
         // Broadcast the NewNotificationEvent to notify the WebSocket clients
         event(new NewNotificationEvent($notification, $notification->id, $user->id));
-        Mail::to($user->email)->queue(new NotificationMail($user, $message, $title));
+        Mail::to($user->email)->queue(new ListingApproved($user, $hostHome, $title));
     
         Cache::clear();
         return response()->json(['message'=>'approved'],200);
@@ -1527,7 +1529,7 @@ class HostHomeController extends Controller
         // Broadcast the NewNotificationEvent to notify the WebSocket clients
         event(new NewNotificationEvent($notification, $notification->id, $user->id));
 
-        Mail::to($user->email)->queue(new NotificationMail($user,$data['message'],$title));
+        Mail::to($user->email)->queue(new DisapproveHostHome($user,$data['message'],$hostHome,$title));
         
         Cache::clear();
         return response()->json(['message'=>'disapproved'],200);

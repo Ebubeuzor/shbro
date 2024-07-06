@@ -64,7 +64,7 @@
                                 <tr>
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
                                         <p>Hello {{$user->name}},</p>
-                                        <p>Exciting news! A guest has requested to stay in your apartment on Shrbo. Please review the booking details and confirm the reservation to welcome your guest.</p>
+                                        <p>Exciting news! A guest has requested to stay in your apartment (<span style="font-weight: bold; color: orange;">{{$hosthome->title}}</span>) on Shrbo. Please review the booking details and confirm the reservation to welcome your guest.</p>
                                         <p>Should you have any questions or need assistance with the booking process, feel free to reach out to our support team.</p>
                                         <p>Thank you for being a part of the Shrbo hosting community. We appreciate your hospitality in sharing your space with travelers.</p>
                                         <p>Best regards,</p>

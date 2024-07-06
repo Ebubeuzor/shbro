@@ -14,11 +14,13 @@ class NewBookingRequest extends Mailable
     use Queueable, SerializesModels;
 
     protected $user;
+    protected $hosthome;
     protected $title;
 
-    public function __construct($user,$title)
+    public function __construct($user,$hosthome,$title)
     {
         $this->user = $user;
+        $this->hosthome = $hosthome;
         $this->title = $title;
     }
     
@@ -26,7 +28,8 @@ class NewBookingRequest extends Mailable
         return $this->subject($this->title)
         ->view('emails.newBookingRequest')
         ->with([
-            'user' => $this->user
+            'user' => $this->user,
+            'hosthome' => $this->hosthome,
         ]);
     }
 }

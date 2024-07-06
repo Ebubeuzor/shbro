@@ -502,8 +502,8 @@ class BookingsController extends Controller
         event(new MessageSent($messageToHost, $user->id, $receiverId));
         $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId);
         $userToReceive = User::whereId($receiverId)->first();
-        Mail::to($userToReceive->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
-        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive, "A Guest has made a request to book your apartment"));
+        Mail::to($user->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
+        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment"));
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId)

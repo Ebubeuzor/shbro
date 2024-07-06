@@ -77,7 +77,7 @@
                                 <tr>
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
                                         <h3 style="margin: 0; font-size: 18px; color: #333333;">Hello {{$user->name}},</h3>
-                                        <p style="margin: 20px 0;">Thank you for your interest in booking {{$hosthome->title}} with Shrbo. We've successfully received your request to book, and here are the details for your review:</p>
+                                        <p style="margin: 20px 0;">Thank you for your interest in booking (<span style="font-weight: bold; color: orange;">{{$hosthome->title}}</span>) with Shrbo. We've successfully received your request to book, and here are the details for your review:</p>
                                         <p style="margin: 20px 0;"><strong>Booking Details</strong></p>
                                         <p style="margin: 10px 0;"><strong>Property:</strong> {{$hosthome->title}}</p>
                                         <p style="margin: 10px 0;"><strong>Location:</strong> {{$hosthome->address}}</p>

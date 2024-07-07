@@ -841,7 +841,7 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
         $title = "Your account has been banned from this company";
-        $viewToUse = 'accountBanned';
+        $viewToUse = 'emails.accountBanned';
         $formatedDate = now()->format('M j, Y h:ia');
         Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         
@@ -970,7 +970,7 @@ class AdminController extends Controller
         $title = "Your account has been suspended for 30 days";
         
         $formatedDate = now()->format('M j, Y h:ia');
-        $viewToUse = 'accountSuspension';
+        $viewToUse = 'emails.accountSuspension';
         Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         
         $user->update([
@@ -1016,7 +1016,7 @@ class AdminController extends Controller
         $user = User::where('id', $id)->first();
         $title = "Your account has been unbanned";
         
-        $viewToUse = 'accountUnbanned';
+        $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
         Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         $user->update([
@@ -1064,7 +1064,7 @@ class AdminController extends Controller
         $user = User::where('id', $id)->first();
         $title = "Your account has been unbanned";
         
-        $viewToUse = 'accountUnbanned';
+        $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
         Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
         

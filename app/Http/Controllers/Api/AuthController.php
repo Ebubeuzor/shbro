@@ -134,6 +134,7 @@ class AuthController extends Controller
             ],201);
 
         } catch (\Exception $e) {
+            info($e);
             return response()->json(['error' => 'Invalid token'], 401);
         }
     }

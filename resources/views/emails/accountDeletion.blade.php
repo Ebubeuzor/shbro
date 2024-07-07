@@ -69,7 +69,7 @@
                                         <p><strong>Account Details</strong></p>
                                         <ul style="padding-left: 20px;">
                                             <li><strong>Account ID</strong>: {{$user->id}}</li>
-                                            <li><strong>Deletion Date</strong>: {{formattedDate}} </li>
+                                            <li><strong>Deletion Date</strong>: {{$formattedDate}} </li>
                                             <li><strong>Reason for Deletion</strong>: {{$usermessage}}</li>
                                         </ul>
                                         

@@ -69,7 +69,7 @@
                                         <p><strong>Details of Suspension</strong></p>
                                         <ul style="padding-left: 20px;">
                                             <li><strong>User Id</strong>: {{$user->id}}</li>
-                                            <li><strong>Suspension Date</strong>:  {{formattedDate}} </li>
+                                            <li><strong>Suspension Date</strong>:  {{$formattedDate}} </li>
                                             <li><strong>Reason for Suspension</strong>:  {{$usermessage}} </li>
                                         </ul>
                                         

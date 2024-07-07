@@ -61,7 +61,7 @@
                                         
                                         <p><strong>Effect of the Ban</strong></p>
                                         <ul style="padding-left: 20px;">
-                                            <li>As of {{formattedDate}} , you will no longer be able to access your Shrbo account, make bookings, or list properties.</li>
+                                            <li>As of {{$formattedDate}} , you will no longer be able to access your Shrbo account, make bookings, or list properties.</li>
                                             <li>Any upcoming bookings or listings you have will be canceled, and appropriate notifications will be sent to affected parties.</li>
                                         </ul>
                                         

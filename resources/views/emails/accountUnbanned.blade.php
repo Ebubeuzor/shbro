@@ -69,7 +69,7 @@
                                         <p><strong>Details of Reinstatement</strong></p>
                                         <ul style="padding-left: 20px;">
                                             <li><strong>Username</strong>: {{$user->name}}</li>
-                                            <li><strong>Reinstatement Date</strong>: {{formattedDate}} </li>
+                                            <li><strong>Reinstatement Date</strong>: {{$formattedDate}} </li>
                                         </ul>
                                         
                                         <p>We encourage you to review our Terms of Service and Community Guidelines thoroughly to ensure a positive and compliant experience on our platform. Adherence to these guidelines is crucial for maintaining the safety and integrity of our community.</p>

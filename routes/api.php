@@ -267,3 +267,5 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
 
     Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
+
+    Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);

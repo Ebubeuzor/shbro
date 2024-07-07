@@ -80,6 +80,65 @@ class AuthController extends Controller
     }
 
     /**
+     * 
+     * @lrd:start
+     * Verify Google Token and Authenticate User
+     * 
+     * This endpoint verifies the provided Google ID token and authenticates the user.
+     * @title Verify Google Token
+     * @description Verifies the Google ID token sent from the Flutter app and logs in or registers the user.
+     * @auth false
+     * @bodyParam token string required The Google ID token received after successful sign-in in the Flutter app. Example: "eyJhb..."
+     * @response 200 {
+     *   "user": {
+     *     "id": 1,
+     *     "name": "Ajanaku David",
+     *     "email": "davidajanaku46163@gmail.com",
+     *     "google_id": "110500601015550307317",
+     *     "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+     *   }
+     * }
+     * @response 400 {
+     *   "error": "Invalid or expired token"
+     * }
+     * @lrd:end
+     * @LRDparam token use|required
+     */
+    public function verifyGoogleToken(Request $request)
+    {
+        $token = $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        try {
+            // Validate the token with Google
+            $googleUser = Socialite::driver('google')->stateless()->userFromToken($token['token']);
+
+            // Check if the user exists in your database
+            $user = User::where('google_id', $googleUser->getId())->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'google_id' => $googleUser->getId(),
+                    'remember_token' => Str::random(40)
+                ]);
+    
+                Mail::to($user->email)->send(new WelcomeMail($user));
+            }
+    
+            return response()->json([
+                'user' => $user,
+                'token' => $user->createToken('main')->plainTextToken,
+            ],201);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+    }
+
+    /**
      * @lrd:start
      * This function is used to register a new user. 
      *

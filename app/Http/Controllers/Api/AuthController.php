@@ -129,7 +129,8 @@ class AuthController extends Controller
             info('Google User Data', ['googleUser' => $googleUser]);
 
             // Check if the user exists in your database
-            $user = User::where('google_id', $googleUser['sub'])->first();
+            
+            $user = User::where('email', $googleUser['email'])->first();
 
             if (!$user) {
                 $user = User::create([

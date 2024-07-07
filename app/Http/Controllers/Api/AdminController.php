@@ -840,7 +840,7 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
-        $title = "Your account has been banned from this company";
+        $title = "Your account has been banned from shrbo";
         $viewToUse = 'emails.accountBanned';
         $formatedDate = now()->format('M j, Y h:ia');
         Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
@@ -967,7 +967,7 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
-        $title = "Your account has been suspended for 30 days";
+        $title = "Your account has been suspended from shrbo";
         
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountSuspension';
@@ -1062,7 +1062,7 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
-        $title = "Your account has been unbanned";
+        $title = "Your account has been unsuspended";
         
         $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');

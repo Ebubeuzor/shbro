@@ -133,9 +133,26 @@ class AuthController extends Controller
                 'token' => $user->createToken('main')->plainTextToken,
             ],201);
 
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            // Log the error for debugging
+            info('Google Token Verification Failed', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null,
+            ]);
+
+            return response()->json([
+                'error' => 'Invalid or expired token',
+            ], 400);
         } catch (\Exception $e) {
-            info($e);
-            return response()->json(['error' => 'Invalid token'], 401);
+            // Log generic exceptions
+            info('An error occurred during Google Token Verification', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred during token verification',
+            ], 500);
         }
     }
 

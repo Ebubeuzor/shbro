@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
 
 class AuthController extends Controller
@@ -111,42 +112,44 @@ class AuthController extends Controller
         ]);
 
         try {
-            // Validate the token with Google
-            $googleUser = Socialite::driver('google')->stateless()->userFromToken($token['token']);
+            // Verify the token with Google directly as a secondary check
+            $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+                'id_token' => $token['token'],
+            ]);
+
+            if ($response->failed()) {
+                return response()->json([
+                    'error' => 'Invalid or expired token',
+                ], 400);
+            }
+
+            $googleUser = $response->json();
+
+            // Log Google User for Debugging
+            info('Google User Data', ['googleUser' => $googleUser]);
 
             // Check if the user exists in your database
-            $user = User::where('google_id', $googleUser->getId())->first();
+            $user = User::where('google_id', $googleUser['sub'])->first();
 
             if (!$user) {
                 $user = User::create([
-                    'name' => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
-                    'google_id' => $googleUser->getId(),
+                    'name' => $googleUser['name'],
+                    'email' => $googleUser['email'],
+                    'google_id' => $googleUser['sub'],
                     'remember_token' => Str::random(40)
                 ]);
-    
+
                 Mail::to($user->email)->send(new WelcomeMail($user));
             }
-    
+
             return response()->json([
                 'user' => $user,
                 'token' => $user->createToken('main')->plainTextToken,
-            ],201);
+            ], 201);
 
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (\Exception $e) {
             // Log the error for debugging
             info('Google Token Verification Failed', [
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null,
-            ]);
-
-            return response()->json([
-                'error' => 'Invalid or expired token',
-            ], 400);
-        } catch (\Exception $e) {
-            // Log generic exceptions
-            info('An error occurred during Google Token Verification', [
                 'message' => $e->getMessage(),
             ]);
 
@@ -155,6 +158,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * @lrd:start

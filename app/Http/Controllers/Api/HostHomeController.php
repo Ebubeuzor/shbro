@@ -71,6 +71,8 @@ class HostHomeController extends Controller
      * @lrd:start
      * gets the details of every verified homes
      * /api/hosthomes?per_page=20
+     * /api/hosthomesForUnAuthUser is for unauthenticated user
+     * /api/hosthomesForAuthUser is for authenticated user
      * @lrd:end
      * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
      */

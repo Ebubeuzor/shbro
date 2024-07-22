@@ -54,6 +54,7 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
+        'XSS' => \App\Http\Middleware\ContentSecurityPolicy::class,
         'auth' => \App\Http\Middleware\Authenticate::class,
         'cache' => \App\Http\Middleware\CacheMiddleware::class,
         'checkUserConditions' => \App\Http\Middleware\CheckUserConditions::class,

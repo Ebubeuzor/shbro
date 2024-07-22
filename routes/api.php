@@ -20,19 +20,21 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
-Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
-Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
-Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
-Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
-Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
-
-Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
-
-Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
-
-    Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);
-
+Route::middleware(['XSS'])->group(function(){
+    
+    Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
+    Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
+    Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
+    Route::get('admin-guest-chat/getChatMessages/{adminId}/{userId}/{sessionId}', [AdminGuestChatController::class, 'getChatMessages']);
+    Route::post('admin-guest-chat/startConversationOrReplyText', [AdminGuestChatController::class, 'startConversation']);
+    Route::get('hostReview/{hostId}', [UserController::class, 'hostReview']);
+    
+    Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
+    
+    Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
+        
+        Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);
+        
     Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById']);
 
     Route::post('schduler/host-homes/{id}/edit-price', [HostHomeController::class, 'schdulerEditHostHomePrice']);
@@ -42,10 +44,10 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('schduler/host-homes/{id}/edit-blocked-date', [HostHomeController::class, 'schdulerEditHostHomeBlockedDate']);
     Route::post('schduler/host-homes/{id}/edit-unblock-date', [HostHomeController::class, 'schdulerUnblockHostHomeDates']);
     Route::put('schdulerUpdatePricesForDateRange/{id}', [HostHomeController::class, 'schdulerUpdatePricesForDateRange']);
-
+    
     Route::get('/user', [UserController::class, 'getUserInfo']); 
     Route::get('/hostcohosts', [UserController::class, 'hostcohosts']); 
-
+    
     Route::apiResource('/userDetail', UserController::class);
     
     
@@ -55,11 +57,11 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('makeRequestToBook/{receiverId}/{hostHomeId}', [BookingsController::class, 'makeRequestToBook']);
     
     Route::get('logout', [AuthController::class, 'logout']);
-
+    
     Route::post('createCard/{id}', [UserController::class, 'createCard']);
     Route::post('createUserBankinfo/{id}', [UserController::class, 'createUserBankinfo']);
     Route::delete('deleteUserBankInfo/{userId}/{accountId}', [UserController::class, 'deleteUserBankInfo']);
-
+    
     Route::delete('deleteUserCard/{userCardId}/{userid}', [UserController::class, 'deleteUserCard']);
     Route::delete('removeFromWishlist/{hostHomeId}', [UserController::class, 'removeFromWishlist']);
     Route::get('selectCard/{userCardId}/{userid}', [UserController::class, 'selectCard']);
@@ -87,31 +89,31 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
         Route::post('changePassword', [AuthController::class, 'changePassword']);
         
     });
-
+    
     // Delete discount by id
     Route::delete('/deleteDiscountById/{id}', [HostHomeController::class, 'deleteDiscountById'])
-        ->name('deleteDiscountById');
-
+    ->name('deleteDiscountById');
+    
     // Delete offer by id
     Route::delete('/deleteOfferById/{id}', [HostHomeController::class, 'deleteOfferById'])
         ->name('deleteOfferById');
-
+        
     // Delete description by id
     Route::delete('/deleteDescriptionById/{id}', [HostHomeController::class, 'deleteDescriptionById'])
         ->name('deleteDescriptionById');
-
-    // Delete reservation by id
-    Route::delete('/deleteReservationById/{id}', [HostHomeController::class, 'deleteReservationById'])
+        
+        // Delete reservation by id
+        Route::delete('/deleteReservationById/{id}', [HostHomeController::class, 'deleteReservationById'])
         ->name('deleteReservationById');
-
-    // Delete rule by id
-    Route::delete('/deleteRuleById/{id}', [HostHomeController::class, 'deleteRuleById'])
+        
+        // Delete rule by id
+        Route::delete('/deleteRuleById/{id}', [HostHomeController::class, 'deleteRuleById'])
         ->name('deleteRuleById');
-
-    // Delete notice by id
+        
+        // Delete notice by id
     Route::delete('/deleteNoticeById/{id}', [HostHomeController::class, 'deleteNoticeById'])
-        ->name('deleteNoticeById');
-
+    ->name('deleteNoticeById');
+    
     Route::post('hosthomes', [HostHomeController::class, 'store']);
     Route::get('addCoHost', [HostHomeController::class, 'addCoHost']);
     Route::put('hosthomes/{hosthome}', [HostHomeController::class, 'update']);
@@ -125,12 +127,12 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
         Route::get('/{receiverId?}', [ChatController::class, 'index'])->name('index');
         Route::post('/{receiverId?}', [ChatController::class, 'store'])->name('store');
     });
-
+    
     Route::get('hosthomes/{hosthome}', [HostHomeController::class, 'show']);
     Route::get('admin-guest-chat/joinChat/{guestid}/{sessionId}', [AdminGuestChatController::class, 'joinChat']);
     Route::get('admin-guest-chat/getUnattendedChats', [AdminGuestChatController::class, 'getUnattendedChats']);
     Route::get('admin-guest-chat/getSessionMessages', [AdminGuestChatController::class, 'getSessionMessages']);
-
+    
     Route::middleware('role:admin,super admin')->group(function(){
         Route::post('homepage', [HomepageController::class, 'store']);
         Route::post("sendEmail", [AdminController::class, 'sendEmail']);
@@ -212,7 +214,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::delete('/deleteHostPendingReviews/{id}', [ReviewController::class, 'deleteHostPendingReviews']);
     Route::delete('/deletesHostPendingReviewsForGuest/{id}', [ReviewController::class, 'deletesHostPendingReviewsForGuest']);
     Route::get('/schdulerGetHostHomeAndId', [HostHomeController::class, 'schdulerGetHostHomeAndId']);
-
+    
     
     Route::post('/payment/initiate-multiple/{hosthomeid}/{userid}', [BookingsController::class, 'bookApartment']);
     Route::post('/createCancelTrips', [BookingsController::class, 'createCancelTrips']);
@@ -242,30 +244,31 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 });
 
 
-    Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
+Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
 
-    Route::get('homepage', [HomepageController::class, 'index']);
+Route::get('homepage', [HomepageController::class, 'index']);
 
-    Route::post('signup', [AuthController::class, 'signup']);
-    Route::post('login', [AuthController::class, 'login']);
-    Route::get('auth', [AuthController::class, 'redirectToAuth']);
-    Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
-    Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail']);
+Route::post('signup', [AuthController::class, 'signup']);
+Route::post('login', [AuthController::class, 'login']);
+Route::get('auth', [AuthController::class, 'redirectToAuth']);
+Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
+Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail']);
 
-    Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
+Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
 
-    Route::get('/view-count', [AuthController::class, 'registerVisitor']);
+Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
-    Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
-    Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
-    Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
-    Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
-    Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
+Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
+Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
+Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
+Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
-    Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
+Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
 
-    Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
+Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
 
-    Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
+Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
 
-    Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+});

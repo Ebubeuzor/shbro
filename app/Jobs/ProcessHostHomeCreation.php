@@ -92,111 +92,118 @@ class ProcessHostHomeCreation implements ShouldQueue
         $hostHome->tax = 0;
         $hostHome->total = 0;
 
-        DB::transaction(function () use ($hostHome, $data,$user,$cohost) {
-            $hostHome->save();
+
+        try {
+            DB::transaction(function () use ($hostHome, $data,$user,$cohost) {
+                $hostHome->save();
 
 
-            $amenities = $data['amenities'];
-            $images = $data['hosthomephotos'];
-            $hosthomedescriptions = $data['hosthomedescriptions'];
-            $reservations = $data['reservations'];
-            $discounts = $data['discounts'];
-            $rules = $data['rules'];
-            $notices = $data['notice'];
-            
-            if(trim(isset($data['additionalRules']))){
-                Hosthomerule::create([
-                    'rule' => $data['additionalRules'],
-                    'host_home_id' => $hostHome->id
-                ]);
-            }
-
-            foreach ($images as $base64Image) {
-                ProcessImage::dispatch($base64Image, $hostHome->id);
-            }
-            
-            foreach ($amenities as $amenity) {
-                ProcessOffer::dispatch($amenity, $hostHome->id);
-            }
-            
-            foreach ($hosthomedescriptions as $hosthomedescription) {
-                ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
-            }
-            
-            foreach ($reservations as $reservation) {
-                ProcessReservation::dispatch($reservation,$hostHome->id);
-            }
-            
-            foreach ($discounts as $discount) {
-                ProcessDiscount::dispatch($discount,$hostHome->id);
-            }
-            
-            foreach ($rules as $rule) {
-                ProcessRule::dispatch($rule,$hostHome->id);
-            }
-            
-            foreach ($notices as $notice) {
-                ProcessNotice::dispatch($notice, $hostHome->id);
-            }
-
-            $host = User::find($hostHome->user_id);
-
-            if (!$cohost) {
-                $message = "Your listing has been created now awaiting admin approval";
-                $title = "Listing Created Successfully.";
-                Mail::to($host->email)->queue(new NewApartmentpendingApproval($host,$hostHome,$title));
-                        
-                // Create a new notification record in the database
-                $notification = new Notification();
-                $notification->user_id = $host->id;  // Assuming you want to save the user ID
-                $notification->Message = $message;
-                $notification->save();
-                // Broadcast the NewNotificationEvent to notify the WebSocket clients
-                event(new NewNotificationEvent($notification, $notification->id, $host->id));
-
-            }
-
-            if ($user->co_host == true) {
+                $amenities = $data['amenities'];
+                $images = $data['hosthomephotos'];
+                $hosthomedescriptions = $data['hosthomedescriptions'];
+                $reservations = $data['reservations'];
+                $discounts = $data['discounts'];
+                $rules = $data['rules'];
+                $notices = $data['notice'];
                 
-                $hostHome->update([
-                    'approvedByHost' => false,
-                    'needApproval' => true
-                ]);
-                Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
-                
-                $this->clearAllCache();
+                if(trim(isset($data['additionalRules']))){
+                    Hosthomerule::create([
+                        'rule' => $data['additionalRules'],
+                        'host_home_id' => $hostHome->id
+                    ]);
+                }
 
-            }
-
-            if ($host->cohosts()->exists()) {
-                $coHosts = $host->cohosts()->with('user')->get();
-                $uniqueCohosts = $coHosts->unique('user.email');
-
-                foreach ($uniqueCohosts as $coHost) {
-                    CreateHomesForCohosts::dispatch($coHost->user_id,$coHost->host_id,$hostHome->id);
+                foreach ($images as $base64Image) {
+                    ProcessImage::dispatch($base64Image, $hostHome->id);
                 }
                 
-                $this->clearAllCache();
+                foreach ($amenities as $amenity) {
+                    ProcessOffer::dispatch($amenity, $hostHome->id);
+                }
+                
+                foreach ($hosthomedescriptions as $hosthomedescription) {
+                    ProcessDescription::dispatch($hosthomedescription,$hostHome->id);
+                }
+                
+                foreach ($reservations as $reservation) {
+                    ProcessReservation::dispatch($reservation,$hostHome->id);
+                }
+                
+                foreach ($discounts as $discount) {
+                    ProcessDiscount::dispatch($discount,$hostHome->id);
+                }
+                
+                foreach ($rules as $rule) {
+                    ProcessRule::dispatch($rule,$hostHome->id);
+                }
+                
+                foreach ($notices as $notice) {
+                    ProcessNotice::dispatch($notice, $hostHome->id);
+                }
 
-            }
+                $host = User::find($hostHome->user_id);
 
-            if (!$user->co_host) {
-                $chunkSize = 100;
-                $title = "New Apartment Created: Admin Action Required";
+                if (!$cohost) {
+                    $message = "Your listing has been created now awaiting admin approval";
+                    $title = "Listing Created Successfully.";
+                    Mail::to($host->email)->queue(new NewApartmentpendingApproval($host,$hostHome,$title));
+                            
+                    // Create a new notification record in the database
+                    $notification = new Notification();
+                    $notification->user_id = $host->id;  // Assuming you want to save the user ID
+                    $notification->Message = $message;
+                    $notification->save();
+                    // Broadcast the NewNotificationEvent to notify the WebSocket clients
+                    event(new NewNotificationEvent($notification, $notification->id, $host->id));
 
-                // Process admins in chunks
-                User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title, $host) {
-                    try {
-                        // Dispatch the notification job for the current chunk of admins
-                        NotifyAdmins::dispatch($admins, $hostHome, $host, $title);
-                    } catch (\Exception $e) {
-                        // Optionally log any errors during the dispatch
-                        Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+                }
+
+                if ($user->co_host == true) {
+                    
+                    $hostHome->update([
+                        'approvedByHost' => false,
+                        'needApproval' => true
+                    ]);
+                    Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome,$host,$user));
+                    
+                    $this->clearAllCache();
+
+                }
+
+                if ($host->cohosts()->exists()) {
+                    $coHosts = $host->cohosts()->with('user')->get();
+                    $uniqueCohosts = $coHosts->unique('user.email');
+
+                    foreach ($uniqueCohosts as $coHost) {
+                        CreateHomesForCohosts::dispatch($coHost->user_id,$coHost->host_id,$hostHome->id);
                     }
-                });
-            }
+                    
+                    $this->clearAllCache();
 
-        });
+                }
+
+                if (!$user->co_host) {
+                    $chunkSize = 100;
+                    $title = "New Apartment Created: Admin Action Required";
+
+                    // Process admins in chunks
+                    User::whereNotNull('adminStatus')->chunk($chunkSize, function ($admins) use ($hostHome, $title, $host) {
+                        try {
+                            // Dispatch the notification job for the current chunk of admins
+                            NotifyAdmins::dispatch($admins, $hostHome, $host, $title);
+                        } catch (\Exception $e) {
+                            // Optionally log any errors during the dispatch
+                            Log::error("Failed to dispatch NotifyAdmins job: " . $e->getMessage());
+                        }
+                    });
+                }
+
+            });
+        } catch (\Exception $e) {
+            // Log the error to the console and to the log file
+            Log::error("Transaction failed: " . $e->getMessage());
+            echo "Transaction failed: " . $e->getMessage();
+        }
     }
 
     public function clearAllCache()

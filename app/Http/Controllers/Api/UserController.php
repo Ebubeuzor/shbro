@@ -444,7 +444,9 @@ class UserController extends Controller
             'profilePicture' => $user->profilePicture,
             'emergency_no' => $user->emergency_no,
             'about_user' => $user->aboutUser ? [
-                $user->aboutUser
+                'speaks' => $user->aboutUser->speaks,
+                'lives_in' => $user->aboutUser->lives_in,
+                'occupation' => $user->aboutUser->occupation,
             ] : null,
         ];
 

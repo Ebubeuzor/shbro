@@ -424,6 +424,8 @@ class UserController extends Controller
             }
         }
 
+        $cacheKey = "user_info_{$user->id}";
+        Cache::forget($cacheKey);
         return response()->json(['message' => 'User updated successfully']);
     }
     

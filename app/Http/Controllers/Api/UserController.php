@@ -58,6 +58,7 @@ use Carbon\Carbon;
 use FFMpeg\FFMpeg;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -392,6 +393,11 @@ class UserController extends Controller
         if (isset($validated['profilePicture'])) {
             $validated['profilePicture'] = $this->saveImage($validated['profilePicture']);
         }
+
+        $userFields = ['name', 'email', 'profilePicture', 'emergency_no'];
+        $userData = Arr::only($validated, $userFields);
+        
+        $user->update($userData);
 
         $user->update($validated);
 

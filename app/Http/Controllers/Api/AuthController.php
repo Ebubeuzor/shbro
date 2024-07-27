@@ -124,11 +124,6 @@ class AuthController extends Controller
             }
 
             $googleUser = $response->json();
-
-            // Log Google User for Debugging
-            info('Google User Data', ['googleUser' => $googleUser]);
-
-            // Check if the user exists in your database
             
             $user = User::where('email', $googleUser['email'])->first();
 

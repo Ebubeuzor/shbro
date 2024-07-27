@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Notification as UserNotification;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
 use App\Http\Requests\StoreCreateUserCardRequest;
 use App\Http\Requests\StoreWishlistRequest;
+use App\Http\Requests\UpdateUserInfoForMobileAppUsers;
 use App\Http\Requests\UpdateUserNumberRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Requests\VerifyOtpRequest;
@@ -360,7 +361,100 @@ class UserController extends Controller
 
         return $relativePath;
     }
+
+
+    /**
+     * @lrd:start
+     * Update the user's information based on the provided request.
+     *
+     * This method processes the incoming update request, validates the data, 
+     * and updates the user's record in the database. If a profile picture is 
+     * provided as a base64-encoded string, it is decoded and saved as an image file. 
+     * Additionally, any related 'about_users' data is updated or created if necessary.
+     *
+     * 
+     * @return JsonResponse Returns a JSON response indicating the success or failure of the update operation.
+     *                       If the update is successful, it returns the updated user data.
+     *                       If the user is not found, it returns a 404 Not Found response.
+     *                       If there are validation issues, it returns a 422 Unprocessable Entity response.
+     * @lrd:end
+    */
+    public function updateForMoble(UpdateUserInfoForMobileAppUsers $request)
+    {
+        $user = User::find(auth()->id());
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        $validated = $request->validated();
+
+        if (isset($validated['profilePicture'])) {
+            $validated['profilePicture'] = $this->saveImage($validated['profilePicture']);
+        }
+
+        $user->update($validated);
+
+        // If the request includes fields for the `about_users` table, you need to update that table too
+        if ($request->has('speaks') || $request->has('lives_in') || $request->has('occupation')) {
+            $aboutUser = $user->aboutUser; // Assuming the relationship is defined
+            if ($aboutUser) {
+                $aboutUser->update([
+                    'speaks' => $request->input('speaks'),
+                    'lives_in' => $request->input('lives_in'),
+                    'occupation' => $request->input('occupation'),
+                ]);
+            } else {
+                $user->aboutUser()->create([
+                    'speaks' => $request->input('speaks'),
+                    'lives_in' => $request->input('lives_in'),
+                    'occupation' => $request->input('occupation'),
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'User updated successfully']);
+    }
     
+    /**
+     * @lrd:start
+     * Retrieve user details based on the user ID.
+     *
+     * This method fetches the user details along with related 'about_users' data.
+     * It uses a map to select only the required fields from the user data.
+     *
+     * @return JsonResponse Returns a JSON response with the user's selected details.
+     *                       If the user is not found, it returns a 404 Not Found response.
+     * @lrd:end
+     */
+    public function showDetailsForMobile()
+    {
+        // Find the user and include related 'about_users' data
+        $user = User::with('aboutUser')->find(auth()->id());
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Define the fields to be included in the response
+        $userDetails = $user->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profilePicture' => $user->profilePicture,
+                'emergency_no' => $user->emergency_no,
+                'about_user' => $user->aboutUser ? [
+                    'speaks' => $user->aboutUser->speaks,
+                    'lives_in' => $user->aboutUser->lives_in,
+                    'occupation' => $user->aboutUser->occupation,
+                ] : null,
+            ];
+        });
+
+        return response()->json(['user' => $userDetails]);
+    }
+
     /**
      * @lrd:start
      * This is a put request and it is used to update a user information as you can see it accept a value in the url this value is an authenticated user id

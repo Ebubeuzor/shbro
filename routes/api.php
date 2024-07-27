@@ -31,6 +31,10 @@ Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 
 Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
+    
+    Route::post('/mobile/updateForMoble', [UserController::class, 'updateForMoble']);
+    Route::get('/mobile/showDetailsForMobile', [UserController::class, 'showDetailsForMobile']);
+
     Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);
 
     Route::put('/updateSecurityDepositById/{bookingId}/{newSecurityDeposit}', [UserController::class, 'updateSecurityDepositById']);

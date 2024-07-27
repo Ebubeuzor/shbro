@@ -32,7 +32,7 @@ Route::get('/api/token/{userId}',[UserController::class, 'getUserToken']);
 Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
 
     
-    Route::post('/mobile/updateUserDetailsForMoble', [UserController::class, 'updateUserDetailsForMoble']);
+    Route::post('/mobile/updateUserDetailsForMobile', [UserController::class, 'updateUserDetailsForMobile']);
     Route::get('/mobile/showUserDetailsForMobile', [UserController::class, 'showUserDetailsForMobile']);
 
     Route::post('/handleBookingRequest/{requestId}/{host_home_id}/{host_id}/{guest_id}/{action}', [BookingsController::class, 'handleBookingRequest']);

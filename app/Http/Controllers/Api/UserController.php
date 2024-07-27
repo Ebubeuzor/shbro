@@ -380,7 +380,7 @@ class UserController extends Controller
      *                       If there are validation issues, it returns a 422 Unprocessable Entity response.
      * @lrd:end
     */
-    public function updateUserDetailsForMoble(UpdateUserInfoForMobileAppUsers $request)
+    public function updateUserDetailsForMobile(UpdateUserInfoForMobileAppUsers $request)
     {
         $user = User::find(auth()->id());
 

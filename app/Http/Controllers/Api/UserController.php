@@ -425,7 +425,9 @@ class UserController extends Controller
         }
 
         $cacheKey = "user_info_{$user->id}";
+        $cacheKey2 = "user_info_mobile_{$user->id}";
         Cache::forget($cacheKey);
+        Cache::forget($cacheKey2);
         return response()->json(['message' => 'User updated successfully']);
     }
     
@@ -445,25 +447,30 @@ class UserController extends Controller
         // Find the user and include related 'about_users' data
         $user = User::with('aboutUser')->find(auth()->id());
 
+        
+        $cacheKey = "user_info_mobile_{$user->id}";
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
         // Define the fields to be included in the response
-        $userDetails = [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'profilePicture' => $user->profilePicture,
-            'emergency_no' => $user->emergency_no,
-            'about_user' => $user->aboutUser ? [
-                'speaks' => $user->aboutUser->speaks,
-                'lives_in' => $user->aboutUser->lives_in,
-                'occupation' => $user->aboutUser->occupation,
-            ] : null,
-        ];
-
-        return response()->json(['user' => $userDetails]);
+        return Cache::remember($cacheKey, now()->addHour(),function() use($user){
+            
+            $userDetails = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profilePicture' => $user->profilePicture,
+                'emergency_no' => $user->emergency_no,
+                'about_user' => $user->aboutUser ? [
+                    'speaks' => $user->aboutUser->speaks,
+                    'lives_in' => $user->aboutUser->lives_in,
+                    'occupation' => $user->aboutUser->occupation,
+                ] : null,
+            ];
+    
+            return response()->json(['user' => $userDetails]);
+        });
     }
 
     /**

@@ -62,7 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     public function aboutUser(){
-        return $this->hasMany(AboutUser::class);
+        return $this->hasOne(AboutUser::class);
     }
 
     public function hosthomes(){

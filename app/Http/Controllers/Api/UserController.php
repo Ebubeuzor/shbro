@@ -397,9 +397,14 @@ class UserController extends Controller
         $userFields = ['name', 'email', 'profilePicture', 'emergency_no'];
         $userData = Arr::only($validated, $userFields);
         
-        $user->update($userData);
+        $userData = array_filter($userData, function ($value) {
+            return $value !== '' && $value !== null;
+        });
 
-        $user->update($validated);
+        // Update the user with filtered data
+        if (!empty($userData)) {
+            $user->update($userData);
+        }
 
         // If the request includes fields for the `about_users` table, you need to update that table too
         if ($request->has('speaks') || $request->has('lives_in') || $request->has('occupation')) {

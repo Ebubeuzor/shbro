@@ -380,7 +380,7 @@ class UserController extends Controller
      *                       If there are validation issues, it returns a 422 Unprocessable Entity response.
      * @lrd:end
     */
-    public function updateForMoble(UpdateUserInfoForMobileAppUsers $request)
+    public function updateUserDetailsForMoble(UpdateUserInfoForMobileAppUsers $request)
     {
         $user = User::find(auth()->id());
 
@@ -442,7 +442,7 @@ class UserController extends Controller
      *                       If the user is not found, it returns a 404 Not Found response.
      * @lrd:end
      */
-    public function showDetailsForMobile()
+    public function showUserDetailsForMobile()
     {
         // Find the user and include related 'about_users' data
         $user = User::with('aboutUser')->find(auth()->id());

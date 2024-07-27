@@ -437,20 +437,18 @@ class UserController extends Controller
         }
 
         // Define the fields to be included in the response
-        $userDetails = $user->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profilePicture' => $user->profilePicture,
-                'emergency_no' => $user->emergency_no,
-                'about_user' => $user->aboutUser ? [
-                    'speaks' => $user->aboutUser->speaks,
-                    'lives_in' => $user->aboutUser->lives_in,
-                    'occupation' => $user->aboutUser->occupation,
-                ] : null,
-            ];
-        });
+        $userDetails = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'profilePicture' => $user->profilePicture,
+            'emergency_no' => $user->emergency_no,
+            'about_user' => $user->aboutUser ? [
+                'speaks' => $user->aboutUser->speaks,
+                'lives_in' => $user->aboutUser->lives_in,
+                'occupation' => $user->aboutUser->occupation,
+            ] : null,
+        ];
 
         return response()->json(['user' => $userDetails]);
     }

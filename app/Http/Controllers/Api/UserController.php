@@ -2332,7 +2332,7 @@ class UserController extends Controller
 
             // If the authenticated user is a cohost, find the corresponding host
             if ($user->co_host) {
-                $cohostOgHost = Hosthomecohost::where('user_id', $user->id)->first();
+                $cohostOgHost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohostOgHost->host_id;
             } else {
                 $hostId = $user->id;

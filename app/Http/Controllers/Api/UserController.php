@@ -34,6 +34,7 @@ use App\Mail\ActivateAccount;
 use App\Mail\NotificationMail;
 use App\Mail\RequestPayMail;
 use App\Mail\VerifyUser;
+use App\Mail\VerifyYourEmail;
 use App\Models\AboutUser;
 use App\Models\Adminrole;
 use App\Models\Booking;
@@ -394,6 +395,10 @@ class UserController extends Controller
             $validated['profilePicture'] = $this->saveImage($validated['profilePicture']);
         }
 
+        if ($user->google_id && isset($validated['email'])) {
+            return response()->json(['message' => 'Cannot update email for users with a Google ID'], 403);
+        }    
+
         $userFields = ['name', 'email', 'profilePicture', 'emergency_no'];
         $userData = Arr::only($validated, $userFields);
         
@@ -403,7 +408,18 @@ class UserController extends Controller
 
         // Update the user with filtered data
         if (!empty($userData)) {
+            // Check if email is being updated
+            $emailUpdated = isset($userData['email']) && $userData['email'] !== $user->email;
+            
             $user->update($userData);
+    
+            // If email was updated, send a verification email
+            if ($emailUpdated) {
+                Mail::to($user->email)->queue(new VerifyYourEmail($user));
+                $user->update([
+                    'email_verified_at' => null
+                ]);
+            }
         }
 
         // If the request includes fields for the `about_users` table, you need to update that table too

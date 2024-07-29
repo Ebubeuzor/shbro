@@ -35,8 +35,11 @@ class StoreHostHomeRequest extends FormRequest
             'bathrooms' => "required",
             'amenities' => "required | array",
             'hosthomephotos' => "required | array | min:5",
-            'hosthomevideo' => [
-                'required'],
+            'hosthomevideo' => ['required', function ($attribute, $value, $fail) {
+                if (!$this->isBase64($value)) {
+                    $fail('The ' . $attribute . ' must be a valid base64 encoded value.');
+                }
+            }],
             'title' => "required",
             'hosthomedescriptions' => "required|array| min:2",
             'description' => "required",
@@ -53,5 +56,11 @@ class StoreHostHomeRequest extends FormRequest
             'cancelPolicy' => "required",
             'securityDeposit' => "required|numeric",
         ];
+    }
+
+    protected function isBase64($value)
+    {
+        $decoded = base64_decode($value, true);
+        return $decoded !== false && base64_encode($decoded) === $value;
     }
 }

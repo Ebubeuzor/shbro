@@ -155,11 +155,13 @@
         <p class="text-gray-600">Thank you for your purchase.</p>
         <p class="text-gray-600">A copy of your receipt has been sent to your email.</p>
 
-        <div class="text-center mt-4">
-            <a href="https://shortletbooking.com/" class="btn">
-                <span>Back to Home</span>
-            </a>
-        </div>
+        @if ($mobile_request == "empty")
+            <div class="text-center mt-4">
+                <a href="https://shortletbooking.com/" class="btn">
+                    <span>Back to Home</span>
+                </a>
+            </div>
+        @endif
     </div>
 </body>
 </html>

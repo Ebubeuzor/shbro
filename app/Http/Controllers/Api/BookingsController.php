@@ -318,7 +318,8 @@ class BookingsController extends Controller
                     'bookingId' => $booking->id,
                     'usertoken' => $recentToken->token,
                     'userrem' => $user->remember_token,
-                    'hostHomeId' => $hostHome->id
+                    'hostHomeId' => $hostHome->id,
+                    'mobile_request' => empty($data['mobile_request']) ? "empty" : $data['mobile_request'],
                 ]),
                 'channels' => ['card'],
             ];
@@ -658,6 +659,7 @@ class BookingsController extends Controller
         $userrem = request()->userrem;
         $hostHomeId = request()->hostHomeId;
         $bookingId = request()->bookingId;
+        $mobile_request = request()->mobile_request;
 
         $user = User::findOrFail($userId);
         $recentToken = $user->tokens->last();
@@ -731,7 +733,9 @@ class BookingsController extends Controller
                     }
                     $cacheKey = "allHostReservation{$host->id}";
                     Cache::forget($cacheKey);
-                    return redirect()->route('successPage');
+                    return redirect()->route('successPage')->with([
+                        "mobile_request" => $mobile_request
+                    ]);
                 } else {
                     return redirect()->route('failedPage');
                 }

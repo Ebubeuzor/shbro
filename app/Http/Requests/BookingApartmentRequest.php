@@ -30,6 +30,7 @@ class BookingApartmentRequest extends FormRequest
             'infants' => 'required',
             'check_in' => 'required',
             'check_out' => 'required',
+            'mobile_request' => 'nullable|string',
         ];
     }
 }

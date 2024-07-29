@@ -153,7 +153,7 @@
         </div>
         <h2 class="text-3xl font-semibold mb-2 mt-2">Payment Successful!</h2>
         <p class="text-gray-600">Thank you for your purchase.</p>
-        <p class="text-gray-600">A {{session('mobile_request')}} copy of your receipt has been sent to your email.</p>
+        <p class="text-gray-600">A copy of your receipt has been sent to your email.</p>
 
         @if (session('mobile_request') === "empty")
             <div class="text-center mt-4">

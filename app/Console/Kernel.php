@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('backup:db')->twiceDaily(1, 13);
         $schedule->job(new ProcessCancelTrips)->hourly();
         $schedule->job(new CalculateHostTotalBalance)->everyThreeMinutes();
         $schedule->job(new ProcessSecurityDeposit)->everyFifteenMinutes();

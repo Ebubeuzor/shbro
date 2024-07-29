@@ -419,6 +419,7 @@ class UserController extends Controller
                 $user->update([
                     'email_verified_at' => null
                 ]);
+                $user->currentAccessToken()->delete();
             }
         }
 

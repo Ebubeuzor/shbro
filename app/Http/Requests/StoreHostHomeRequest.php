@@ -60,10 +60,10 @@ class StoreHostHomeRequest extends FormRequest
 
     protected function isBase64($value)
     {
-        // Remove the data URI prefix if present
-        $base64Data = preg_replace('/^data:video\/mp4;base64,/', '', $value);
+        // Define a regex pattern for the base64 data URI
+        $pattern = '/^data:video\/mp4;base64,[A-Za-z0-9+\/=]+$/';
 
-        $decoded = base64_decode($base64Data, true);
-        return $decoded !== false && base64_encode($decoded) === $base64Data;
+        // Check if the value matches the pattern
+        return preg_match($pattern, $value);
     }
 }

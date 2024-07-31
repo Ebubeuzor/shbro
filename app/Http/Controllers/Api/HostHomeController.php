@@ -308,12 +308,28 @@ class HostHomeController extends Controller
      */
     public function store(StoreHostHomeRequest $request)
     {
+        // Start timing
+        $startTime = microtime(true);
+
+        // Validate and get data
         $data = $request->validated();
 
+        // Find user
         $user = User::find(auth()->id());
 
+        // Dispatch job
         ProcessHostHomeCreation::dispatch($data, $user->id);
-        
+
+        // End timing
+        $endTime = microtime(true);
+
+        // Calculate execution time
+        $executionTime = $endTime - $startTime;
+
+        // Log the execution time
+        Log::info('Store method execution time: ' . $executionTime . ' seconds');
+
+        // Return response
         return response([
             "ok" => "Created"
         ], 201);

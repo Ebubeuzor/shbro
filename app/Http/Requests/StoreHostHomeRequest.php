@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 class StoreHostHomeRequest extends FormRequest
 {
     protected $startTime;
-    
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -37,7 +37,11 @@ class StoreHostHomeRequest extends FormRequest
             'beds' => "required",
             'bathrooms' => "required",
             'amenities' => "required | array",
-            'hosthomephotos' => "required | array | min:5",
+            'hosthomephotos' => ['required', 'array', 'min:5', function ($attribute, $value, $fail) {
+                if (!$this->isArrayOfBase64Images($value)) {
+                    $fail('The ' . $attribute . ' must be an array of valid base64 encoded images.');
+                }
+            }],
             'hosthomevideo' => ['required', function ($attribute, $value, $fail) {
                 if (!$this->isBase64($value)) {
                     $fail('The ' . $attribute . ' must be a valid base64 encoded value.');
@@ -68,6 +72,33 @@ class StoreHostHomeRequest extends FormRequest
     {
         // Start timing
         $this->startTime = microtime(true);
+    }
+
+    protected function isArrayOfBase64Images($value)
+    {
+        // Define a regex pattern for the base64 data URI of images
+        $pattern = '/^data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+\/=]+$/';
+
+        // Ensure the value is an array
+        if (!is_array($value)) {
+            return false;
+        }
+
+        // Check for excessive sizes
+        foreach ($value as $item) {
+            if (strlen(base64_decode(substr($item, strpos($item, ',') + 1))) > 5 * 1024 * 1024) { // Example: 5 MB
+                return false;
+            }
+        }
+
+        // Validate each item in the array
+        foreach ($value as $item) {
+            if (!preg_match($pattern, $item)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

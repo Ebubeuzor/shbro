@@ -3,9 +3,12 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class StoreHostHomeRequest extends FormRequest
 {
+    protected $startTime;
+    
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -56,6 +59,26 @@ class StoreHostHomeRequest extends FormRequest
             'cancelPolicy' => "required",
             'securityDeposit' => "required|numeric",
         ];
+    }
+
+    /**
+     * Hook to be called before validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Start timing
+        $this->startTime = microtime(true);
+    }
+
+    /**
+     * Hook to be called after validation.
+     */
+    protected function passedValidation()
+    {
+        // End timing and log duration
+        $endTime = microtime(true);
+        $executionTime = $endTime - $this->startTime;
+        Log::info('Validation time for StoreHostHomeRequest: ' . $executionTime . ' seconds');
     }
 
     protected function isBase64($value)

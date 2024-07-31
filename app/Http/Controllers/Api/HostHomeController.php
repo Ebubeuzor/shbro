@@ -331,7 +331,8 @@ class HostHomeController extends Controller
 
         // Return response
         return response([
-            "ok" => "Created"
+            "ok" => "Created",
+            "execution_time" => $executionTime
         ], 201);
     }
 

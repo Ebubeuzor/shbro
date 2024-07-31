@@ -1589,7 +1589,7 @@ class UserController extends Controller
 
             $user->hosthomes()->delete();
 
-            return response('', 204);
+            return response('', 400);
         }
 
         return response('User not found.', 404);

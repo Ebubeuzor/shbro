@@ -400,7 +400,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Cannot update email for users with a Google ID'], 403);
         }    
 
-        $userFields = ['name', 'email', 'profilePicture', 'emergency_no'];
+        $userFields = ['name','country','street','zipcode','state','city','email', 'profilePicture', 'emergency_no'];
         $userData = Arr::only($validated, $userFields);
         
         $userData = array_filter($userData, function ($value) {

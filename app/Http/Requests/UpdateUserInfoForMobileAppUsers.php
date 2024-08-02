@@ -42,7 +42,11 @@ class UpdateUserInfoForMobileAppUsers extends FormRequest
             'emergency_no' => 'nullable|string',
             'profilePicture' => 'nullable|string',
             'speaks' => 'nullable|string',
-            'lives_in' => 'nullable|string',
+            'country' => 'nullable|string',
+            'street' => 'nullable|string',
+            'zipcode' => 'nullable|string',
+            'state' => 'nullable|string',
+            'city' => 'nullable|string',
             'occupation' => 'nullable|string',
         ];
     }

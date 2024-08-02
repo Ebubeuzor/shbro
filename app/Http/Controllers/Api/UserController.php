@@ -193,6 +193,7 @@ class UserController extends Controller
             $user->aboutUser()->save($aboutUser);
         }
 
+        
         // Fill the about user record with the validated data
         $aboutUser->fill($data);
 
@@ -424,18 +425,18 @@ class UserController extends Controller
         }
 
         // If the request includes fields for the `about_users` table, you need to update that table too
-        if ($request->has('speaks') || $request->has('lives_in') || $request->has('occupation')) {
+        if ($request->has('speaks') || $request->has('occupation')) {
             $aboutUser = $user->aboutUser; // Assuming the relationship is defined
             if ($aboutUser) {
                 $aboutUser->update([
                     'speaks' => $request->input('speaks'),
-                    'lives_in' => $request->input('lives_in'),
+                    'lives_in' => "NO LONGER NECESSARY",
                     'occupation' => $request->input('occupation'),
                 ]);
             } else {
                 $user->aboutUser()->create([
                     'speaks' => $request->input('speaks'),
-                    'lives_in' => $request->input('lives_in'),
+                    'lives_in' => "NO LONGER NECESSARY",
                     'occupation' => $request->input('occupation'),
                 ]);
             }
@@ -478,6 +479,11 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'profilePicture' => $user->profilePicture,
+                'state' => $user->state,
+                'city' => $user->city,
+                'country' => $user->country,
+                'zipcode' => $user->zipcode,
+                'street' => $user->street,
                 'emergency_no' => $user->emergency_no,
                 'about_user' => $user->aboutUser ? [
                     'speaks' => $user->aboutUser->speaks,

@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade')->nullable();
             $table->string('work')->nullable();
             $table->string('speaks')->nullable();
-            $table->string('lives_in')->nullable();
             $table->string('occupation')->nullable();
             $table->timestamps();
         });

@@ -39,21 +39,23 @@ class Kernel extends ConsoleKernel
 
         $schedule->job(new ProcessEmailReminders)->daily(); // Change to everyFiveMinutes
 
-        $bookings = Booking::where('paymentStatus','success')->get(); 
+        Booking::where('paymentStatus','success')->chunk(100, function($bookings) use($schedule){
+                
+            foreach ($bookings as $booking) {
+                // Schedule the TwoDayReminderJob two days before the check-in date
+                $schedule->job(new TwoDayReminderJob($booking))->everyFourMinutes();
 
-        foreach ($bookings as $booking) {
-            // Schedule the TwoDayReminderJob two days before the check-in date
-            $schedule->job(new TwoDayReminderJob($booking))->everyFourMinutes();
+                // Schedule the FewHoursReminderJob a few hours before the check-in time
+                $schedule->job(new FewHoursReminderJob($booking))->everyTwoMinutes(); // Change to everyTwoMinutes
 
-            // Schedule the FewHoursReminderJob a few hours before the check-in time
-            $schedule->job(new FewHoursReminderJob($booking))->everyTwoMinutes(); // Change to everyTwoMinutes
+                // Schedule the CheckInNotificationJob at the check-in time
+                $schedule->job(new CheckInNotificationJob($booking))->everyFiveMinutes();
 
-            // Schedule the CheckInNotificationJob at the check-in time
-            $schedule->job(new CheckInNotificationJob($booking))->everyFiveMinutes();
-
-            // Schedule the CheckInNotificationJob at the check-in time
-            $schedule->job(new CheckOutNotificationJob($booking))->everyTenMinutes();
-        }       
+                // Schedule the CheckInNotificationJob at the check-in time
+                $schedule->job(new CheckOutNotificationJob($booking))->everyTenMinutes();
+            } 
+        }); 
+      
     }
 
 

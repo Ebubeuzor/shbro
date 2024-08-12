@@ -35,7 +35,7 @@ class TwoDayReminderJob implements ShouldQueue
         $twoDaysBefore = Carbon::today()->addDays(2);
 
         if ($checkInDate->isSameDay($twoDaysBefore) && is_null($this->booking->twoDayReminder)) {
-            Mail::to($this->booking->user->email)->send(new TwoDaysReminder(
+            Mail::to($this->booking->user->email)->queue(new TwoDaysReminder(
                 $this->booking->user,
                 "You have a booking in 2 days. Get ready!"
             ));

@@ -20,11 +20,13 @@
         "rakutentech/laravel-request-docs": "^2.27",
         "sadiqsalau/laravel-otp": "^1.0",
         "spatie/laravel-image-optimizer": "^1.8",
+        "stevebauman/location": "^7.3",
         "symfony/css-selector": "^7.0",
         "symfony/event-dispatcher": "^7.0",
         "symfony/mailer": "^6.4",
         "symfony/string": "^7.0",
         "symfony/yaml": "^7.0",
+        "twilio/sdk": "^8.2",
         "unicodeveloper/laravel-paystack": "^1.1"
     },
     "require-dev": {

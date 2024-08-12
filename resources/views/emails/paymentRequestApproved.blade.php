@@ -49,17 +49,13 @@
                                 <tr>
                                     <td align="left" style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Arial, sans-serif; color: #666666;" class="padding">
                                         <p>Hello {{$user->name}},</p>
-                                        <p>We are pleased to inform you that your payment request has been successfully approved. We've processed the transaction for your upcoming stay at [Property Name], from [Check-in Date] to [Check-out Date].</p>
+                                        <p>We are pleased to inform you that your payment request has been successfully approved.</p>
                                         
                                         <p><strong>Payment Details</strong></p>
                                         <ul style="padding-left: 20px;">
                                             <li><strong>Amount</strong>: {{$amount}}</li>
                                             <li><strong>Payment Date</strong>: {{$paymentDate}}</li>
                                         </ul>
-                                        
-                                        <p>This confirms your booking, and you're all set for your visit! You should receive a confirmation and receipt shortly. If you don't receive it within the next few hours, please check your spam folder or contact us for assistance.</p>
-                                        
-                                        <p>As your trip approaches, we encourage you to communicate with your host, [Host Name], regarding check-in times, key collection, and any other specific details or requests you might have for your stay.</p>
                                         
                                         <p>Should you have any questions or need further assistance regarding your booking or payment, feel free to reach out to our support team. We're here to ensure that your experience is smooth and enjoyable.</p>
                                         

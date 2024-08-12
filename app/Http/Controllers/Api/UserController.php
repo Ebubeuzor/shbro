@@ -69,6 +69,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Jlorente\Laravel\CreditCards\Facades\CreditCardValidator;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
+use Twilio\Rest\Client;
 
 class UserController extends Controller
 {
@@ -424,9 +425,8 @@ class UserController extends Controller
             }
         }
 
-        // If the request includes fields for the `about_users` table, you need to update that table too
-        if ($request->has('speaks') || $request->has('occupation')) {
-            $aboutUser = $user->aboutUser; // Assuming the relationship is defined
+        $aboutUser = $user->aboutUser;
+        if ($request->has('speaks') && $request->has('occupation')) {
             if ($aboutUser) {
                 $aboutUser->update([
                     'speaks' => $request->input('speaks'),
@@ -436,6 +436,29 @@ class UserController extends Controller
             } else {
                 $user->aboutUser()->create([
                     'speaks' => $request->input('speaks'),
+                    'lives_in' => "NO LONGER NECESSARY",
+                    'occupation' => $request->input('occupation'),
+                ]);
+            }
+        }elseif ($request->has('speaks')) {
+            if ($aboutUser) {
+                $aboutUser->update([
+                    'speaks' => $request->input('speaks'),
+                ]);
+            } else {
+                $user->aboutUser()->create([
+                    'speaks' => $request->input('speaks'),
+                    'lives_in' => "NO LONGER NECESSARY",
+                ]);
+            }
+        }elseif ($request->has('occupation')) {
+            if ($aboutUser) {
+                $aboutUser->update([
+                    'lives_in' => "NO LONGER NECESSARY",
+                    'occupation' => $request->input('occupation'),
+                ]);
+            } else {
+                $user->aboutUser()->create([
                     'lives_in' => "NO LONGER NECESSARY",
                     'occupation' => $request->input('occupation'),
                 ]);
@@ -481,6 +504,7 @@ class UserController extends Controller
                 'profilePicture' => $user->profilePicture,
                 'state' => $user->state,
                 'city' => $user->city,
+                'phone' => $user->phone,
                 'country' => $user->country,
                 'zipcode' => $user->zipcode,
                 'street' => $user->street,
@@ -587,16 +611,33 @@ class UserController extends Controller
         $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
-
-        $otp = Otp::identifier($user->email)->send(
-            new UserUpdateNumberOtp(
-                id: $userid,
-                phone_number: $data['new_number']
-            ),
-            UserNotification::route('mail', $user->email)
-        );
+        
+        $token = "c263b0ec3657b2343b71039b26056bed";
+        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
+        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
+        try {
+            // Initialize Twilio client
+            $twilio = new Client($twilio_sid, $token);
     
-        return __($otp['status']);
+            // Send OTP
+            $twilio->verify->v2->services($twilio_verify_sid)
+                ->verifications
+                ->create($data['new_number'], "sms");
+    
+            // Update the user's record with the new phone number
+            $user->update([
+                'otp_phone_number' => $data['new_number']
+            ]);
+    
+            return response("OTP sent", 200);
+    
+        } catch (\Twilio\Exceptions\RestException $e) {
+            return response("Failed to send OTP. Please try again later.", 500);
+    
+        } catch (\Exception $e) {
+            return response("An unexpected error occurred. Please try again later.", 500);
+        }
+            
     }
 
     /**
@@ -605,20 +646,32 @@ class UserController extends Controller
      * This method verifies the OTP provided by the user for changing their phone number.
      * @lrd:end
      */
-    public function verifyOtp(VerifyOtpRequest $request) {
-
+    public function verifyOtp(VerifyOtpRequest $request)
+    {
         $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
-    
-        $otp = Otp::identifier($user->email)->attempt($data['otp_code']);
-    
-        if($otp['status'] != Otp::OTP_PROCESSED)
-        {
-            abort(403, __($otp['status']));
+        
+        $token = "c263b0ec3657b2343b71039b26056bed";
+        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
+        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
+        $twilio = new Client($twilio_sid, $token);
+        $verification = $twilio->verify->v2->services($twilio_verify_sid)
+            ->verificationChecks
+            ->create([
+                'to' => $user->otp_phone_number, 
+                'code' => $data['otp_code']
+            ]);
+        
+        if ($verification->valid) {
+            // Update the user's phone number
+            $user->phone = $user->otp_phone_number; // Ensure 'new_number' is included in the request
+            $user->save();
+            
+            return response("Phone number changed", 200);
         }
-    
-        return response("Phone number sucessfully Changed");
+        
+        return response("Phone number not changed Invalid otp code", 400);
     }
 
     /**
@@ -833,20 +886,41 @@ class UserController extends Controller
      * @lrd:start
      * Resend the OTP for changing the user's phone number.
      * This method resends the OTP for changing the user's phone number.
+     * new_number you must include it in the request body when making the request
      * @lrd:end
      */
-    public function resendOtp() {
-
+    public function resendOtp(UpdateUserNumberRequest $request)
+    {
+        $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $otp = Otp::identifier($user->email)->update();
+        $token = "c263b0ec3657b2343b71039b26056bed";
+        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
+        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
+        try {
+            // Initialize Twilio client
+            $twilio = new Client($twilio_sid, $token);
     
-        if($otp['status'] != Otp::OTP_SENT)
-        {
-            abort(403, __($otp['status']));
+            // Send OTP
+            $twilio->verify->v2->services($twilio_verify_sid)
+                ->verifications
+                ->create($data['new_number'], "sms");
+    
+            // Update the user's record with the new phone number
+            $user->update([
+                'otp_phone_number' => $data['new_number']
+            ]);
+    
+            return response("OTP sent", 200);
+    
+        } catch (\Twilio\Exceptions\RestException $e) {
+            return response("Failed to send OTP. Please try again later.", 500);
+    
+        } catch (\Exception $e) {
+            return response("An unexpected error occurred. Please try again later.", 500);
         }
-        return __($otp['status']);
+            
     }
 
 

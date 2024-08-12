@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
-
+use Stevebauman\Location\Facades\Location;
 
 Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
 Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
@@ -193,7 +193,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/reportUser', [ReportController::class, 'reportUser']);
     Route::post('/reportDamage', [ReportController::class, 'reportDamage']);
     
-    
     Route::post('createWishlist/{userid}', [UserController::class, 'createWishlist']);
     Route::post('createOrUpdateAboutUser', [UserController::class, 'createOrUpdateAboutUser']);
     Route::get('viewUserWalletRecords', [UserController::class, 'viewUserWalletRecords']); // continue here
@@ -251,10 +250,10 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('homepage', [HomepageController::class, 'index']);
 
     Route::post('signup', [AuthController::class, 'signup']);
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,60');
     Route::get('auth', [AuthController::class, 'redirectToAuth']);
     Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
-    Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail']);
+    Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail'])->middleware('throttle:3,60');
 
     Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
 
@@ -273,3 +272,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
 
     Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+
+    Route::get('/getLocation', function(){
+        return response()->json(['location' => Location::get()]);
+    });

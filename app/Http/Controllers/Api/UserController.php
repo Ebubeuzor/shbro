@@ -612,9 +612,10 @@ class UserController extends Controller
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $token = "c263b0ec3657b2343b71039b26056bed";
-        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
-        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
+        $token = env('TWILIO_AUTH_TOKEN');
+        $twilio_sid = env('TWILIO_SID');
+        $twilio_verify_sid = env('TWILIO_VERIFY_SID');
+        
         try {
             // Initialize Twilio client
             $twilio = new Client($twilio_sid, $token);
@@ -895,9 +896,9 @@ class UserController extends Controller
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $token = "c263b0ec3657b2343b71039b26056bed";
-        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
-        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
+        $token = env('TWILIO_AUTH_TOKEN');
+        $twilio_sid = env('TWILIO_SID');
+        $twilio_verify_sid = env('TWILIO_VERIFY_SID');
         try {
             // Initialize Twilio client
             $twilio = new Client($twilio_sid, $token);

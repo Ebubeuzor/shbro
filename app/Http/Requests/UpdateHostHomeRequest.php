@@ -23,7 +23,7 @@ class UpdateHostHomeRequest extends FormRequest
             'beds' => "required",
             'bathrooms' => "required",
             'amenities' => "array",
-            'hosthomephotos' => ['array', 'min:5', function ($attribute, $value, $fail) {
+            'hosthomephotos' => ['array', function ($attribute, $value, $fail) {
                 if (!$this->isArrayOfBase64Images($value)) {
                     $fail('The ' . $attribute . ' must be an array of valid base64 encoded images.');
                 }

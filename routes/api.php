@@ -274,5 +274,5 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
 
     Route::get('/getLocation', function(Request $request){
-        return response()->json(['location' => Location::get($request->ip())]);
+        return response()->json(['location' => $request->ip()]);
     });

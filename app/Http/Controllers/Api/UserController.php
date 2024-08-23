@@ -1189,9 +1189,9 @@ class UserController extends Controller
         $allowPets = $data['allow_pets'];
         $per_page = $data['per_page'] ?? 10;
 
-        $filteredHostHomes = null;
+        $filteredHostHomes = HostHome::query();
         if (empty($startDate) || empty($endDate) || is_null($startDate) || is_null($endDate)) {
-            $filteredHostHomes = HostHome::query();
+            $filteredHostHomes = $filteredHostHomes->where('address', 'LIKE', "%{$address}%");;
         }else {
             $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
             ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
@@ -1217,10 +1217,10 @@ class UserController extends Controller
                     }
                     
                     
-                }
-                $result = $filteredHostHomes->distinct()->paginate($per_page);
-                
-                $resourceCollection = HostHomeResource::collection($result);
+        }
+        $result = $filteredHostHomes->distinct()->paginate($per_page);
+        
+        $resourceCollection = HostHomeResource::collection($result);
                     
         // Cache the result with the defined cache key for future use
         Cache::put($cacheKey, $resourceCollection, now()->addHours(1)); // Adjust cache expiry time as needed

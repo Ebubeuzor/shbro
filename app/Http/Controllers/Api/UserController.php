@@ -1189,7 +1189,11 @@ class UserController extends Controller
         $allowPets = $data['allow_pets'];
         $per_page = $data['per_page'] ?? 10;
 
-        $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
+        $filteredHostHomes = null;
+        if (empty($startDate) || empty($endDate) || is_null($startDate) || is_null($endDate)) {
+            $filteredHostHomes = HostHome::query();
+        }else {
+            $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
             ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
                 $query->where(function ($q) use ($startDate, $endDate) {
                     $q->whereBetween('check_in', [$startDate, $endDate])
@@ -1197,25 +1201,27 @@ class UserController extends Controller
                         ->orWhere(function ($q) use ($startDate, $endDate) {
                             $q->where('check_in', '<=', $startDate)
                                 ->where('check_out', '>=', $endDate);
+                            });
                         });
-                });
-            })
-            ->where('guests', '>=', $guests)
-            ->where('verified', 1)
-            ->where('disapproved', null)
-            ->whereNull('banned')
-            ->whereNull('suspend');
-
-        if ($allowPets === 'allow_pets') {
-            $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
-                $query->where('rule', 'No pets');
-            });
-        }
-
-        $result = $filteredHostHomes->distinct()->paginate($per_page);
-
-        $resourceCollection = HostHomeResource::collection($result);
-
+                    })
+                    ->where('guests', '>=', $guests)
+                    ->where('verified', 1)
+                    ->where('disapproved', null)
+                    ->whereNull('banned')
+                    ->whereNull('suspend');
+                    
+                    if ($allowPets === 'allow_pets') {
+                        $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
+                            $query->where('rule', 'No pets');
+                        });
+                    }
+                    
+                    
+                }
+                $result = $filteredHostHomes->distinct()->paginate($per_page);
+                
+                $resourceCollection = HostHomeResource::collection($result);
+                    
         // Cache the result with the defined cache key for future use
         Cache::put($cacheKey, $resourceCollection, now()->addHours(1)); // Adjust cache expiry time as needed
 

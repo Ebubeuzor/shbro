@@ -670,75 +670,76 @@ class BookingsController extends Controller
         $user->remember_token == $userrem && 
         $booking->user_id == $user->id) {
                 
-                if ($status == 'success') {
-                    $hostHome = HostHome::find($hostHomeId);
-                    
-                    // Update host home listing status
+            if ($status == 'success') {
+                $hostHome = HostHome::find($hostHomeId);
+                
+                // Update host home listing status
+                $hostHome->update([
+                    'listing_status' => 1,
+                    'bookingCount' => $hostHome->bookingCount + 1
+                ]);
+
+                if ($hostHome->bookingCount == 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
                     $hostHome->update([
-                        'listing_status' => 1,
-                        'bookingCount' => $hostHome->bookingCount + 1
+                        'price' => $hostHome->actualPrice
                     ]);
-
-                    if ($hostHome->bookingCount == 3 && $this->hasNewListingPromotionDiscount($hostHome)) {
-                        $hostHome->update([
-                            'price' => $hostHome->actualPrice
-                        ]);
-                    }
-                    
-                    $checkouttime = $hostHome->check_out_time; 
-                    $checkintime = $hostHome->check_in_time; 
-                    $priceForANight = $hostHome->price; 
-                    $amount = $data['data']['amount'];
-                    $paymentType = $data['data']['authorization']['card_type'];
-
-                    $booking->update([
-                        "totalamount" => ($amount/100),
-                        "paymentStatus" => $status,
-                        'paymentId' => $transactionID,
-                        'paymentType' => $paymentType,
-                        'securityDeposit' => $hostHome->security_deposit,
-                        'check_out_time' => $checkouttime,
-                        'check_in_time' => $checkintime,
-                        'priceForANight' => $priceForANight,
-                        'host_services_charge_percentage' => $this->hostServicesCharge,
-                        'guest_services_charge_percentage' => $this->guestServicesCharge,
-                    ]);
-
-                    $userTrip = new UserTrip();
-                    $userTrip->user_id = $booking->user_id;
-                    $userTrip->booking_id = $booking->id;
-                    $userTrip->save();
-
-                    $cacheKey = 'user_trips_' . $booking->user_id;
-                    Cache::forget($cacheKey);
-
-                    // Notify host about the booking
-                    $host = User::find($hostHome->user_id);
-                    $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
-                    $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
-                    $checkInTime = $hostHome->check_in_time;
-                    Mail::to($host->email)->queue(new SuccessfulBookingMessage($host, $user,$hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Your apartment has been booked"));
-                    
-                    Mail::to($user->email)->queue(new GuestBookingConfirmationReceipt($user, $hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Booking Confirmation Receipt"));
-
-                    $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
-                    ->where('host_home_id',$hostHomeId)
-                    ->where('approved','approved')
-                    ->first();
-
-                    if ($acceptRequest) {
-                        $acceptRequest->update([
-                            'bookingstatus' => 'booked'
-                        ]);
-                    }
-                    $cacheKey = "allHostReservation{$host->id}";
-                    Cache::forget($cacheKey);
-                    return redirect()->route('successPage')->with([
-                        "mobile_request" => $mobile_request
-                    ]);
-                } else {
-                    return redirect()->route('failedPage');
                 }
+                
+                $checkouttime = $hostHome->check_out_time; 
+                $checkintime = $hostHome->check_in_time; 
+                $priceForANight = $hostHome->price; 
+                $amount = $data['data']['amount'];
+                $paymentType = $data['data']['authorization']['card_type'];
+
+                $booking->update([
+                    "totalamount" => ($amount/100),
+                    "paymentStatus" => $status,
+                    'paymentId' => $transactionID,
+                    'paymentType' => $paymentType,
+                    'securityDeposit' => $hostHome->security_deposit,
+                    'check_out_time' => $checkouttime,
+                    'check_in_time' => $checkintime,
+                    'priceForANight' => $priceForANight,
+                    'host_services_charge_percentage' => $this->hostServicesCharge,
+                    'guest_services_charge_percentage' => $this->guestServicesCharge,
+                ]);
+
+                $userTrip = new UserTrip();
+                $userTrip->user_id = $booking->user_id;
+                $userTrip->booking_id = $booking->id;
+                $userTrip->save();
+
+                $cacheKey = 'user_trips_' . $booking->user_id;
+                Cache::forget($cacheKey);
+
+                // Notify host about the booking
+                $host = User::find($hostHome->user_id);
+                $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
+                $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
+                $checkInTime = $hostHome->check_in_time;
+                Mail::to($host->email)->queue(new SuccessfulBookingMessage($host, $user,$hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Your apartment has been booked"));
+                
+                Mail::to($user->email)->queue(new GuestBookingConfirmationReceipt($user, $hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Booking Confirmation Receipt"));
+
+                $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
+                ->where('host_home_id',$hostHomeId)
+                ->where('approved','approved')
+                ->first();
+
+                if ($acceptRequest) {
+                    $acceptRequest->update([
+                        'bookingstatus' => 'booked'
+                    ]);
+                }
+                $cacheKey = "allHostReservation{$host->id}";
+                Cache::forget($cacheKey);
+                Cache::flush();
+                return redirect()->route('successPage')->with([
+                    "mobile_request" => $mobile_request
+                ]);
+            } else {
+                return redirect()->route('failedPage');
+            }
             
         }else {
             abort(404,"No record found");

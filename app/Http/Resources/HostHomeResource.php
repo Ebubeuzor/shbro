@@ -48,12 +48,12 @@ class HostHomeResource extends JsonResource
         
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
         
-        $cohosts = $this->cohosthomes;
+        // $cohosts = $this->cohosthomes;
 
-        // Map each co-host to the corresponding HostHomeHostInfoResource
-        $cohostResources = $cohosts->map(function ($cohost) {
-            return new HostHomeHostInfoResource(User::find($cohost->user_id));
-        });
+        // // Map each co-host to the corresponding HostHomeHostInfoResource
+        // $cohostResources = $cohosts->map(function ($cohost) {
+        //     return new HostHomeHostInfoResource(User::find($cohost->user_id));
+        // });
 
         $bookingRequestStatus = null;
 
@@ -68,7 +68,7 @@ class HostHomeResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
-            'cohosts' => $cohostResources->isNotEmpty() ? $cohostResources : null,
+            // 'cohosts' => $cohostResources->isNotEmpty() ? $cohostResources : null,
             'property_type' => $this->property_type,
             'guest_choice' => $this->guest_choice,
             'address' => $this->address,

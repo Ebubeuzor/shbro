@@ -54,6 +54,8 @@ use App\Models\Tip;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -85,15 +87,20 @@ class HostHomeController extends Controller
         $cacheKey = 'host_homes_' . $perPage;
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
-            return HostHomeResource::collection(
-                HostHome::where('verified', 1)
-                    ->where('disapproved', null)
-                    ->whereNull('banned')
-                    ->whereNull('suspend')
-                    ->paginate($perPage)
-            );
+            // Fetch the data with relationships
+            $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
+                ->where('verified', 1)
+                ->whereNull('disapproved')
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->inRandomOrder()
+                ->paginate($perPage);
+
+            // Transform the data using the resource and serialize it
+            return HostHomeResource::collection($hostHomes)->response()->getData(true);
         });
     }
+
 
     
     /**
@@ -106,14 +113,23 @@ class HostHomeController extends Controller
     public function searchHomeByProperty_type(Request $request,$property_type)
     {
         $perPage = $request->input('per_page', 10);
-        return HostHomeResource::collection(
-            HostHome::where('verified', 1)
-                    ->where('disapproved',null)
-                    ->where('property_type',$property_type)
-                    ->whereNull('banned')
-                    ->whereNull('suspend')
-                    ->paginate($perPage)
-        );
+        
+        $cacheKey = "view_home_by" . $property_type . "_per_page_" . $perPage;
+        return Cache::remember($cacheKey,60, function() use($property_type, $perPage){
+            // Fetch the data with relationships
+            $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
+            ->where('verified', 1)
+            ->whereNull('disapproved')
+            ->whereNull('banned')
+            ->whereNull('suspend')
+            ->where('property_type',$property_type)
+            ->inRandomOrder()
+            ->paginate($perPage);
+
+            // Transform the data using the resource and serialize it
+            return HostHomeResource::collection($hostHomes)->response()->getData(true);
+        });
+        
     }
     
     /**
@@ -155,14 +171,22 @@ class HostHomeController extends Controller
     /**
      * @lrd:start
      * Get all host homes for the authenticated user.
-     *
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @return \Illuminate\Http\Response
      * @lrd:end
-     */
-    public function getUserHostHomes()
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+    */
+    public function getUserHostHomes(Request $request)
     {
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Set the current page based on the request, default to 1
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+
         // Check if the response is cached
-        $cacheKey = 'user_host_homes_' . Auth::id();
+        $cacheKey = 'user_host_homes_' . Auth::id() . '_page_' . $currentPage . '_per_page_' . $perPage;
+
         if (Cache::has($cacheKey)) {
             // If cached, return the cached response
             return Cache::get($cacheKey);
@@ -173,8 +197,7 @@ class HostHomeController extends Controller
 
         $userCohostedHomes = Auth::user()->cohosthomes()->with('hosthome')->get()
             ->map(function ($cohost) {
-                $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
-                return $cohostUser; // Return an empty collection if user not found
+                return HostHome::where('id', $cohost->host_home_id)->first();
             })
             ->flatten();
 
@@ -184,52 +207,105 @@ class HostHomeController extends Controller
         // Use unique to remove potential duplicates
         $userHostHomes = $userHostHomes->unique();
 
-        // Cache the response for 1 hour
-        Cache::put($cacheKey, response([
-            "userHostHomes" => HostHomeResource::collection($userHostHomes),
-        ], 200), 3600);
+        // Paginate the collection
+        $paginatedHomes = $this->paginateCollection($userHostHomes, $perPage, $currentPage);
 
-        // Return the response
-        return Cache::get($cacheKey);
+        // Cache the response for 1 hour
+        Cache::put($cacheKey, $paginatedHomes, 3600);
+
+        // Return the paginated response
+        return $paginatedHomes;
+    }
+
+    /**
+     * Paginate a given collection.
+     *
+     * @param Collection $items
+     * @param int $perPage
+     * @param int $page
+     * @return LengthAwarePaginator
+     */
+    protected function paginateCollection(Collection $items, $perPage, $page)
+    {
+        $offset = ($page * $perPage) - $perPage;
+        $paginatedItems = $items->slice($offset, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            HostHomeResource::collection($paginatedItems)->response()->getData(true), 
+            $items->count(), 
+            $perPage, 
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
     }
 
     /**
      * @lrd:start
      * gets the details of every homes
+     * 
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
-     */
-    public function allHomes()
+     * 
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+    */
+    public function allHomes(Request $request)
     {
-        return HostHomeResource::collection(
-            HostHome::where('disapproved',null)
-            ->whereNull('banned')
-            ->whereNull('suspend')
-            ->get()
-        );
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Generate a cache key based on the request parameters
+        $cacheKey = 'allHomes_for_admin_' . $perPage;
+
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            
+            return HostHomeResource::collection(
+                HostHome::where('disapproved',null)
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->paginate($perPage)
+            )->response()->getData(true);;
+
+        });
     }
     
     
     /**
      * @lrd:start
      * gets the details of every unverified homes
+     * 
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
-     */
-    public function notVerified()
+     * 
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+    */
+    public function notVerified(Request $request)
     {
-        return HostHomeResource::collection(
-            HostHome::where(function($query) {
-                $query->where('approvedByHost', true)
-                      ->where('needApproval', false);
-            })
-            ->orWhere(function($query) {
-                $query->whereNull('approvedByHost')
-                      ->orWhereNull('needApproval');
-            })
-            ->where('verified',0)
-            ->where('disapproved',null)
-            ->whereNull('banned')
-            ->whereNull('suspend')->get()
-        );
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Generate a cache key based on the request parameters
+        $cacheKey = 'unverifiedHomes_for_admin_' . $perPage;
+
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            // Fetch the data with relationships
+
+            return HostHomeResource::collection(
+                HostHome::where(function($query) {
+                    $query->where('approvedByHost', true)
+                        ->where('needApproval', false);
+                })
+                ->orWhere(function($query) {
+                    $query->whereNull('approvedByHost')
+                        ->orWhereNull('needApproval');
+                })
+                ->where('verified',0)
+                ->where('disapproved',null)
+                ->whereNull('banned')
+                ->whereNull('suspend')->paginate($perPage)
+            )->response()->getData(true);
+        });
     }
 
     private function saveImage($image,$hosthomeid)
@@ -701,6 +777,14 @@ class HostHomeController extends Controller
     public function schdulerGetHostHomeAndId()
     {
         $hostId = auth()->id();
+        $cacheKey = 'host_homes_and_ids_user_' . $hostId;
+        $cacheDuration = 600; // Cache duration in seconds (10 minutes)
+
+        // Check if the data is already cached
+        if (Cache::has($cacheKey)) {
+            // Retrieve and return the cached data
+            return response()->json(Cache::get($cacheKey));
+        }
 
         // Retrieve host homes owned by the authenticated user
         $userOwnedHostHomes = HostHome::where("user_id", $hostId)
@@ -709,21 +793,30 @@ class HostHomeController extends Controller
             ->get();
 
         // Retrieve co-hosted homes where the authenticated user is a co-host
-        $userCohostedHomes = Hosthomecohost::where('user_id', $hostId)->with('hosthome')->get()
-        ->map(function ($cohost) {
-            $cohostUser = HostHome::where('id', $cohost->host_home_id)->first();
-            return $cohostUser; // Return an empty collection if user not found
-        })
-        ->flatten();
+        $userCohostedHomes = Hosthomecohost::where('user_id', $hostId)
+            ->with('hosthome')
+            ->get()
+            ->map(function ($cohost) {
+                return HostHome::find($cohost->host_home_id);
+            })
+            ->flatten();
 
         // Combine both sets of homes
         $userHostHomes = $userOwnedHostHomes->merge($userCohostedHomes);
 
         // Use unique to remove potential duplicates
-        $userHostHomes = $userHostHomes->unique();
+        $userHostHomes = $userHostHomes->unique('id');
 
-        return GetHostHomeAndIdResource::collection($userHostHomes);
+        // Transform the data using the resource and serialize it
+        $transformedData = GetHostHomeAndIdResource::collection($userHostHomes)->response()->getData(true);
+
+        // Cache the transformed and serialized data
+        Cache::put($cacheKey, $transformedData, $cacheDuration);
+
+        // Return the serialized data
+        return response()->json($transformedData);
     }
+
 
     /**
      * 
@@ -1431,19 +1524,29 @@ class HostHomeController extends Controller
         $cacheKey = 'host_home_' . $hostHomeId . '_user_' . auth()->id();
         $cacheDuration = 600; // Cache duration in seconds (10 minutes)
 
-        $hostHome = Cache::remember($cacheKey, $cacheDuration, function () use ($hostHomeId) {
-            $hostHome = HostHome::find($hostHomeId);
-            $user = Auth::user();
+        // Check if the data is already cached
+        if (Cache::has($cacheKey)) {
+            // Retrieve and return the cached data
+            return response()->json(Cache::get($cacheKey));
+        }
 
-            if ($hostHome && ($user->adminStatus != null || $user->hosthomes->contains('id', $hostHomeId) || $user->cohosthomes->contains('host_home_id', $hostHomeId))) {
-                return $hostHome;
-            }
+        // If not cached, proceed to fetch and process the data
+        $hostHome = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
+        ->find($hostHomeId);
+        $user = Auth::user();
 
-            return null;
-        });
+        if ($hostHome && ($user->adminStatus != null || $user->hosthomes->contains('id', $hostHomeId) || $user->cohosthomes->contains('host_home_id', $hostHomeId))) {
+            // Transform the data using the resource and serialize it to an array
+            $hostHomeResourceArray = (new HostHomeResource($hostHome))->response()->getData(true);
 
-        if ($hostHome) {
-            return new HostHomeResource($hostHome);
+            // Wrap the data in a 'data' key
+            $wrappedData = $hostHomeResourceArray;
+
+            // Cache the wrapped and serialized data
+            Cache::put($cacheKey, $wrappedData, $cacheDuration);
+
+            // Return the serialized data
+            return response()->json($wrappedData);
         } else {
             abort(403, 'Unauthorized Access');
         }
@@ -1466,7 +1569,7 @@ class HostHomeController extends Controller
                         ->where('disapproved',null)
                         ->whereNull('banned')
                         ->whereNull('suspend')->first();
-            return new HostHomeResource($hostHome);
+            return (new HostHomeResource($hostHome))->response()->getData(true);
         });
     }
     
@@ -1502,7 +1605,7 @@ class HostHomeController extends Controller
         event(new NewNotificationEvent($notification, $notification->id, $user->id));
         Mail::to($user->email)->queue(new ListingApproved($user, $hostHome, $title));
     
-        Cache::clear();
+        Cache::flush();
         return response()->json(['message'=>'approved'],200);
     }
     
@@ -1551,7 +1654,7 @@ class HostHomeController extends Controller
 
         Mail::to($user->email)->queue(new DisapproveHostHome($user,$data['message'],$hostHome,$title));
         
-        Cache::clear();
+        Cache::flush();
         return response()->json(['message'=>'disapproved'],200);
     }
 
@@ -1719,6 +1822,6 @@ class HostHomeController extends Controller
 
     private function clearCacheForAllUsers()
     {
-        Cache::clear();
+        Cache::flush();
     }
 }

@@ -76,13 +76,25 @@ class UserController extends Controller
     /**
      * @lrd:start
      * this gets the details of every user that is not  verified so that they can be verified by the admin
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+
      */
-    public function index()
+    public function index(Request $request)
     {
-        return UserResource::collection(
-            User::Where('verified' , "Not Verified")->distinct()->get()
-        );
+
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Generate a unique cache key for this specific query
+        $cacheKey = 'unverified_users_' . $perPage;
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            return UserResource::collection(
+                User::Where('verified' , "Not Verified")->distinct()->paginate($perPage)
+            )->response()->getData(true);
+        });
     }
     
     /**
@@ -208,13 +220,23 @@ class UserController extends Controller
     /**
      * @lrd:start
      * this gets the details of every user that is verified 
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
      */
-    public function getVerifiedUsers()
+    public function getVerifiedUsers(Request $request)
     {
-        return UserResource::collection(
-            User::Where('verified' , "Verified")->distinct()->get()
-        );
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Generate a unique cache key for this specific query
+        $cacheKey = 'all_verified_users_' . $perPage;
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            return UserResource::collection(
+                User::Where('verified' , "Verified")->distinct()->paginate($perPage)
+            )->response()->getData(true);
+        });
     }
 
     /**
@@ -236,7 +258,23 @@ class UserController extends Controller
 
     /**
      * @lrd:start
-     * This requests an authenticated user details this is a get request
+     * Retrieve the authenticated user's details.
+     *
+     * This endpoint allows an authenticated user to retrieve their personal information. 
+     * If the user is an admin or super admin, their admin roles are also retrieved.
+     *
+     * @param \Illuminate\Http\Request $request
+     *   The request instance, automatically injected by Laravel.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *   Returns a JSON response containing the user details. If the user is an admin,
+     *   their admin roles are included in the response.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     *   Thrown if the user or admin roles cannot be found (though this should not 
+     *   typically occur as this method is intended for authenticated users).
+     *
+     * @api
      * @lrd:end
      */
     public function getUserInfo(Request $request)
@@ -570,6 +608,7 @@ class UserController extends Controller
             
             if ($data['status'] == "Verified") {
                 Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"));
+                Cache::tags(['all_verified_users'])->flush();
             }else {
                 $tip = new Tip();
                 $tip->user_id = $user;
@@ -580,6 +619,7 @@ class UserController extends Controller
                 
             }
             
+            Cache::tags(['unverified_users'])->flush();
 
         }
         elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){
@@ -589,6 +629,7 @@ class UserController extends Controller
                 'government_id' => $this->saveImage($data['government_id']),
                 'live_photo' => $this->saveImage($data['live_photo'])
             ]);
+            Cache::tags(['unverified_users'])->flush();
         }else{
             return response("Please fill out all fields",422);
         }

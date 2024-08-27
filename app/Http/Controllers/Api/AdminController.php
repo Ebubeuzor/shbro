@@ -117,13 +117,28 @@ class AdminController extends Controller
     /**
      * @lrd:start
      * this gets all the registered users 
+     * 
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
+     * 
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
      */
-    public function guests() {
+    public function guests(Request $request)
+    {
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
 
-        return GuestsResource::collection(
-            User::all()
-        );
+        // Generate a cache key based on the request parameters
+        $cacheKey = 'guests_for_admin_' . $perPage;
+
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            // Fetch the data with relationships
+
+            return GuestsResource::collection(
+                User::paginate($perPage)
+            )->response()->getData(true);
+        });
 
     }
     
@@ -521,19 +536,36 @@ class AdminController extends Controller
     /**
      * @lrd:start
      * this gets all the hosts
+     * 
+     * and use the query parameter per_page to determine the number of record needed ?per_page=(Number of record needed)
      * @lrd:end
+     * 
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+     * 
      */
-    public function hosts() {
-        $users = User::where('host', 1)->get();
-    
-        $responseData = [];
-        foreach ($users as $user) {
-            $user->profilePicture = $user->profilePicture != null ? URL::to($user->profilePicture) : null;
-            $verifiedHomesCount = $user->hosthomes()->where('verified', 1)->count();
-            $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
-        }
-    
-        return response()->json(['data' => $responseData]);
+    public function hosts(Request $request)
+    {
+        // Set a default value for the number of items per page
+        $perPage = $request->input('per_page', 10);
+
+        // Generate a cache key based on the request parameters
+        $cacheKey = 'hosts_for_admin_' . $perPage;
+
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            // Fetch the data with relationships
+
+            $users = User::where('host', 1)->get();
+        
+            $responseData = [];
+            foreach ($users as $user) {
+                $user->profilePicture = $user->profilePicture != null ? URL::to($user->profilePicture) : null;
+                $verifiedHomesCount = $user->hosthomes()->where('verified', 1)->count();
+                $responseData[] = ['user' => $user, 'verified_homes_count' => $verifiedHomesCount];
+            }
+        
+            return response()->json(['data' => $responseData]);
+        });
     }
     
 

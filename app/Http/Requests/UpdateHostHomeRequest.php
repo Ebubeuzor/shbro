@@ -23,16 +23,8 @@ class UpdateHostHomeRequest extends FormRequest
             'beds' => "required",
             'bathrooms' => "required",
             'amenities' => "array",
-            'hosthomephotos' => ['array', function ($attribute, $value, $fail) {
-                if (!$this->isArrayOfBase64Images($value)) {
-                    $fail('The ' . $attribute . ' must be an array of valid base64 encoded images.');
-                }
-            }],
-            'hosthomevideo' => ['nullable', function ($attribute, $value, $fail) {
-                if (!$this->isBase64($value)) {
-                    $fail('The ' . $attribute . ' must be a valid base64 encoded value.');
-                }
-            }],
+            'hosthomephotos' => "array",
+            'hosthomevideo' => "nullable | string",
             'title' => "required",
             'hosthomedescriptions' => "required | array",
             'description' => "required",

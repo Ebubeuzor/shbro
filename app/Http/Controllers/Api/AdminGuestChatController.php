@@ -460,6 +460,7 @@ class AdminGuestChatController extends Controller
                 'end_convo' => $chat->end_convo,
                 // You may need to adjust this if the user relationship is not directly available
                 'user_name' => $chat->user->name,
+                'created_at' => $chat->created_at,
             ];
         });
     

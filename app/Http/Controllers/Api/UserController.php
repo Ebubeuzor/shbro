@@ -1213,8 +1213,12 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
         // Define a unique cache key based on the request data
-        $cacheKey = 'filtered_host_homes_dates_' . md5(json_encode($data));
+        $cacheKey = 'filtered_host_homes_dates_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;
 
         // Check if the data is already cached
         if (Cache::has($cacheKey)) {
@@ -1264,7 +1268,7 @@ class UserController extends Controller
         }
         $result = $filteredHostHomes->distinct()->paginate($per_page);
         
-        $resourceCollection = HostHomeResource::collection($result);
+        $resourceCollection = HostHomeResource::collection($result)->response()->getData(true);
                     
         // Cache the result with the defined cache key for future use
         Cache::put($cacheKey, $resourceCollection, now()->addHours(1)); // Adjust cache expiry time as needed

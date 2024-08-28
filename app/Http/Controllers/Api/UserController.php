@@ -1759,9 +1759,13 @@ class UserController extends Controller
     {
         try {
             $data = $request->validated();
+                
+            $user = $request->user();
+
+            $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
             // Define a unique cache key based on the request data
-            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data));
+            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;;
 
             // Check if the data is already cached
             if (Cache::has($cacheKey)) {
@@ -1820,13 +1824,18 @@ class UserController extends Controller
                 });
             }
     
+            
             // Fetch the filtered results along with associated host home photos
             $result = $query->with('hosthomephotos')->distinct()->paginate($per_page);
-    
+            
+            $wrappedData = HostHomeResource::collection($result)->response()->getData(true);
+
             // Cache the result with the defined cache key for future use
-            Cache::put($cacheKey, $result, now()->addHours(1));
+            Cache::put($cacheKey, $wrappedData, now()->addHours(1));
+
             // Return the filtered data as JSON response
-            return response()->json(['data' => HostHomeResource::collection($result)], 200);
+            return response()->json(['data' => $wrappedData], 200);
+
         } catch (QueryException $e) {
             // Log the exception or handle it as needed
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);

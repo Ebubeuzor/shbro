@@ -83,8 +83,12 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
         // Generate a cache key based on the request parameters
-        $cacheKey = 'host_homes_' . $perPage;
+        $cacheKey = 'host_homes_' . $perPage . "_user_id_" . $userIdOrUniqueId;
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
             // Fetch the data with relationships
@@ -114,7 +118,12 @@ class HostHomeController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         
-        $cacheKey = "view_home_by" . $property_type . "_per_page_" . $perPage;
+        
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
+        $cacheKey = "view_home_by" . $property_type . "_per_page_" . $perPage . "user_id_" . $userIdOrUniqueId;;
         return Cache::remember($cacheKey,60, function() use($property_type, $perPage){
             // Fetch the data with relationships
             $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
@@ -184,8 +193,13 @@ class HostHomeController extends Controller
         // Set the current page based on the request, default to 1
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
 
+
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
         // Check if the response is cached
-        $cacheKey = 'user_host_homes_' . Auth::id() . '_page_' . $currentPage . '_per_page_' . $perPage;
+        $cacheKey = 'user_host_homes_' . Auth::id() . '_page_' . $currentPage . '_per_page_' . $perPage . "_user_id_" . $userIdOrUniqueId;;
 
         if (Cache::has($cacheKey)) {
             // If cached, return the cached response
@@ -253,8 +267,12 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
         // Generate a cache key based on the request parameters
-        $cacheKey = 'allHomes_for_admin_' . $perPage;
+        $cacheKey = 'allHomes_for_admin_' . $perPage . "_user_id_" . $userIdOrUniqueId;
 
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
@@ -284,8 +302,12 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        $user = $request->user();
+
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+        
         // Generate a cache key based on the request parameters
-        $cacheKey = 'unverifiedHomes_for_admin_' . $perPage;
+        $cacheKey = 'unverifiedHomes_for_admin_' . $perPage . "_user_id_" . $userIdOrUniqueId;
 
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
@@ -1561,7 +1583,12 @@ class HostHomeController extends Controller
      */
     public function showGuestHome($hostHomeId)
     {
-        $cacheKey = "showGuestHome_".$hostHomeId;
+    
+        $user = request()->user();
+
+        $userIdOrUniqueId = $user ? $user->id : request()->ip();
+
+        $cacheKey = "showGuestHome_".$hostHomeId . "_user_id_" . $userIdOrUniqueId;
         
         return Cache::remember( $cacheKey , now()->addHour() ,function () use ($hostHomeId){
             $hostHome = HostHome::whereId($hostHomeId)

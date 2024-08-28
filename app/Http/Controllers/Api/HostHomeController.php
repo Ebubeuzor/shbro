@@ -885,7 +885,7 @@ class HostHomeController extends Controller
                 'actualPrice' => $price,
             ]);
             
-            ClearCache::dispatch($hostHome->id,$host->id);
+            Cache::flush();
             return response("Price for all homes updated", 200);
         }
         
@@ -920,7 +920,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Prices updated successfully", 200);
     }
 
@@ -984,7 +984,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Prices updated for the specified date range", 200);
     }
 
@@ -1025,7 +1025,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
         
     }
@@ -1064,7 +1064,7 @@ class HostHomeController extends Controller
         }
 
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
     }
 
@@ -1100,7 +1100,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
     }
 
@@ -1136,7 +1136,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
     }
 
@@ -1172,7 +1172,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
     }
 
@@ -1208,7 +1208,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Done", 200);
     }
 
@@ -1264,7 +1264,7 @@ class HostHomeController extends Controller
             Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
         }
 
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Dates blocked successfully", 200);
     }
 
@@ -1322,7 +1322,7 @@ class HostHomeController extends Controller
         }
 
         
-        ClearCache::dispatch($hostHome->id,$host->id);
+        Cache::flush();
         return response("Prices updated for the specified date range", 200);
     }
     
@@ -1382,7 +1382,7 @@ class HostHomeController extends Controller
                 Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
             }
             
-            ClearCache::dispatch($hostHome->id,$host->id);
+            Cache::flush();
             return response()->json([
                 'message' => 'Discount updated successfully.',
                 'data' => $existingDiscount ?? $ostHomeCustomDiscount,

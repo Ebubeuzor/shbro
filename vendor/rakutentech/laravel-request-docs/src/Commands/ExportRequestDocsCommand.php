@@ -3,49 +3,50 @@
 namespace Rakutentech\LaravelRequestDocs\Commands;
 
 use ErrorException;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Rakutentech\LaravelRequestDocs\LaravelRequestDocs;
 use Rakutentech\LaravelRequestDocs\LaravelRequestDocsToOpenApi;
-use Throwable;
 
 class ExportRequestDocsCommand extends Command
 {
+    private LaravelRequestDocs          $laravelRequestDocs;
+    private LaravelRequestDocsToOpenApi $laravelRequestDocsToOpenApi;
+
+    public function __construct(LaravelRequestDocs $laravelRequestDoc, LaravelRequestDocsToOpenApi $laravelRequestDocsToOpenApi)
+    {
+        parent::__construct();
+
+        $this->laravelRequestDocs          = $laravelRequestDoc;
+        $this->laravelRequestDocsToOpenApi = $laravelRequestDocsToOpenApi;
+    }
+
     /**
      * The name and signature of the console command.
+     *
+     * @var string
      */
-    // phpcs:ignore
     protected $signature = 'laravel-request-docs:export
                             {path? : Export file location}
                             {--sort=default : Sort the data by route names}
                             {--groupby=default : Group the data by API URI}
                             {--force : Whether to overwrite existing file}';
 
+
     /**
      * The console command description.
+     *
+     * @var string
      */
-    // phpcs:ignore
     protected $description = 'Generate OpenAPI collection as json file';
 
-    private LaravelRequestDocs $laravelRequestDocs;
-
     private string $exportFilePath;
-
-    private LaravelRequestDocsToOpenApi $laravelRequestDocsToOpenApi;
-
-    public function __construct(LaravelRequestDocs $laravelRequestDoc, LaravelRequestDocsToOpenApi $laravelRequestDocsToOpenApi)
-    {
-        $this->laravelRequestDocsToOpenApi = $laravelRequestDocsToOpenApi;
-
-        parent::__construct();
-
-        $this->laravelRequestDocs = $laravelRequestDoc;
-    }
 
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle()
     {
         if (!$this->confirmFilePathAvailability()) {
             //silently stop command
@@ -55,7 +56,7 @@ class ExportRequestDocsCommand extends Command
         try {
             //get the excluded methods list from config
             $excludedMethods = config('request-docs.open_api.exclude_http_methods', []);
-            $excludedMethods = array_map(static fn ($item) => strtolower($item), $excludedMethods);
+            $excludedMethods = array_map(fn($item) => strtolower($item), $excludedMethods);
 
             //filter while method apis to export
             $showGet    = !in_array('get', $excludedMethods);
@@ -77,13 +78,13 @@ class ExportRequestDocsCommand extends Command
 
             // Loop and split Doc by the `methods` property.
             $docs = $this->laravelRequestDocs->splitByMethods($docs);
-            $docs = $this->laravelRequestDocs->sortDocs($docs, is_string($this->option('sort')) ? $this->option('sort') : 'default');
-            $docs = $this->laravelRequestDocs->groupDocs($docs, is_string($this->option('groupby')) ? $this->option('groupby') : 'default');
+            $docs = $this->laravelRequestDocs->sortDocs($docs, $this->option('sort'));
+            $docs = $this->laravelRequestDocs->groupDocs($docs, $this->option('groupby'));
 
             if (!$this->writeApiDocsToFile($docs)) {
                 throw new ErrorException("Failed to write on [{$this->exportFilePath}] file.");
             }
-        } catch (Throwable $exception) {
+        } catch (Exception $exception) {
             $this->error('Error : ' . $exception->getMessage());
             return self::FAILURE;
         }
@@ -91,6 +92,9 @@ class ExportRequestDocsCommand extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * @return bool
+     */
     private function confirmFilePathAvailability(): bool
     {
         $path = $this->argument('path');
@@ -105,7 +109,10 @@ class ExportRequestDocsCommand extends Command
 
         if (file_exists($this->exportFilePath)) {
             if (!$this->option('force')) {
-                return $this->confirm("File exists on [{$path}]. Overwrite?", false) === true;
+                if ($this->confirm("File exists on [{$path}]. Overwrite?", false) == true) {
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -113,13 +120,14 @@ class ExportRequestDocsCommand extends Command
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \Rakutentech\LaravelRequestDocs\Doc>  $docs
+     * @param $docs
+     * @return bool
      */
     private function writeApiDocsToFile(Collection $docs): bool
     {
         $content = json_encode(
             $this->laravelRequestDocsToOpenApi->openApi($docs->all())->toArray(),
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
         );
 
         $targetDirectory = dirname($this->exportFilePath);

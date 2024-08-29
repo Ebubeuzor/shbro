@@ -12,16 +12,13 @@ namespace Mockery\Generator\StringManipulation\Pass;
 
 use Mockery;
 use Mockery\Generator\MockConfiguration;
+
 use function class_exists;
 use function ltrim;
 use function str_replace;
 
 class ClassPass implements Pass
 {
-    /**
-     * @param  string $code
-     * @return string
-     */
     public function apply($code, MockConfiguration $config)
     {
         $target = $config->getTargetClass();

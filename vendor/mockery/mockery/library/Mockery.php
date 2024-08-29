@@ -229,11 +229,11 @@ class Mockery
     /**
      * Static fetching of a mock associated with a name or explicit class poser.
      *
-     * @template TFetchMock of object
+     * @template TMock of object
      *
-     * @param class-string<TFetchMock> $name
+     * @param class-string<TMock> $name
      *
-     * @return null|(LegacyMockInterface&MockInterface&TFetchMock)
+     * @return LegacyMockInterface&MockInterface&TMock
      */
     public static function fetchMock($name)
     {
@@ -466,9 +466,9 @@ class Mockery
     /**
      * Static shortcut to Container::mock().
      *
-     * @template TMock of object
+     * @template TMock
      *
-     * @param array<class-string<TMock>|TMock|Closure(LegacyMockInterface&MockInterface&TMock):LegacyMockInterface&MockInterface&TMock|array<TMock>> $args
+     * @param array<class-string<TMock>|TMock|array<mixed>> $args
      *
      * @return LegacyMockInterface&MockInterface&TMock
      */
@@ -561,7 +561,7 @@ class Mockery
      * @template TReturnArgs
      *
      * @param TReturnArgs ...$args
-     * @param Closure     $add
+     * @param Closure $add
      *
      * @return CompositeExpectation
      */
@@ -668,13 +668,13 @@ class Mockery
      *
      * @template TSpy
      *
-     * @param array<class-string<TSpy>|TSpy|Closure(LegacyMockInterface&MockInterface&TSpy):LegacyMockInterface&MockInterface&TSpy|array<TSpy>> $args
+     * @param array<class-string<TSpy>|TSpy|array<mixed>> $args
      *
      * @return LegacyMockInterface&MockInterface&TSpy
      */
     public static function spy(...$args)
     {
-        if ($args !== [] && $args[0] instanceof Closure) {
+        if (\count($args) && $args[0] instanceof Closure) {
             $args[0] = new ClosureWrapper($args[0]);
         }
 
@@ -711,7 +711,7 @@ class Mockery
      * Sets up expectations on the members of the CompositeExpectation and
      * builds up any demeter chain that was passed to shouldReceive.
      *
-     * @param string  $arg
+     * @param string $arg
      * @param Closure $add
      *
      * @throws MockeryException
@@ -780,7 +780,7 @@ class Mockery
      * @template TArray or array
      *
      * @param TArray $argument
-     * @param int    $nesting
+     * @param int $nesting
      *
      * @return TArray
      */
@@ -812,7 +812,7 @@ class Mockery
      * @template TArgument
      *
      * @param TArgument $argument
-     * @param int       $nesting
+     * @param int $nesting
      *
      * @return mixed
      */
@@ -847,10 +847,10 @@ class Mockery
             $shortName = \trim(\array_pop($parts));
             $namespace = \implode('\\', $parts);
 
-            $targetCode .= "namespace {$namespace};\n";
+            $targetCode.= "namespace {$namespace};\n";
         }
 
-        $targetCode .= \sprintf('%s %s {} ', $type, $shortName);
+        $targetCode.= \sprintf('%s %s {} ', $type, $shortName);
 
         /*
          * We could eval here, but it doesn't play well with the way
@@ -870,7 +870,7 @@ class Mockery
      * Returns all public instance properties.
      *
      * @param object $object
-     * @param int    $nesting
+     * @param int $nesting
      *
      * @return array<string, mixed>
      */
@@ -899,7 +899,7 @@ class Mockery
      * of any passed argument.
      *
      * @param mixed $argument
-     * @param int   $depth
+     * @param int $depth
      *
      * @return mixed
      */
@@ -956,7 +956,7 @@ class Mockery
      *
      * @param class-string<TMock> $demeterMockKey
      *
-     * @return null|(LegacyMockInterface&MockInterface&TMock)
+     * @return LegacyMockInterface&MockInterface&TMock
      */
     private static function getExistingDemeterMock(Container $container, $demeterMockKey)
     {
@@ -1032,7 +1032,7 @@ class Mockery
      * Utility function to turn public properties and public get* and is* method values into an array.
      *
      * @param object $object
-     * @param int    $nesting
+     * @param int $nesting
      *
      * @return array
      */

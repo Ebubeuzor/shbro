@@ -11,17 +11,14 @@
 namespace Mockery\Generator\StringManipulation\Pass;
 
 use Mockery\Generator\MockConfiguration;
+
 use function preg_replace;
 
 /**
  * Remove mock's empty destructor if we tend to use original class destructor
  */
-class RemoveDestructorPass implements Pass
+class RemoveDestructorPass
 {
-    /**
-     * @param  string $code
-     * @return string
-     */
     public function apply($code, MockConfiguration $config)
     {
         $target = $config->getTargetClass();

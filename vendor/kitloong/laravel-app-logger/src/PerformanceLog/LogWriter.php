@@ -37,14 +37,10 @@ class LogWriter implements PerformanceLogWriter
     }
 
     /**
-     * @return array{
-     *     uniqid: string,
-     *     method: string,
-     *     uri: string,
-     *     status: int,
-     *     time: string,
-     *     memory: string
-     * }
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Response  $response
+     * @param  string  $uniqId
+     * @return array
      */
     protected function getMessages(Request $request, $response, string $uniqId): array
     {

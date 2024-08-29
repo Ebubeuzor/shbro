@@ -11,6 +11,7 @@
 namespace Mockery\Generator\StringManipulation\Pass;
 
 use Mockery\Generator\MockConfiguration;
+
 use function array_map;
 use function implode;
 use function ltrim;
@@ -18,10 +19,6 @@ use function preg_replace;
 
 class TraitPass implements Pass
 {
-    /**
-     * @param  string $code
-     * @return string
-     */
     public function apply($code, MockConfiguration $config)
     {
         $traits = $config->getTargetTraits();

@@ -15,27 +15,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LaravelRequestDocsMiddleware extends QueryLogger
 {
-    /**
-     * @var array<int, array{time: float, connection_name: string, sql: string}>
-     */
-    private array $queries = [];
-
-    /**
-     * @var array<int, object>
-     *
-     * The object structure:
-     * object{level: string, message: string, context: array<string, string>}
-     */
-    private array $logs = [];
-
-    /**
-     * @var array<class-string, array<string, int>>
-     */
-    private array $models = [];
-
-    /**
-     * @var array<int, array{event: string, model: class-string}>
-     */
+    private array $queries        = [];
+    private array $logs           = [];
+    private array $models         = [];
     private array $modelsTimeline = [];
 
     /**
@@ -50,31 +32,30 @@ class LaravelRequestDocsMiddleware extends QueryLogger
         }
 
         if (!config('app.debug') && $request->headers->has('X-Request-LRD')) {
-            /** @var \Illuminate\Http\JsonResponse $response */
             $response    = $next($request);
             $jsonContent = json_encode([
-                'data' => $response->getData(),
+                // because php stan is not what it used to be
+                /** @phpstan-ignore-next-line */
+                'data' => $response->getData()
             ]);
-            $response->setContent((string) $jsonContent);
+            $response->setContent($jsonContent);
             return $response;
         }
 
         if (!config('app.debug')) {
             return $next($request);
         }
-
         if (!$request->headers->has('X-Request-LRD')) {
             return $next($request);
         }
 
+
         if (!config('request-docs.hide_sql_data')) {
             $this->listenToDB();
         }
-
         if (!config('request-docs.hide_logs_data')) {
             $this->listenToLogs();
         }
-
         if (!config('request-docs.hide_models_data')) {
             $this->listenToModels();
         }
@@ -99,65 +80,61 @@ class LaravelRequestDocsMiddleware extends QueryLogger
 
         $jsonContent = json_encode($content);
 
-        if (!$jsonContent) {
-            return $next($request);
-        }
-
         if (in_array('gzip', $request->getEncodings()) && function_exists('gzencode')) {
             $level             = 9; // Best compression.
             $compressedContent = gzencode($jsonContent, $level);
-
-            if ($compressedContent === false) {
-                return $next($request);
-            }
 
             // Create a new response object with compressed content.
             $response = new Response($compressedContent);
 
             // Add necessary headers.
             $response->headers->add([
-                'Content-Type'     => 'application/json; charset=utf-8',
-                'Content-Length'   => strlen($compressedContent),
+                'Content-Type' => 'application/json; charset=utf-8',
+                'Content-Length' => strlen($compressedContent),
                 'Content-Encoding' => 'gzip',
             ]);
 
             return $response; // Return the response object directly.
+        } else {
+            // Fallback for clients that do not support gzip.
+            $response = new Response($jsonContent);
+            $response->headers->add([
+                'Content-Type' => 'application/json; charset=utf-8',
+            ]);
+
+            return $response;
         }
-
-        // Fallback for clients that do not support gzip.
-        $response = new Response($jsonContent);
-        $response->headers->add([
-            'Content-Type' => 'application/json; charset=utf-8',
-        ]);
-
-        return $response;
     }
 
     public function listenToDB(): void
     {
-        DB::listen(function (QueryExecuted $query): void {
+        DB::listen(function (QueryExecuted $query) {
             $this->queries[] = $this->getMessages($query);
         });
     }
 
     public function listenToLogs(): void
     {
-        Log::listen(function ($message): void {
+        Log::listen(function ($message) {
             $this->logs[] = $message;
         });
     }
 
     public function listenToModels(): void
     {
-        Event::listen('eloquent.*', function (string $event, array $models): void {
+        Event::listen('eloquent.*', function ($event, $models) {
             foreach (array_filter($models) as $model) {
-                /** @var \Illuminate\Database\Eloquent\Model $model */
-
                 // doing and booted ignore
-                if ($this->shouldIgnore($event)) {
+                if (Str::startsWith($event, 'eloquent.booting')
+                    || Str::startsWith($event, 'eloquent.booted')
+                    || Str::startsWith($event, 'eloquent.retrieving')
+                    || Str::startsWith($event, 'eloquent.creating')
+                    || Str::startsWith($event, 'eloquent.saving')
+                    || Str::startsWith($event, 'eloquent.updating')
+                    || Str::startsWith($event, 'eloquent.deleting')
+                ) {
                     continue;
                 }
-
                 // split $event by : and take first part
                 $event = explode(':', $event)[0];
                 $event = Str::replace('eloquent.', '', $event);
@@ -171,27 +148,11 @@ class LaravelRequestDocsMiddleware extends QueryLogger
                 if (!isset($this->models[$class])) {
                     $this->models[$class] = [];
                 }
-
                 if (!isset($this->models[$class][$event])) {
                     $this->models[$class][$event] = 0;
                 }
-
-                $this->models[$class][$event] += 1;
+                $this->models[$class][$event] = $this->models[$class][$event] + 1;
             }
         });
-    }
-
-    /**
-     * Event of doing and booted ignore
-     */
-    private function shouldIgnore(string $event): bool
-    {
-        return Str::startsWith($event, 'eloquent.booting')
-            || Str::startsWith($event, 'eloquent.booted')
-            || Str::startsWith($event, 'eloquent.retrieving')
-            || Str::startsWith($event, 'eloquent.creating')
-            || Str::startsWith($event, 'eloquent.saving')
-            || Str::startsWith($event, 'eloquent.updating')
-            || Str::startsWith($event, 'eloquent.deleting');
     }
 }

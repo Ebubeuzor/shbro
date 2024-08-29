@@ -15,8 +15,7 @@
         "american express",
         "discover",
         "diners club",
-        "unionpay",
-        "troy"
+        "unionpay"
     ],
     "license": "MIT",
     "authors": [

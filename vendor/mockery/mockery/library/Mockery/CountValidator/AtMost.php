@@ -21,7 +21,6 @@ class AtMost extends CountValidatorAbstract
      *
      * @param int $n
      *
-     * @throws InvalidCountException
      * @return bool
      */
     public function validate($n)

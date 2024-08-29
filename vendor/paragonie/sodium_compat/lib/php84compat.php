@@ -34,13 +34,8 @@ if (!is_callable('sodium_crypto_aead_aegis128l_decrypt')) {
      * @return string
      * @throws SodiumException
      */
-    function sodium_crypto_aead_aegis128l_decrypt(
-        $ciphertext,
-        $additional_data,
-        $nonce,
-        #[\SensitiveParameter]
-        $key
-    ) {
+    function sodium_crypto_aead_aegis128l_decrypt($ciphertext, $additional_data, $nonce, $key)
+    {
         return ParagonIE_Sodium_Compat::crypto_aead_aegis128l_decrypt(
             $ciphertext,
             $additional_data,
@@ -60,14 +55,8 @@ if (!is_callable('sodium_crypto_aead_aegis128l_encrypt')) {
      * @throws SodiumException
      * @throws TypeError
      */
-    function sodium_crypto_aead_aegis128l_encrypt(
-        #[\SensitiveParameter]
-        $message,
-        $additional_data,
-        $nonce,
-        #[\SensitiveParameter]
-        $key
-    ) {
+    function sodium_crypto_aead_aegis128l_encrypt($message, $additional_data, $nonce, $key)
+    {
         return ParagonIE_Sodium_Compat::crypto_aead_aegis128l_encrypt(
             $message,
             $additional_data,
@@ -86,13 +75,8 @@ if (!is_callable('sodium_crypto_aead_aegis256_decrypt')) {
      * @return string
      * @throws SodiumException
      */
-    function sodium_crypto_aead_aegis256_decrypt(
-        $ciphertext,
-        $additional_data,
-        $nonce,
-        #[\SensitiveParameter]
-        $key
-    ) {
+    function sodium_crypto_aead_aegis256_decrypt($ciphertext, $additional_data, $nonce, $key)
+    {
         return ParagonIE_Sodium_Compat::crypto_aead_aegis256_decrypt(
             $ciphertext,
             $additional_data,
@@ -112,14 +96,8 @@ if (!is_callable('sodium_crypto_aead_aegis256_encrypt')) {
      * @throws SodiumException
      * @throws TypeError
      */
-    function sodium_crypto_aead_aegis256_encrypt(
-        #[\SensitiveParameter]
-        $message,
-        $additional_data,
-        $nonce,
-        #[\SensitiveParameter]
-        $key
-    ) {
+    function sodium_crypto_aead_aegis256_encrypt($message, $additional_data, $nonce, $key)
+    {
         return ParagonIE_Sodium_Compat::crypto_aead_aegis256_encrypt(
             $message,
             $additional_data,

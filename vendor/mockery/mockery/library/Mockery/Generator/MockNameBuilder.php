@@ -15,19 +15,10 @@ use function str_replace;
 
 class MockNameBuilder
 {
-    /**
-     * @var int
-     */
-    protected static $mockCounter = 0;
-
-    /**
-     * @var list<string>
-     */
     protected $parts = [];
 
-    /**
-     * @param string $part
-     */
+    protected static $mockCounter = 0;
+
     public function addPart($part)
     {
         $this->parts[] = $part;
@@ -35,9 +26,6 @@ class MockNameBuilder
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function build()
     {
         $parts = ['Mockery', static::$mockCounter++];

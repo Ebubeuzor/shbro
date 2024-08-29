@@ -14,7 +14,6 @@ export default function App() {
 
     const [lrdDocsJson, setLrdDocsJson] = useState<IAPIInfo[]>([]);
     const [lrdDocsJsonCopy, setLrdDocsJsonCopy] = useState<IAPIInfo[]>([]);
-    const [searchInput, setSearchInput] = useState<string>('');
     const [apiURL, setApiURL] = useState<string>('');
     const [config, setConfig] = useState<IConfig>({
         title: "",
@@ -121,13 +120,9 @@ export default function App() {
         search = search.trim()
         if (!search) {
             setLrdDocsJson(lrdDocsJsonCopy)
-            setSearchInput("")
             return
         }
-        const docsToSearch = search.includes(searchInput)
-            ? lrdDocsJson
-            : lrdDocsJsonCopy;
-        const fuse = new Fuse(docsToSearch, searchOptions);
+        const fuse = new Fuse(lrdDocsJson, searchOptions);
 
         const filteredData = fuse.search(search);
         const filteredLrdJson: IAPIInfo[] = []
@@ -136,7 +131,6 @@ export default function App() {
         }
 
         setLrdDocsJson(filteredLrdJson)
-        setSearchInput(search)
     }
 
     const handleChangeSettings = (showGet: string,

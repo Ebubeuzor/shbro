@@ -14,9 +14,5 @@ use Mockery\Generator\MockConfiguration;
 
 interface Pass
 {
-    /**
-     * @param  string $code
-     * @return string
-     */
     public function apply($code, MockConfiguration $config);
 }

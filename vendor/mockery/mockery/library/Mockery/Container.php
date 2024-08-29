@@ -10,7 +10,6 @@
 
 namespace Mockery;
 
-use Closure;
 use Exception as PHPException;
 use Mockery;
 use Mockery\Exception\InvalidOrderException;
@@ -50,11 +49,6 @@ use function strtolower;
 use function substr;
 use function trait_exists;
 
-/**
- * Container for mock objects
- *
- * @template TMockObject of object
- */
 class Container
 {
     public const BLOCKS = Mockery::BLOCKS;
@@ -93,7 +87,7 @@ class Container
     /**
      * Store of mock objects
      *
-     * @var array<class-string<LegacyMockInterface&MockInterface&TMockObject>|array-key,LegacyMockInterface&MockInterface&TMockObject>
+     * @var array<class-string<LegacyMockInterface&MockInterface>|int,LegacyMockInterface&MockInterface>
      */
     protected $_mocks = [];
 
@@ -168,8 +162,7 @@ class Container
     }
 
     /**
-     * @template TMock of object
-     * @return array<class-string<LegacyMockInterface&MockInterface&TMockObject>|array-key,LegacyMockInterface&MockInterface&TMockObject>
+     * @return array<class-string<LegacyMockInterface&MockInterface>|int,LegacyMockInterface&MockInterface>
      */
     public function getMocks()
     {
@@ -213,13 +206,13 @@ class Container
      * names or partials - just so long as it's something that can be mocked.
      * I'll refactor it one day so it's easier to follow.
      *
-     * @template TMock of object
+     * @template TMock of LegacyMockInterface&MockInterface&object
      *
-     * @param array<class-string<TMock>|TMock|Closure(LegacyMockInterface&MockInterface&TMock):LegacyMockInterface&MockInterface&TMock|array<TMock>> $args
+     * @param array|string ...$args
      *
      * @throws ReflectionException|RuntimeException
      *
-     * @return LegacyMockInterface&MockInterface&TMock
+     * @return TMock
      */
     public function mock(...$args)
     {
@@ -268,7 +261,7 @@ class Container
                         continue;
                     }
 
-                    if (strpos($type, ',') && !strpos($type, ']')) {
+                    if (strpos($type, ',') && (strpos($type, ']') === 0 || strpos($type, ']') === false)) {
                         $interfaces = explode(',', str_replace(' ', '', $type));
 
                         $builder->addTargets($interfaces);
@@ -300,7 +293,10 @@ class Container
 
                         $class = $parts[0];
 
-                        if (! class_exists($class, true) && ! interface_exists($class, true)) {
+                        if (
+                            ! class_exists($class, true)
+                            && ! interface_exists($class, true)
+                        ) {
                             throw new Exception('Can only create a partial mock from an existing class or interface');
                         }
 
@@ -323,7 +319,15 @@ class Container
                         continue;
                     }
 
-                    if (class_exists($type, true) || interface_exists($type, true) || trait_exists($type, true)) {
+                    if (! $this->isValidClassName($type)) {
+                        throw new Exception('Class name contains invalid characters');
+                    }
+
+                    if (
+                        class_exists($type, true)
+                        || interface_exists($type, true)
+                        || trait_exists($type, true)
+                    ) {
                         $builder->addTarget($type);
 
                         continue;
@@ -331,10 +335,6 @@ class Container
 
                     if (! $mockeryConfiguration->mockingNonExistentMethodsAllowed()) {
                         throw new Exception(sprintf("Mockery can't find '%s' so can't mock it", $type));
-                    }
-
-                    if (! $this->isValidClassName($type)) {
-                        throw new Exception('Class name contains invalid characters');
                     }
 
                     $builder->addTarget($type);
@@ -352,28 +352,18 @@ class Container
                 continue;
             }
 
-            if (is_array($arg)) {
-                if ([] !== $arg && array_keys($arg) !== range(0, count($arg) - 1)) {
-                    // if associative array
-                    if (array_key_exists(self::BLOCKS, $arg)) {
-                        $blocks = $arg[self::BLOCKS];
-                    }
-
-                    unset($arg[self::BLOCKS]);
-
-                    $quickDefinitions = $arg;
-
-                    continue;
+            if ($arg !== [] && array_keys($arg) !== range(0, count($arg) - 1)) {
+                // if associative array
+                if (array_key_exists(self::BLOCKS, $arg)) {
+                    $blocks = $arg[self::BLOCKS];
                 }
 
+                unset($arg[self::BLOCKS]);
+
+                $quickDefinitions = $arg;
+            } else {
                 $constructorArgs = $arg;
-
-                continue;
             }
-
-            throw new Exception(sprintf(
-                'Unable to parse arguments sent to %s::mock()', get_class($this)
-            ));
         }
 
         $builder->addBlackListedMethods($blocks);
@@ -415,9 +405,7 @@ class Container
             }
         }
 
-        // if the last parameter passed to mock() is a closure,
-        if ($expectationClosure instanceof Closure) {
-            // call the closure with the mock object
+        if ($expectationClosure !== null) {
             $expectationClosure($mock);
         }
 
@@ -499,7 +487,7 @@ class Container
      * Set ordering for a group
      *
      * @param string $group
-     * @param int    $order
+     * @param int $order
      *
      * @return void
      */
@@ -547,7 +535,7 @@ class Container
      * Validate the current mock's ordering
      *
      * @param string $method
-     * @param int    $order
+     * @param int $order
      *
      * @throws Exception
      */
@@ -587,11 +575,9 @@ class Container
     /**
      * Store a mock and set its container reference
      *
-     * @template TRememberMock of object
+     * @param LegacyMockInterface|MockInterface $mock
      *
-     * @param LegacyMockInterface&MockInterface&TRememberMock $mock
-     *
-     * @return LegacyMockInterface&MockInterface&TRememberMock
+     * @return LegacyMockInterface|MockInterface
      */
     public function rememberMock(LegacyMockInterface $mock)
     {
@@ -624,12 +610,11 @@ class Container
 
     /**
      * @template TMock of object
-     * @template TMixed
      *
      * @param class-string<TMock> $mockName
-     * @param null|array<TMixed>  $constructorArgs
+     * @param null|array<int,mixed> $constructorArgs
      *
-     * @return TMock
+     * @return LegacyMockInterface&MockInterface&TMock
      */
     protected function _getInstance($mockName, $constructorArgs = null)
     {

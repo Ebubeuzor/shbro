@@ -7,7 +7,7 @@ import ApiAction from './ApiAction';
 import useLocalStorage from 'react-use-localstorage';
 import shortid from 'shortid';
 import Fuse from 'fuse.js';
-import type { IAPIInfo, IConfig } from '../libs/types'
+import type { IAPIInfo } from '../libs/types'
 
 
 export default function App() {
@@ -15,10 +15,6 @@ export default function App() {
     const [lrdDocsJson, setLrdDocsJson] = useState<IAPIInfo[]>([]);
     const [lrdDocsJsonCopy, setLrdDocsJsonCopy] = useState<IAPIInfo[]>([]);
     const [apiURL, setApiURL] = useState<string>('');
-    const [config, setConfig] = useState<IConfig>({
-        title: "",
-        default_headers: ["Content-Type: application/json", "Accept: application/json"]
-    });
     const [host, setHost] = useState<string>('');
     const [sendingRequest, setSendingRequest] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +25,7 @@ export default function App() {
     const [showDelete] = useLocalStorage('showDelete', 'true');
     const [showPut] = useLocalStorage('showPut', 'true');
     const [showPatch] = useLocalStorage('showPatch', 'true');
-    const [showHead] = useLocalStorage('showHead', 'false');
+    const [showHead] = useLocalStorage('showHead', 'true');
 
     const searchOptions = {
         keys: ['uri', 'doc_block'],
@@ -44,27 +40,23 @@ export default function App() {
         // get query param named api
         const urlParams = new URLSearchParams(window.location.search);
         let url = urlParams.get('api');
-        let configAPI = ""
 
         if (!url) {
             // get current url without query params
             const domain = location.protocol + '//' + location.host
             setHost(domain)
             url = domain + "/request-docs/api"
-            configAPI = domain + "/request-docs/config"
         }
 
         if (url) {
             // extract host from url
             const domain = url?.split('/').slice(0, 3).join('/');
             setHost(domain)
-            configAPI = domain + "/request-docs/config"
         }
         setApiURL(url)
 
         const api = getUrl(url, showGet, showPost, showDelete, showPut, showPatch, showHead, sort, groupby)
         generateDocs(api)
-        fetchConfig(configAPI)
     }, [])
 
     const scrollToAnchorOnHistory = () => {
@@ -78,19 +70,7 @@ export default function App() {
             }
         }
     }
-    const fetchConfig = (url: string) => {
-        const response = fetch(url);
-        response
-            .then(c => c.json())
-            .then((c) => {
-                setConfig(c)
-                if (c.title && document) {
-                    document.title = c.title
-                }
-            }).catch((error) => {
-                setError(error.message)
-            })
-    }
+
     const generateDocs = (url: string) => {
         setSendingRequest(true)
         const response = fetch(url);
@@ -175,7 +155,7 @@ export default function App() {
                                         <ApiInfo lrdDocsItem={lrdDocsItem} method={lrdDocsItem.http_method} />
                                     </div>
                                     <div className="col-span-5 ml-5">
-                                        <ApiAction lrdDocsItem={lrdDocsItem} method={lrdDocsItem.http_method} host={host} config={config} />
+                                        <ApiAction lrdDocsItem={lrdDocsItem} method={lrdDocsItem.http_method} host={host} />
                                     </div>
                                 </div>
                             </div>

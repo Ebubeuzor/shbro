@@ -2,11 +2,6 @@ export interface IAPIRule {
     [key: string]: string[];
 }
 
-export interface IConfig {
-    title: string;
-    default_headers: string[];
-}
-
 export interface IAPIInfo {
     uri: string;
     middlewares: string[];
@@ -20,7 +15,7 @@ export interface IAPIInfo {
     group: string;
     group_index: number;
     responses: string[];
-
+    
 }
 
 export interface LRDResponse {

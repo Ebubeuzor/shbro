@@ -2652,7 +2652,7 @@ class UserController extends Controller
             $amount = (int)$data['amount'];
 
             $user = User::findOrFail(auth()->id());
-
+ 
             if ($user->co_host) {
                 abort(400, "Cohosts cant make pay requests");
             }

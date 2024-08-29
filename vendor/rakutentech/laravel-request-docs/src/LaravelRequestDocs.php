@@ -231,17 +231,14 @@ class LaravelRequestDocs
                 continue;
             }
 
-            $controllerReflectionMethod = new ReflectionMethod($doc->getControllerFullPath(), $doc->getMethod());
+            $reflectionMethod = new ReflectionMethod($doc->getControllerFullPath(), $doc->getMethod());
 
-            $controllerMethodDocComment = $this->getDocComment($controllerReflectionMethod);
+            $docComment = $this->getDocComment($reflectionMethod);
 
-            $controllerMethodLrdComment = $this->lrdDocComment($controllerMethodDocComment);
-            $controllerMethodDocRules   = $this->customParamsDocComment($controllerMethodDocComment);
+            $customRules = $this->customParamsDocComment($docComment);
+            $doc->setResponses($this->customResponsesDocComment($docComment));
 
-            $doc->setResponses($this->customResponsesDocComment($controllerMethodDocComment));
-
-            $lrdDocComments = [];
-            foreach ($controllerReflectionMethod->getParameters() as $param) {
+            foreach ($reflectionMethod->getParameters() as $param) {
                 /** @var \ReflectionNamedType|\ReflectionUnionType|\ReflectionIntersectionType|null $namedType */
                 $namedType = $param->getType();
                 if (!$namedType) {
@@ -264,29 +261,18 @@ class LaravelRequestDocs
 
                         try {
                             $doc->mergeRules($this->flattenRules($requestObject->$requestMethod()));
-                            $requestReflectionMethod = new ReflectionMethod($requestObject, $requestMethod);
                         } catch (Throwable $e) {
                             $doc->mergeRules($this->rulesByRegex($requestClassName, $requestMethod));
-                            $requestReflectionMethod = new ReflectionMethod($requestClassName, $requestMethod);
                         }
-
-                        $requestMethodDocComment = $this->getDocComment($requestReflectionMethod);
-
-                        $requestMethodLrdComment = $this->lrdDocComment($requestMethodDocComment);
-                        $requestMethodDocRules   = $this->customParamsDocComment($requestMethodDocComment);
-
-                        $lrdDocComments[] = $requestMethodLrdComment;
-                        $doc->mergeRules($requestMethodDocRules);
                     }
                 } catch (Throwable $e) {
                     // Do nothing.
                 }
+
+                $doc->mergeRules($customRules);
             }
 
-            $lrdDocComments[] = $controllerMethodLrdComment;
-            $lrdDocComments   = array_filter($lrdDocComments, fn($s) => $s !== '');
-            $doc->setDocBlock(join("\n", $lrdDocComments));
-            $doc->mergeRules($controllerMethodDocRules);
+            $doc->setDocBlock($this->lrdDocComment($docComment));
         }
         return $docs;
     }

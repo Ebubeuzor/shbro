@@ -261,8 +261,6 @@ class BookingsController extends Controller
             
             $bookingPrice = $discountedPrice;
             
-            info($bookingPrice);
-            
             $total = 0;
             
             if ($weekendPrice == 0) {
@@ -438,8 +436,6 @@ class BookingsController extends Controller
             }
         }
 
-        
-        info($discountedPrice);
         return $returnPrice;
 
     }

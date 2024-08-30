@@ -261,6 +261,7 @@ class BookingsController extends Controller
             
             $bookingPrice = $discountedPrice;
             
+            info(["discountedPrice" => $discountedPrice]);
             $total = 0;
             
             if ($weekendPrice == 0) {

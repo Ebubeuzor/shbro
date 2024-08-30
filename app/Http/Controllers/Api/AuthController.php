@@ -256,7 +256,7 @@ class AuthController extends Controller
         Mail::to($user->email)->queue(new WelcomeMail($user));
         Mail::to($user->email)->queue(new VerifyYourEmail($user));
     
-        Cache::tags(['guests_for_admin'])->flush();
+        Cache::flush();
         $routeLink = route('verification.notice');
 
         return response([

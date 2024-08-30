@@ -608,7 +608,7 @@ class UserController extends Controller
             
             if ($data['status'] == "Verified") {
                 Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"));
-                Cache::tags(['all_verified_users'])->flush();
+                Cache::flush();
             }else {
                 $tip = new Tip();
                 $tip->user_id = $user;
@@ -619,7 +619,7 @@ class UserController extends Controller
                 
             }
             
-            Cache::tags(['unverified_users'])->flush();
+            Cache::flush();
 
         }
         elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){
@@ -629,7 +629,7 @@ class UserController extends Controller
                 'government_id' => $this->saveImage($data['government_id']),
                 'live_photo' => $this->saveImage($data['live_photo'])
             ]);
-            Cache::tags(['unverified_users'])->flush();
+            Cache::flush();
         }else{
             return response("Please fill out all fields",422);
         }

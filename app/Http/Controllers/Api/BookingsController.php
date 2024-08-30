@@ -261,7 +261,7 @@ class BookingsController extends Controller
             
             $bookingPrice = $discountedPrice;
             
-            info(["bookingPrice" => $bookingPrice]);
+            info($bookingPrice);
             
             $total = 0;
             

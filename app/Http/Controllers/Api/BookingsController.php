@@ -261,7 +261,7 @@ class BookingsController extends Controller
             
             $bookingPrice = $discountedPrice;
             
-            
+            info($bookingPrice);
             
             $total = 0;
             
@@ -358,6 +358,8 @@ class BookingsController extends Controller
     {
         $discountedPrice = $actualPrice;
 
+        info($discountedPrice);
+
         if (!count($standardDiscounts) == 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{
@@ -396,6 +398,8 @@ class BookingsController extends Controller
             }
         }
 
+        
+        info($returnPrice);
         return $returnPrice;
     }
 
@@ -433,6 +437,9 @@ class BookingsController extends Controller
                     break;
             }
         }
+
+        
+        info($returnPrice);
 
         return $returnPrice;
 

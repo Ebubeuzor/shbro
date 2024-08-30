@@ -261,7 +261,6 @@ class BookingsController extends Controller
             
             $bookingPrice = $discountedPrice;
             
-            info(["discountedPrice" => $discountedPrice]);
             $total = 0;
             
             if ($weekendPrice == 0) {
@@ -357,8 +356,6 @@ class BookingsController extends Controller
     {
         $discountedPrice = $actualPrice;
 
-        info($discountedPrice);
-
         if (!count($standardDiscounts) == 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{
@@ -397,8 +394,6 @@ class BookingsController extends Controller
             }
         }
 
-        
-        info($returnPrice);
         return $returnPrice;
     }
 

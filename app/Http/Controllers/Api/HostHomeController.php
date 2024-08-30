@@ -1578,7 +1578,25 @@ class HostHomeController extends Controller
 
     /**
      * @lrd:start
-     * this is for a user (guests) to see a home based on a provided homeId
+     * Display a specific home to a guest based on the provided home ID.
+     *
+     * This method is designed to allow guests (non-authenticated users) and authenticated users to view the details 
+     * of a home based on a provided `hostHomeId`. The method caches the response to optimize performance, reducing 
+     * the load on the database for subsequent requests for the same home from the same user or IP address.
+     *
+     * The method works as follows:
+     * - It first identifies the user making the request. If the user is authenticated, their user ID is used;
+     *   otherwise, the user's IP address is used as a unique identifier.
+     * - It then constructs a unique cache key based on the `hostHomeId` and the user's ID or IP.
+     * - If the data is not already cached, it queries the `HostHome` model to fetch the home details, ensuring 
+     *   that only verified, non-disapproved, non-banned, and non-suspended homes are returned.
+     * - The resulting home data is then wrapped in a `HostHomeResource` for consistent API responses and is cached 
+     *   for one hour.
+     * - Additionally, an object named `bookingCount` represents the number of times the apartment has been booked for the 
+     *   20% New listing promotion, 
+     *   which should be included in the `HostHomeResource` output.
+     *
+     * @param  int  $hostHomeId  The ID of the home to be displayed.
      * @lrd:end
      */
     public function showGuestHome($hostHomeId)

@@ -1601,6 +1601,9 @@ class HostHomeController extends Controller
      */
     public function showGuestHome($hostHomeId)
     {
+        if (!HostHome::find($hostHomeId)) {
+            abort(404, "Hosthome not found");
+        }
     
         $user = request()->user();
 

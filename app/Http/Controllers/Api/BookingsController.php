@@ -281,14 +281,16 @@ class BookingsController extends Controller
                 info(["booKingPrice" => $bookingPrice]);
 
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
+                info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);
                 $reservedDaysDiscountedPrice += $weekendPrice;
+                info(["reservedDaysDiscountedPrice2" => $reservedDaysDiscountedPrice]);
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
                 
-                info(["reservedDaysDiscountedPrice" => $reservedDaysDiscountedPrice]);
+                info(["reservedDaysDiscountedPrice3" => $reservedDaysDiscountedPrice]);
                 info(["security_deposit" => $hostHome->security_deposit]);
-                
+
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }
             

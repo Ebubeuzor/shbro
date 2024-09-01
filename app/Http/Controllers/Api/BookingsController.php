@@ -264,10 +264,15 @@ class BookingsController extends Controller
             $total = 0;
             
             if ($weekendPrice == 0) {
+                info(["checkin" => $checkIn]);
+                info(["checkout" => $checkOut]);
+                info(["booKingPrice" => $bookingPrice]);
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
+                info(["reservedDaysDiscountedPrice" => $reservedDaysDiscountedPrice]);
+                info(["security_deposit" => $hostHome->security_deposit]);
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }else {
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
@@ -707,9 +712,6 @@ class BookingsController extends Controller
                 $userTrip->booking_id = $booking->id;
                 $userTrip->save();
 
-                $cacheKey = 'user_trips_' . $booking->user_id;
-                Cache::forget($cacheKey);
-
                 // Notify host about the booking
                 $host = User::find($hostHome->user_id);
                 $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
@@ -729,8 +731,6 @@ class BookingsController extends Controller
                         'bookingstatus' => 'booked'
                     ]);
                 }
-                $cacheKey = "allHostReservation{$host->id}";
-                Cache::forget($cacheKey);
                 Cache::flush();
                 return redirect()->route('successPage')->with([
                     "mobile_request" => $mobile_request

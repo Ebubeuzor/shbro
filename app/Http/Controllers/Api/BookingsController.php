@@ -279,6 +279,8 @@ class BookingsController extends Controller
                 info(["checkin" => $checkIn]);
                 info(["checkout" => $checkOut]);
                 info(["booKingPrice" => $bookingPrice]);
+                info(["reservedDays" => $reservedDays]);
+                info(["totalWeekends" => $totalWeekends]);
 
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
                 info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);

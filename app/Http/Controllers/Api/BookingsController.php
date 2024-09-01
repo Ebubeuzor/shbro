@@ -263,39 +263,18 @@ class BookingsController extends Controller
             
             $total = 0;
             
-            $priceFactor = $dateDifference - $reservedDays - $totalWeekends;
-
             if ($weekendPrice == 0) {
-                info(["checkin" => $checkIn]);
-                info(["checkout" => $checkOut]);
-                info(["booKingPrice" => $bookingPrice]);
-                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor));
+                $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
-                info(["reservedDaysDiscountedPrice" => $reservedDaysDiscountedPrice]);
-                info(["security_deposit" => $hostHome->security_deposit]);
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }else {
-                
-                info(["checkin" => $checkIn]);
-                info(["checkout" => $checkOut]);
-                info(["booKingPrice" => $bookingPrice]);
-                info(["reservedDays" => $reservedDays]);
-                info(["totalWeekends" => $totalWeekends]);
-                info(["dateDifference" => $dateDifference]);
-
-                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor));
-                info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);
+                $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
                 $reservedDaysDiscountedPrice += $weekendPrice;
-                info(["reservedDaysDiscountedPrice2" => $reservedDaysDiscountedPrice]);
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
-                
-                info(["reservedDaysDiscountedPrice3" => $reservedDaysDiscountedPrice]);
-                info(["security_deposit" => $hostHome->security_deposit]);
-
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }
             

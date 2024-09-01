@@ -269,7 +269,7 @@ class BookingsController extends Controller
                 info(["checkin" => $checkIn]);
                 info(["checkout" => $checkOut]);
                 info(["booKingPrice" => $bookingPrice]);
-                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor > 0 ? $priceFactor : 0));
+                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor));
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
@@ -285,9 +285,9 @@ class BookingsController extends Controller
                 info(["totalWeekends" => $totalWeekends]);
                 info(["dateDifference" => $dateDifference]);
 
-                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor > 0 ? $priceFactor : 0));
+                $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor));
                 info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);
-                $reservedDaysDiscountedPrice += $priceFactor >= 0 ? $weekendPrice : 0;
+                $reservedDaysDiscountedPrice += $weekendPrice;
                 info(["reservedDaysDiscountedPrice2" => $reservedDaysDiscountedPrice]);
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);

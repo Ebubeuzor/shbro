@@ -287,7 +287,7 @@ class BookingsController extends Controller
 
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor > 0 ? $priceFactor : 0));
                 info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);
-                $reservedDaysDiscountedPrice += $priceFactor > 0 ? $weekendPrice : 0;
+                $reservedDaysDiscountedPrice += $priceFactor >= 0 ? $weekendPrice : 0;
                 info(["reservedDaysDiscountedPrice2" => $reservedDaysDiscountedPrice]);
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);

@@ -281,6 +281,7 @@ class BookingsController extends Controller
                 info(["booKingPrice" => $bookingPrice]);
                 info(["reservedDays" => $reservedDays]);
                 info(["totalWeekends" => $totalWeekends]);
+                info(["dateDifference" => $dateDifference]);
 
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($dateDifference - $reservedDays - $totalWeekends));
                 info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);

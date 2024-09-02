@@ -396,6 +396,7 @@ class BookingsController extends Controller
     {
         $returnPrice = 0;
         foreach ($customDiscounts as $customDiscount) {
+            info(["customDiscount",$customDiscount]);
             switch ($customDiscount->duration) {
                 case '1 week':
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;

@@ -168,7 +168,7 @@ class UserController extends Controller
 
             // Combine all records into a single collection with titles
             $walletRecords = collect([
-                'Host Money' => $bookingHostBalanceRecords,
+                'Record Host Balance for Apartments' => $bookingHostBalanceRecords,
                 'Host Refund' => $cancelTripHostRefundRecords,
                 'Guest Refund' => $cancelTripGuestRefundRecords,
                 'Host Security Deposit' => $bookingSecurityDepositToHostRecords,

@@ -48,6 +48,9 @@ class SendMailForChatToCohosts implements ShouldQueue
          */
     public function handle()
     {
+        info(['requestToBook' => $this->requestToBook]);
+        info(['hostHomeId' => $this->hostHomeId]);
+
         if (!$this->sender && $this->requestToBook == null) {
             $this->sendMessage($this->message, $this->senderId, $this->receiverId);
         }elseif ($this->requestToBook != null && $this->hostHomeId != null) {

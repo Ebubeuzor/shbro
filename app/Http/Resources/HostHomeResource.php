@@ -65,6 +65,10 @@ class HostHomeResource extends JsonResource
 
         }
 
+        $filteredDiscounts = $this->hosthomediscounts->filter(function ($discount) {
+            return !($this->bookingCount >= 3 && $discount->discount == "20% New listing promotion");
+        });
+
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
@@ -96,7 +100,7 @@ class HostHomeResource extends JsonResource
             'availability_window' => $this->availability_window,
             'price' => $this->actualPrice,
             'weekend' => $this->weekendPrice ?? null,
-            'discounts' => $this->hosthomediscounts,
+            'discounts' => $filteredDiscounts,
             'rules' => $this->hosthomerules,
             'reviews' => HostHomeReviewResource::collection($this->hosthomereviews),
             'host_type' => $this->host_type,

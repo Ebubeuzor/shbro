@@ -265,38 +265,19 @@ class BookingsController extends Controller
             
             $priceFactor = $dateDifference - $reservedDays - $totalWeekends;
 
-            info(["reservedDaysDiscountedPrice0" => $reservedDaysDiscountedPrice]);
             if ($weekendPrice == 0) {
-                info(["checkin" => $checkIn]);
-                info(["checkout" => $checkOut]);
-                info(["booKingPrice" => $bookingPrice]);
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor > 0 ? $priceFactor : 0));
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
-                info(["reservedDaysDiscountedPrice" => $reservedDaysDiscountedPrice]);
-                info(["security_deposit" => $hostHome->security_deposit]);
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }else {
-                
-                info(["checkin" => $checkIn]);
-                info(["checkout" => $checkOut]);
-                info(["booKingPrice" => $bookingPrice]);
-                info(["reservedDays" => $reservedDays]);
-                info(["totalWeekends" => $totalWeekends]);
-                info(["dateDifference" => $dateDifference]);
 
                 $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor >= 0 ? $priceFactor : 0));
-                info(["reservedDaysDiscountedPrice1" => $reservedDaysDiscountedPrice]);
                 $reservedDaysDiscountedPrice += $priceFactor >= 0 ? $weekendPrice : 0;
-                info(["reservedDaysDiscountedPrice2" => $reservedDaysDiscountedPrice]);
                 $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
                 $tax = ($reservedDaysDiscountedPrice * $this->tax);
                 $taxAndFees = $fees + $tax;
-                
-                info(["reservedDaysDiscountedPrice3" => $reservedDaysDiscountedPrice]);
-                info(["security_deposit" => $hostHome->security_deposit]);
-
                 $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
             }
             
@@ -378,15 +359,12 @@ class BookingsController extends Controller
     {
         $discountedPrice = $actualPrice;
 
-        info(["standardDiscountCount",count($standardDiscounts) == 0]);
         if (count($standardDiscounts) != 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{
-            
-            info("entering custom discount");
+
             $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
             
-            info(["discountedPrice",$discountedPrice]);
         }
 
         return $discountedPrice;
@@ -396,14 +374,9 @@ class BookingsController extends Controller
     {
         $returnPrice = 0;
         foreach ($customDiscounts as $customDiscount) {
-            info(["customDiscount",$customDiscount->duration]);
             switch ($customDiscount->duration) {
                 case '1 week':
-                    
-                    info("testing");
-                    info(["durationOfStay",$durationOfStay]);
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
-                    info(["returnPrice",$returnPrice]);
                     break;
                 case '2 weeks':
                     $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
@@ -425,7 +398,6 @@ class BookingsController extends Controller
                     break;
             }
         }
-        info(["returnPrice2",$returnPrice]);
         return $returnPrice;
     }
 

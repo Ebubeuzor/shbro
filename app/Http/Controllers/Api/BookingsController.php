@@ -378,7 +378,7 @@ class BookingsController extends Controller
     {
         $discountedPrice = $actualPrice;
 
-        info(["standardDiscountCount",count($standardDiscounts)]);
+        info(["standardDiscountCount",count($standardDiscounts) == 0]);
         if (!count($standardDiscounts) == 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{

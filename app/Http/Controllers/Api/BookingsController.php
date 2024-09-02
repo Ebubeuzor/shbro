@@ -229,8 +229,8 @@ class BookingsController extends Controller
                     ];
                 })->values();
 
-                $uniquePricesWithOccurrences->each(function($item) use($standardDiscounts, $customDiscounts, $hostHome, &$reservedDaysDiscountedPrice) {
-                    $price = $this->calculateDiscountedPrice($item['price'], $standardDiscounts, $customDiscounts, $item['occurrences'], $hostHome->bookingCount);
+                $uniquePricesWithOccurrences->each(function($item) use($standardDiscounts, $customDiscounts,$dateDifference, $hostHome, &$reservedDaysDiscountedPrice) {
+                    $price = $this->calculateDiscountedPrice($item['price'], $standardDiscounts, $customDiscounts,$dateDifference, $hostHome->bookingCount);
                     $reservedDaysDiscountedPrice += $price * $item['occurrences'];
                 });
                 

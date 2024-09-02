@@ -399,7 +399,10 @@ class BookingsController extends Controller
             info(["customDiscount",$customDiscount->duration]);
             switch ($customDiscount->duration) {
                 case '1 week':
+                    
+                    info("testing");
                     $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
+                    info(["returnPrice",$returnPrice]);
                     break;
                 case '2 weeks':
                     $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : $price;
@@ -421,7 +424,7 @@ class BookingsController extends Controller
                     break;
             }
         }
-
+        info(["returnPrice",$returnPrice]);
         return $returnPrice;
     }
 

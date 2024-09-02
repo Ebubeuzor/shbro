@@ -50,7 +50,7 @@ class SendMailForChatToCohosts implements ShouldQueue
     {
         if (!$this->sender && $this->requestToBook == null) {
             $this->sendMessage($this->message, $this->senderId, $this->receiverId);
-        }elseif ($this->requestToBook != null && $this->hostHomeId) {
+        }elseif ($this->requestToBook != null && $this->hostHomeId != null) {
             $this->sendMessageForBookingRequest($this->message, $this->senderId, $this->receiverId);
         }else {
             $this->shareMessageWithCohost($this->message, $this->senderId, $this->receiverId);

@@ -3,9 +3,12 @@
 namespace App\Jobs;
 
 use App\Events\MessageSent;
+use App\Events\NewNotificationEvent;
 use App\Mail\NewBookingRequest;
 use App\Mail\NewMessageMail;
 use App\Mail\NotificationMail;
+use App\Models\HostHome;
+use App\Models\Notification;
 use App\Models\User;
 use App\Repository\ChatRepository;
 use Illuminate\Bus\Queueable;
@@ -32,6 +35,7 @@ class SendMailForChatToCohosts implements ShouldQueue
         private $receiverId,
         private $sender,
         private $requestToBook = null,
+        private $hostHomeId = null,
         )
         {
             //
@@ -46,7 +50,7 @@ class SendMailForChatToCohosts implements ShouldQueue
     {
         if (!$this->sender && $this->requestToBook == null) {
             $this->sendMessage($this->message, $this->senderId, $this->receiverId);
-        }elseif ($this->requestToBook != null) {
+        }elseif ($this->requestToBook != null && $this->hostHomeId) {
             $this->sendMessageForBookingRequest($this->message, $this->senderId, $this->receiverId);
         }else {
             $this->shareMessageWithCohost($this->message, $this->senderId, $this->receiverId);
@@ -97,7 +101,17 @@ class SendMailForChatToCohosts implements ShouldQueue
             $receiver = User::find($receiverId);
             $sender = User::find($senderId);
 
-            Mail::to($receiver->email)->queue(new NewBookingRequest($receiver, "A Guest made a request"));
+            
+            // Create a new notification record in the database
+            $notification = new Notification();
+            $notification->user_id = $receiverId;  // Assuming you want to save the user ID
+            $notification->Message = $message;
+            $notification->save();
+            // Broadcast the NewNotificationEvent to notify the WebSocket clients
+            event(new NewNotificationEvent($notification, $notification->id, $receiverId));
+
+            $hosthome = HostHome::find($this->hostHomeId);
+            Mail::to($receiver->email)->queue(new NewBookingRequest($receiver,$hosthome, "A Guest made a request"));
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }

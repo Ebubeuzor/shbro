@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MessageSent;
+use App\Events\NewNotificationEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
@@ -22,6 +23,7 @@ use App\Models\Cohost;
 use App\Models\HostHome;
 use App\Models\HostHomeCustomDiscount;
 use App\Models\Hosthomediscount;
+use App\Models\Notification;
 use App\Models\ReservedPricesForCertainDay;
 use App\Models\Servicecharge;
 use App\Models\User;
@@ -517,13 +519,22 @@ class BookingsController extends Controller
 
 
         event(new MessageSent($messageToHost, $user->id, $receiverId));
-        $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId);
+        
+        // Create a new notification record in the database
+        $notification = new Notification();
+        $notification->user_id = $receiverId;  // Assuming you want to save the user ID
+        $notification->Message = $messageToHost;
+        $notification->save();
+        // Broadcast the NewNotificationEvent to notify the WebSocket clients
+        event(new NewNotificationEvent($notification, $notification->id, $receiverId));
+
+        $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId, $hostHomeId);
         $userToReceive = User::whereId($receiverId)->first();
         Mail::to($user->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
         Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment"));
     }
 
-    private function sendMessagesToCohosts($message, $senderId, $receiverId)
+    private function sendMessagesToCohosts($message, $senderId, $receiverId, $hostHomeId)
     {
         $receiver = User::find($receiverId);
         $sender = User::find($senderId);
@@ -532,7 +543,7 @@ class BookingsController extends Controller
             $cohosts = $receiver->hostcohosts()->with('user')->get();
 
             foreach ($cohosts as $cohost) {
-                SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true);
+                SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true, $hostHomeId);
             }
         }elseif ($sender->cohosts()->exists()) {
             $cohosts = $sender->hostcohosts()->with('user')->get();

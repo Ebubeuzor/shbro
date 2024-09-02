@@ -113,6 +113,7 @@ class UserController extends Controller
             $bookingHostBalanceRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
                 ->where('bookings.hostId', $userId)
                 ->whereNotNull('bookings.addedToHostWallet')
+                ->latest()
                 ->select('bookings.id', 'bookings.hostBalance as amount', 'bookings.created_at', 'bookings.updated_at')
                 ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
                 ->get();
@@ -121,6 +122,7 @@ class UserController extends Controller
             $cancelTripHostRefundRecords = Canceltrip::join('bookings', 'canceltrips.booking_id', '=', 'bookings.id')
             ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
             ->where('canceltrips.host_id', $userId)
+            ->latest()
             ->whereNotNull('canceltrips.addedToHostWallet')
             ->select('canceltrips.id', 'canceltrips.host_refund as amount', 'canceltrips.created_at', 'canceltrips.updated_at')
             ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
@@ -131,6 +133,7 @@ class UserController extends Controller
             $cancelTripGuestRefundRecords = CancelTrip::join('bookings', 'canceltrips.booking_id', '=', 'bookings.id')
             ->join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
             ->where('canceltrips.user_id', $userId)
+            ->latest()
             ->whereNotNull('canceltrips.addedToGuestWallet')
             ->select('canceltrips.id', 'canceltrips.guest_refund as amount', 'canceltrips.created_at', 'canceltrips.updated_at')
             ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
@@ -141,6 +144,7 @@ class UserController extends Controller
             $bookingSecurityDepositToHostRecords = Booking::join('host_homes', 'bookings.host_home_id', '=', 'host_homes.id')
             ->where('bookings.hostId', $userId)
             ->whereNotNull('bookings.securityDepositToHost')
+            ->latest()
             ->whereNotNull('bookings.pauseSecurityDepositToGuest')
             ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
             ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
@@ -156,6 +160,7 @@ class UserController extends Controller
                             ->whereNotNull('bookings.pauseSecurityDepositToGuest');
                     });
             })
+            ->latest()
             ->select('bookings.id', 'bookings.securityDeposit as amount', 'bookings.created_at', 'bookings.updated_at')
             ->selectRaw('host_homes.id AS hosthome_id, host_homes.title AS hosthome_title')
             ->get();
@@ -163,7 +168,7 @@ class UserController extends Controller
 
             // Combine all records into a single collection with titles
             $walletRecords = collect([
-                'Host Balance' => $bookingHostBalanceRecords,
+                'Host Money' => $bookingHostBalanceRecords,
                 'Host Refund' => $cancelTripHostRefundRecords,
                 'Guest Refund' => $cancelTripGuestRefundRecords,
                 'Host Security Deposit' => $bookingSecurityDepositToHostRecords,

@@ -52,7 +52,8 @@ class AdminController extends Controller
         try {
             $paymentRequests = UserRequestPay::whereNull('approvedStatus')
                 ->with('user:id,name,email')
-                ->get(['id', 'user_id', 'account_number', 'account_name', 'amount', 'bank_name']);
+                ->latest()
+                ->get(['id', 'user_id', 'account_number', 'account_name', 'amount', 'bank_name','created_at']);
 
             return response()->json(['payment_requests' => $paymentRequests]);
         } catch (\Exception $e) {

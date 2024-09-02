@@ -536,7 +536,9 @@ class BookingsController extends Controller
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId, $hostHomeId)
     {
+        info("testing");
         $receiver = User::find($receiverId);
+        info(["receiver" => $receiver->cohosts()->exists()]);
         $sender = User::find($senderId);
 
         if ($receiver->cohosts()->exists()) {

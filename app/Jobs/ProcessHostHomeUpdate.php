@@ -189,7 +189,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
                 $uniqueCohosts = $coHosts->unique('user.email');
             
                 foreach ($uniqueCohosts as $coHost) {
-                    CreateHomesForCohosts::dispatch($coHost->user_id, $coHost->host_id, $hostHome->id);
+                    CreateHomesForCohosts::dispatch($coHost->user_id, $coHost->host_id, $hostHome->id,"true");
                 }
                 
                 $this->clearCacheForAllUsers();

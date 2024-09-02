@@ -23,6 +23,7 @@ class CreateHomesForCohosts implements ShouldQueue
         private $user_id,
         private $host_id,
         private $host_home_id,
+        private $updateHostHome = null
     )
     {
         //
@@ -35,10 +36,13 @@ class CreateHomesForCohosts implements ShouldQueue
      */
     public function handle()
     {
-        Hosthomecohost::create([
-            'user_id' => $this->user_id,
-            'host_id' => $this->host_id,
-            'host_home_id' => $this->host_home_id
-        ]);
+        if ($this->updateHostHome == null) {
+            Hosthomecohost::create([
+                'user_id' => $this->user_id,
+                'host_id' => $this->host_id,
+                'host_home_id' => $this->host_home_id
+            ]);
+        }
+        
     }
 }

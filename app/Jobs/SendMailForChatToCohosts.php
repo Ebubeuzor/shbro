@@ -48,8 +48,6 @@ class SendMailForChatToCohosts implements ShouldQueue
          */
     public function handle()
     {
-        info(['requestToBook' => $this->requestToBook]);
-        info(['hostHomeId' => $this->hostHomeId]);
 
         if (!$this->sender && $this->requestToBook == null) {
             $this->sendMessage($this->message, $this->senderId, $this->receiverId);
@@ -102,8 +100,6 @@ class SendMailForChatToCohosts implements ShouldQueue
             
             // Send notification email to the receiver
             $receiver = User::find($receiverId);
-            $sender = User::find($senderId);
-
             
             // Create a new notification record in the database
             $notification = new Notification();

@@ -250,7 +250,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('homepage', [HomepageController::class, 'index']);
 
     Route::post('signup', [AuthController::class, 'signup']);
-    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,60');
+    Route::post('login', [AuthController::class, 'login']);
     Route::get('auth', [AuthController::class, 'redirectToAuth']);
     Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
     Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail'])->middleware('throttle:3,60');

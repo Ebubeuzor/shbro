@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 
 class AuthController extends Controller
@@ -370,36 +371,57 @@ class AuthController extends Controller
      * if it is correct it should return the current user info and the token which will be used to authenticate the user
      * @lrd:end
      */
-    public function login(LoginRequest $request){
+    public function login(LoginRequest $request)
+    {
         $data = $request->validated();
+        $email = $data['email'];
+
+        // Define the throttle key using the email or IP address
+        $throttleKey = Str::lower($email) . '|' . request()->ip();
+
+        // Check if the user is locked out due to too many login attempts
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response([
+                'message' => 'Too many login attempts. Please try again later.'
+            ], 429);
+        }
+
         if (Auth::attempt($data)) {
             $user = Auth::user();
             if ($user->google_id == null) {
-                if(!$user->is_active){
-                    return response("Your account has been deactivated",422);
-                }if($user->suspend != null){
-                    return response("Your account has been suspended",422);
-                }elseif($user->email_verified_at != null){
+                if (!$user->is_active) {
+                    return response("Your account has been deactivated", 422);
+                }
+                if ($user->suspend != null) {
+                    return response("Your account has been suspended", 422);
+                }
+                if ($user->email_verified_at != null) {
                     $user->update(['last_login_at' => Carbon::now()]);
+
+                    // Clear the rate limit on successful login
+                    RateLimiter::clear($throttleKey);
+
                     /** @var User $user  */
                     $token = $user->createToken('main')->plainTextToken;
                     return response([
                         'user' => $user,
                         'token' => $token
                     ]);
-                }else {
-                    return response("Please verify your email",422);
+                } else {
+                    return response("Please verify your email", 422);
                 }
+            } elseif (!$user->is_active) {
+                return response("Your account has been deactivated", 422);
+            } elseif ($user->suspend != null) {
+                return response("Your account has been suspended", 422);
             }
-            elseif(!$user->is_active){
-                return response("Your account has been deactivated",422);
-            }elseif($user->suspend != null){
-                return response("Your account has been suspended",422);
-            }
-        }else{
+        } else {
+            // Increment the number of attempts on a failed login
+            RateLimiter::hit($throttleKey, 60 * 60); // 1 hour lockout
+
             return response([
                 'message' => 'Provided email address or password is incorrect'
-            ],422);
+            ], 422);
         }
     }
 

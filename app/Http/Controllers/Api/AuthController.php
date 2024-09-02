@@ -73,10 +73,10 @@ class AuthController extends Controller
 
             Mail::to($user->email)->send(new WelcomeMail($user));
         }elseif (!$user->is_active) {
-            return response("Your account has been deactivated", 422);
+            return response()->json(["message" => "Your account has been deactivated"], 422);
         }
         elseif ($user->suspend != null) {
-            return response("Your account has been suspended", 422);
+            return response()->json(["message" => "Your account has been suspended"], 422);
         }
 
         return response()->json([

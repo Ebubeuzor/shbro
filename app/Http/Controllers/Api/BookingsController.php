@@ -265,6 +265,7 @@ class BookingsController extends Controller
             
             $priceFactor = $dateDifference - $reservedDays - $totalWeekends;
 
+            info(["reservedDaysDiscountedPrice0" => $reservedDaysDiscountedPrice]);
             if ($weekendPrice == 0) {
                 info(["checkin" => $checkIn]);
                 info(["checkout" => $checkOut]);

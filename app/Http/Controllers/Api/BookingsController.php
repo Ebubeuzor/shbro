@@ -382,7 +382,11 @@ class BookingsController extends Controller
         if (count($standardDiscounts) != 0) {
             $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
         }else{
+            
+            info("entering custom discount");
             $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
+            
+            info(["discountedPrice",$discountedPrice]);
         }
 
         return $discountedPrice;

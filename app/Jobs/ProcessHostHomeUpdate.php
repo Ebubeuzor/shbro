@@ -184,6 +184,17 @@ class ProcessHostHomeUpdate implements ShouldQueue
 
             $this->clearCacheForAllUsers();
 
+            if ($host->hostcohosts()->exists()) {
+                $coHosts = $host->hostcohosts()->with('user')->get();
+                $uniqueCohosts = $coHosts->unique('user.email');
+            
+                foreach ($uniqueCohosts as $coHost) {
+                    CreateHomesForCohosts::dispatch($coHost->user_id, $coHost->host_id, $hostHome->id);
+                }
+                
+                $this->clearCacheForAllUsers();
+            }
+
             $admins = User::whereNotNull('adminStatus')->get();
             $title = "Urgent: User Submitted Apartment Update Requires Admin Attention";
             NotifyAdmins::dispatch($admins,$hostHome,$host,$title);

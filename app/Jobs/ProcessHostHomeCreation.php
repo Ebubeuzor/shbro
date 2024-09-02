@@ -170,16 +170,15 @@ class ProcessHostHomeCreation implements ShouldQueue
 
                 }
 
-                if ($host->cohosts()->exists()) {
-                    $coHosts = $host->cohosts()->with('user')->get();
+                if ($host->hostcohosts()->exists()) {
+                    $coHosts = $host->hostcohosts()->with('user')->get();
                     $uniqueCohosts = $coHosts->unique('user.email');
-
+                
                     foreach ($uniqueCohosts as $coHost) {
-                        CreateHomesForCohosts::dispatch($coHost->user_id,$coHost->host_id,$hostHome->id);
+                        CreateHomesForCohosts::dispatch($coHost->user_id, $coHost->host_id, $hostHome->id);
                     }
                     
                     $this->clearAllCache();
-
                 }
 
                 if (!$user->co_host) {

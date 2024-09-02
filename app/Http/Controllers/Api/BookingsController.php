@@ -538,16 +538,16 @@ class BookingsController extends Controller
     {
         info("testing");
         $receiver = User::find($receiverId);
-        info(["receiver" => $receiver->cohosts()->exists()]);
+        info(["receiver" => $receiver->hostcohosts()->exists()]);
         $sender = User::find($senderId);
 
-        if ($receiver->cohosts()->exists()) {
+        if ($receiver->hostcohosts()->exists()) {
             $cohosts = $receiver->hostcohosts()->with('user')->get();
 
             foreach ($cohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true, $hostHomeId);
             }
-        }elseif ($sender->cohosts()->exists()) {
+        }elseif ($sender->hostcohosts()->exists()) {
             $cohosts = $sender->hostcohosts()->with('user')->get();
 
             foreach ($cohosts as $cohost) {

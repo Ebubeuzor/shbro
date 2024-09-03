@@ -473,7 +473,14 @@ class BookingsController extends Controller
             abort(400, "Cohost arent allowed to make request to book");
         }
 
+        
+
         $user = User::findOrFail(auth()->id());
+        
+        if ($user->verified != "Verified" || $user->phone == null) {
+            abort(400, "Please verify your account by uploading a valid government ID and verifying your phone number.");
+        }        
+
         $hosthome = HostHome::findOrFail($hostHomeId);
 
         // Check if the user has already made a request today

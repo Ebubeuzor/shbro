@@ -1184,8 +1184,15 @@ class UserController extends Controller
             // Find the wishlist container
             $wishlistContainer = Wishlistcontainer::findOrFail($wishlistContainerId);
 
-            // Retrieve all wishlist container items for the given wishlist container
-            $wishlistContainerItems = $wishlistContainer->items;
+            // Retrieve all wishlist container items for the given wishlist container, including soft-deleted HostHome records
+            $wishlistContainerItems = $wishlistContainer->items()->with(['hosthomes' => function($query) {
+                $query->withTrashed();  // Include soft-deleted HostHome records
+            }])->get();
+
+            // Optionally, filter out items where the associated HostHome is null
+            $wishlistContainerItems = $wishlistContainerItems->filter(function ($item) {
+                return $item->hostHome !== null;  // Remove items with null HostHome (if you don't want soft-deleted ones)
+            });
 
             // Transform the wishlistContainerItems using the WishlistContainerItemResource
             $formattedItems = WishlistContainerItemResource::collection($wishlistContainerItems);

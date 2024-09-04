@@ -15,7 +15,8 @@ class WishlistContainerItemResource extends JsonResource
      */
     public function toArray($request)
     {
-        $hostHome = HostHome::where('id',$this->host_home_id)
+        $hostHome = HostHome::withTrashed()
+                    ->where('id',$this->host_home_id)
                     ->where('verified', 1)
                     ->whereNull('disapproved')
                     ->whereNull('banned')

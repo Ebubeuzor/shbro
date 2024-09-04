@@ -1189,11 +1189,6 @@ class UserController extends Controller
                 $query->withTrashed();  // Include soft-deleted HostHome records
             }])->get();
 
-            // Optionally, filter out items where the associated HostHome is null
-            $wishlistContainerItems = $wishlistContainerItems->filter(function ($item) {
-                return $item->hostHome !== null;  // Remove items with null HostHome (if you don't want soft-deleted ones)
-            });
-
             // Transform the wishlistContainerItems using the WishlistContainerItemResource
             $formattedItems = WishlistContainerItemResource::collection($wishlistContainerItems);
 

@@ -18,11 +18,11 @@ class UserTripResource extends JsonResource
     public function toArray($request)
     {
         $host = User::find($this->booking->hostId);
-        $hosthome = HostHome::find($this->booking->host_home_id)
+        $hosthome = HostHome::where('id',$this->booking->host_home_id)
                     ->where('verified', 1)
                     ->whereNull('disapproved')
                     ->whereNull('banned')
-                    ->whereNull('suspend');
+                    ->whereNull('suspend')->first();
 
         return [
             'id' => $this->id,

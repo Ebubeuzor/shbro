@@ -15,11 +15,11 @@ class WishlistContainerItemResource extends JsonResource
      */
     public function toArray($request)
     {
-        $hostHome = HostHome::find($this->host_home_id)
+        $hostHome = HostHome::where('id',$this->host_home_id)
                     ->where('verified', 1)
                     ->whereNull('disapproved')
                     ->whereNull('banned')
-                    ->whereNull('suspend');
+                    ->whereNull('suspend')->first();
 
         // Check if $hostHome is not null before creating the resource
         if ($hostHome) {

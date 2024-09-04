@@ -26,13 +26,15 @@ class HostHomeHostInfoResource extends JsonResource
         $reviews = Review::where('host_id', $hostId)
             ->join('users', 'reviews.user_id', '=', 'users.id')
             ->select('reviews.*', 'users.name as user_name')
-            ->with('hosthome')
+            ->with(['hosthome' => function($query) {
+                $query->withTrashed();  // Include soft-deleted HostHome records
+            }])
             ->get();
 
         // Map the reviews data and include photo URLs
         $mappedReviews = $reviews->map(function ($review) {
             
-            $hosthome = HostHome::find($review->host_home_id);
+            $hosthome = HostHome::withTrashed()->find($review->host_home_id);
             $user = User::find($review->user_id);
 
             $photoUrl = $hosthome->hosthomephotos->isNotEmpty()
@@ -57,7 +59,7 @@ class HostHomeHostInfoResource extends JsonResource
         ->get();
         $successfulCheckOutNumber = $successfulCheckOut->isEmpty() ? 0 : count($successfulCheckOut);
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
-        $firstHome = $this->hosthomes->first();
+        $firstHome = $this->hosthomes->withTrashed()->first();
         $createdAt = $firstHome ? $firstHome->created_at->diffForHumans() : null;
 
         return [
@@ -79,6 +81,7 @@ class HostHomeHostInfoResource extends JsonResource
                 ->where('disapproved', null)
                 ->whereNull('banned')
                 ->whereNull('suspend')
+                ->withTrashed()
                 ->count() ?? 0
         ];
 
@@ -86,7 +89,7 @@ class HostHomeHostInfoResource extends JsonResource
 
     protected function hosthomeDetails()
     {
-        $hosthomes = HostHome::where('user_id', $this->id)
+        $hosthomes = HostHome::withTrashed()->where('user_id', $this->id)
         ->where('verified', 1)
         ->where('disapproved', null)
         ->whereNull('banned')
@@ -116,7 +119,7 @@ class HostHomeHostInfoResource extends JsonResource
             ->where('paymentStatus', 'success')
             ->get();
 
-        $hosthomes = HostHome::whereIn('id', $bookings->pluck('host_home_id'))->get();
+        $hosthomes = HostHome::withTrashed()->whereIn('id', $bookings->pluck('host_home_id'))->get();
 
         return $hosthomes->map(function ($hosthome) {
             $firstPhoto = $hosthome->hosthomephotos->first();

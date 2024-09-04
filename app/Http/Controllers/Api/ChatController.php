@@ -100,13 +100,14 @@ class ChatController extends Controller
         }
 
         $user = User::find(auth()->id());
+        $receiverUser = User::find($receiverId);
 
-        if (!$user->is_active) {
+        if (!$receiverUser->is_active) {
             return response()->json(["message" => "This account has been deactivated"], 400);
         }
-        elseif ($user->suspend != null) {
+        elseif ($receiverUser->suspend != null) {
             return response()->json(["message" => "This account has been suspended"], 400);
-        }elseif($user->banned != null) {
+        }elseif($receiverUser->banned != null) {
             return response()->json(["message" => "This account has been banned"], 400);
         }else {
             

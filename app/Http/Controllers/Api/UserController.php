@@ -1729,6 +1729,7 @@ class UserController extends Controller
 
             $user->hosthomes()->delete();
 
+            Cache::flush();
             return response('', 204);
         }
 

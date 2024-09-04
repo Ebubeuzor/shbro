@@ -1757,6 +1757,71 @@ class UserController extends Controller
 
     }
 
+    //  /**
+    //  * @lrd:start
+    //  * Send OTP for changing the user's phone number.
+    //  * This method is responsible for sending an OTP to the user's email for verifying a change in their phone number.
+    //  * @lrd:end
+    //  */
+    // public function sendOtpForPhoneNumberChange(UpdateUserNumberRequest $request)
+    // {
+    //     $data = $request->validated();
+    //     $userid = auth()->id();
+    //     $user = User::find($userid);
+
+    //     $otp = Otp::identifier($user->email)->send(
+    //         new UserUpdateNumberOtp(
+    //             id: $userid,
+    //             phone_number: $data['new_number']
+    //         ),
+    //         UserNotification::route('mail', $user->email)
+    //     );
+    
+    //     return __($otp['status']);
+    // }
+
+    // /**
+    //  * @lrd:start
+    //  * Verify the OTP provided by the user for changing their phone number.
+    //  * This method verifies the OTP provided by the user for changing their phone number.
+    //  * @lrd:end
+    //  */
+    // public function verifyOtp(VerifyOtpRequest $request) {
+
+    //     $data = $request->validated();
+    //     $userid = auth()->id();
+    //     $user = User::find($userid);
+    
+    //     $otp = Otp::identifier($user->email)->attempt($data['otp_code']);
+    
+    //     if($otp['status'] != Otp::OTP_PROCESSED)
+    //     {
+    //         abort(403, __($otp['status']));
+    //     }
+    
+    //     return response("Phone number sucessfully Changed");
+    // }
+
+    // /**
+    //  * @lrd:start
+    //  * Resend the OTP for changing the user's phone number.
+    //  * This method resends the OTP for changing the user's phone number.
+    //  * @lrd:end
+    //  */
+    // public function resendOtp() {
+
+    //     $userid = auth()->id();
+    //     $user = User::find($userid);
+        
+    //     $otp = Otp::identifier($user->email)->update();
+    
+    //     if($otp['status'] != Otp::OTP_SENT)
+    //     {
+    //         abort(403, __($otp['status']));
+    //     }
+    //     return __($otp['status']);
+    // }
+
     /**
      * @lrd:start
      * Filters host homes based on specified criteria.

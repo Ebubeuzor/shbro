@@ -18,84 +18,85 @@ class UserTripResource extends JsonResource
     public function toArray($request)
     {
         $host = User::find($this->booking->hostId);
+        $hosthome = HostHome::find($this->booking->host_home_id)
+                    ->where('verified', 1)
+                    ->whereNull('disapproved')
+                    ->whereNull('banned')
+                    ->whereNull('suspend');
+
         return [
             'id' => $this->id,
-            'bbokingid' => $this->booking_id,
+            'bookingid' => $this->booking_id,
             'check_in' => $this->booking->check_in,
             'check_out' => $this->booking->check_out,
-            'hosthomephotos' => $this->hosthomephotosUrls(),
-            'hosthomeamenities' => $this->hosthomeamenities(),
-            'hosthomedescription' => $this->hosthomedescription(),
-            'hosthometitleandloacation' => $this->hosthometitleandloacation(),
-            'hosthomebedroom' => $this->hosthomebedroom(),
-            'hosthomebathroom' => $this->hosthomebathroom(),
-            'status' => $this->status(),
-            'hosthomecancelationpolicy' => $this->hosthomecancelationpolicy(),
+            'hosthomephotos' => $this->hosthomephotosUrls($hosthome),
+            'hosthomeamenities' => $this->hosthomeamenities($hosthome),
+            'hosthomedescription' => $this->hosthomedescription($hosthome),
+            'hosthometitleandlocation' => $this->hosthometitleandlocation($hosthome),
+            'hosthomebedroom' => $this->hosthomebedroom($hosthome),
+            'hosthomebathroom' => $this->hosthomebathroom($hosthome),
+            'status' => $this->status($hosthome),
+            'hosthomecancelationpolicy' => $this->hosthomecancelationpolicy($hosthome),
             'amountPaid' => $this->booking->totalamount,
             'hostid' => $this->booking->hostId,
-            'hostName' => $host->name,
+            'hostName' => $host ? $host->name : null,
         ];
     }
 
-    protected function hosthomephotosUrls()
+    protected function hosthomephotosUrls($hosthome)
     {
-        $hosthome = HostHome::find($this->booking->host_home_id);
+        if (!$hosthome) {
+            return [];
+        }
+
         return collect($hosthome->hosthomephotos)->map(function ($photo) {
             $photoData = json_decode($photo, true);
-
-            // Assuming 'image' is the key for the image URL in each photo data
             return url($photoData['image']);
         })->toArray();
     }
 
-    protected function hosthomeamenities()
+    protected function hosthomeamenities($hosthome)
     {
-        $hosthome = HostHome::find($this->booking->host_home_id);
+        if (!$hosthome) {
+            return [];
+        }
+
         return collect($hosthome->hosthomeoffers)->map(function ($offer) {
             return $offer->offer;
         })->toArray();
     }
 
-    protected function hosthomebedroom()
+    protected function hosthomebedroom($hosthome)
     {
-
-        $hosthome = HostHome::find($this->booking->host_home_id);
-        return $hosthome->bedroom;
+        return $hosthome ? $hosthome->bedroom : null;
     }
 
-    protected function hosthomecancelationpolicy()
+    protected function hosthomecancelationpolicy($hosthome)
     {
-
-        $hosthome = HostHome::find($this->booking->host_home_id);
-        return $hosthome->cancellation_policy;
+        return $hosthome ? $hosthome->cancellation_policy : null;
     }
 
-    protected function hosthomebathroom()
+    protected function hosthomebathroom($hosthome)
     {
-        
-        $hosthome = HostHome::find($this->booking->host_home_id);
-        return $hosthome->bathrooms;
+        return $hosthome ? $hosthome->bathrooms : null;
     }
 
-    protected function hosthometitleandloacation()
+    protected function hosthometitleandlocation($hosthome)
     {
-        
-        $hosthome = HostHome::find($this->booking->host_home_id);
-        return $hosthome->title . " " . $hosthome->address;
+        return $hosthome ? $hosthome->title . " " . $hosthome->address : null;
     }
 
-    protected function hosthomedescription()
+    protected function hosthomedescription($hosthome)
     {
-        
-        $hosthome = HostHome::find($this->booking->host_home_id);
-        return $hosthome->description;
+        return $hosthome ? $hosthome->description : null;
     }
 
-
-
-    protected function status()
+    protected function status($hosthome)
     {
-        $hosthome = HostHome::find($this->booking->host_home_id);
+        if (!$hosthome) {
+            return "UNKNOWN";
+        }
+
         $checkInDateTime = Carbon::parse($this->booking->check_in . ' ' . $hosthome->check_in_time);
         $checkOutDateTime = Carbon::parse($this->booking->check_out . ' ' . $this->booking->check_out_time);
         $today = Carbon::now();
@@ -112,5 +113,5 @@ class UserTripResource extends JsonResource
             return "RESERVED";
         }
     }
-
 }
+

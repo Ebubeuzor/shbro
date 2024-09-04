@@ -59,7 +59,7 @@ class HostHomeHostInfoResource extends JsonResource
         ->get();
         $successfulCheckOutNumber = $successfulCheckOut->isEmpty() ? 0 : count($successfulCheckOut);
         $ratings = $reviews->isEmpty() ? 0 : $reviews->avg('ratings');
-        $firstHome = $this->hosthomes->withTrashed()->first();
+        $firstHome = HostHome::withTrashed()->where('user_id', $this->id);
         $createdAt = $firstHome ? $firstHome->created_at->diffForHumans() : null;
 
         return [

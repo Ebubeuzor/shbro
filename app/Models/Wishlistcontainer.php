@@ -12,7 +12,7 @@ class Wishlistcontainer extends Model
 
     
     public function users(){
-        return $this->belongsTo(User::class)->withTrashed();
+        return $this->belongsTo(User::class);
     }
 
     public function items()

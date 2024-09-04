@@ -12,7 +12,7 @@ class WishlistContainerItem extends Model
     protected $guarded = [];
 
     public function hosthomes(){
-        return $this->belongsTo(HostHome::class);
+        return $this->belongsTo(HostHome::class)->withTrashed();
     }
 
     public function wishlistcontainer(){

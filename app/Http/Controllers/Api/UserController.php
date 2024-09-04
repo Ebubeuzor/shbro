@@ -1152,7 +1152,7 @@ class UserController extends Controller
                     ],
                     'itemsLength' => count($wishlistContainer->items),
                     'items' => $wishlistContainer->items->map(function ($item) {
-                        $hostHome = HostHome::find($item->host_home_id);
+                        $hostHome = HostHome::withTrashed()->where('id',$item->host_home_id);
                         return [
                             'id' => $item->id,
                             'hosthomes' => [

@@ -76,12 +76,12 @@ class HostHomeHostInfoResource extends JsonResource
             'hosthomeDetails' => $this->hosthomeDetails() ?? [],
             'bookedhosthomeDetails' => $this->bookedhosthomeDetails() ?? [],
             'yearsOfHosting' => $createdAt ?? null,
-            'totalHomes' => $this->hosthomes()
+            'totalHomes' => HostHome::withTrashed()  // Start with the HostHome model
+                ->where('user_id', $this->id)  // Filter by the user ID
                 ->where('verified', 1)
-                ->where('disapproved', null)
+                ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend')
-                ->withTrashed()
                 ->count() ?? 0
         ];
 

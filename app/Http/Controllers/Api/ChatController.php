@@ -101,41 +101,52 @@ class ChatController extends Controller
 
         $user = User::find(auth()->id());
 
-        // If the user is a cohost, get the host user
-        if ($user->co_host == true) {
-            $cohost = Cohost::where('user_id', $user->id)->first();
-            $user = User::find($cohost->host_id);
+        if (!$user->is_active) {
+            return response()->json(["message" => "This account has been deactivated"], 400);
         }
-
-        // Check if the user has already sent three messages containing numbers to the receiver
-        $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id, $receiverId);
-        if (preg_match_all('/\d/', $request->message) && $messageCountWithNumbers >= 3) {
-            throw new \Exception('You cannot send more than three messages containing numbers to a guest or host.');
-        }
-
-        try {
-            // Send message to the main receiver
-            $this->sendChatMessage($request->message, $user->id, $receiverId);
-
-            // Send message to cohosts, if any
-            $this->sendMessagesToCohosts($request->message, $user->id, $receiverId);
-
-            // Increment the count if the message contains numbers
-            if (preg_match('/\d/', $request->message)) {
-                Message::where('sender_id', $user->id)->increment('messages_with_numbers_count');
+        elseif ($user->suspend != null) {
+            return response()->json(["message" => "This account has been suspended"], 400);
+        }elseif($user->banned != null) {
+            return response()->json(["message" => "This account has been banned"], 400);
+        }else {
+            
+            // If the user is a cohost, get the host user
+            if ($user->co_host == true) {
+                $cohost = Cohost::where('user_id', $user->id)->first();
+                $user = User::find($cohost->host_id);
             }
 
-            // Trigger event for message sent
-            event(new MessageSent($request->message, $user->id, $receiverId));
+            // Check if the user has already sent three messages containing numbers to the receiver
+            $messageCountWithNumbers = $this->chat->countMessagesWithNumbers($user->id, $receiverId);
+            if (preg_match_all('/\d/', $request->message) && $messageCountWithNumbers >= 3) {
+                throw new \Exception('You cannot send more than three messages containing numbers to a guest or host.');
+            }
 
-            // Send notification email to the receiver
-            $receiver = User::find($receiverId);
-            Mail::to($receiver->email)->queue(new NewMessageMail($receiver, 'You have a new message'));
+            try {
+                // Send message to the main receiver
+                $this->sendChatMessage($request->message, $user->id, $receiverId);
 
-            return response("ok", 200);
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
-            return response($th, 422);
+                // Send message to cohosts, if any
+                $this->sendMessagesToCohosts($request->message, $user->id, $receiverId);
+
+                // Increment the count if the message contains numbers
+                if (preg_match('/\d/', $request->message)) {
+                    Message::where('sender_id', $user->id)->increment('messages_with_numbers_count');
+                }
+
+                // Trigger event for message sent
+                event(new MessageSent($request->message, $user->id, $receiverId));
+
+                // Send notification email to the receiver
+                $receiver = User::find($receiverId);
+                Mail::to($receiver->email)->queue(new NewMessageMail($receiver, 'You have a new message'));
+
+                return response("ok", 200);
+            } catch (\Throwable $th) {
+                Log::error($th->getMessage());
+                return response($th, 422);
+            }
+            
         }
     }
 

@@ -1852,6 +1852,32 @@ class HostHomeController extends Controller
         $hostHome = HostHome::find($id); 
         $host = User::find($hostHome->user_id);
 
+        // Get the current date and time
+        $currentDateTime = Carbon::now();
+
+        // Check if the user is currently hosting and has a non-null checkOutNotification
+        $isHosting = Booking::where('host_home_id', $id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // Check if the user is currently staying and has a non-null checkOutNotification
+        $isStaying = Booking::where('host_home_id', $id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
+        if ($isHosting || $isStaying) {
+            return response()->json([
+                'message' => 'The host home cannot be deleted because there is an ongoing stay or hosting activity. Please wait until the current booking is completed.'
+            ], 403);
+        }
+
         // Efficiently check for conditions on active bookings
         $activeBooking = Booking::where('host_home_id', $id)
         ->where('paymentStatus', 'success')

@@ -29,6 +29,7 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\UserTransactionResource;
 use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
+use App\Jobs\NotifyAdminsAboutGovernmentId;
 use App\Jobs\RequestPay;
 use App\Mail\ActivateAccount;
 use App\Mail\NotificationMail;
@@ -634,6 +635,12 @@ class UserController extends Controller
                 'government_id' => $this->saveImage($data['government_id']),
                 'live_photo' => $this->saveImage($data['live_photo'])
             ]);
+
+            User::whereNotNull('adminStatus')->chunk(100, function($admins) {
+                
+                $formatedDate = now()->format('M j, Y h:ia');
+                NotifyAdminsAboutGovernmentId::dispatch($admins, 'Urgent: User Submitted Government ID for Verification', $formatedDate);
+            });
             Cache::flush();
         }else{
             return response("Please fill out all fields",422);

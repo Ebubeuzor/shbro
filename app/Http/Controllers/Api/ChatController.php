@@ -100,12 +100,18 @@ class ChatController extends Controller
         }
 
         $user = User::find(auth()->id());
+
         $receiverUser = User::find($receiverId);
+
+        if ($user->verified != "Verified") {
+            abort(400, "Please verify your account by uploading a valid government ID");
+        } 
 
         if (!$receiverUser->is_active) {
             return response()->json(["message" => "This account has been deactivated"], 400);
-        }
-        elseif ($receiverUser->suspend != null) {
+        }elseif ($receiverUser->verified != "Verified") {
+            abort(400, "Message can't be sent because user isn't verified");
+        }elseif ($receiverUser->suspend != null) {
             return response()->json(["message" => "This account has been suspended"], 400);
         }elseif($receiverUser->banned != null) {
             return response()->json(["message" => "This account has been banned"], 400);

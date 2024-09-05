@@ -37,6 +37,7 @@ use App\Mail\ListingApproved;
 use App\Mail\NotificationMail;
 use App\Mail\VerifyYourEmail;
 use App\Mail\WelcomeMail;
+use App\Models\Booking;
 use App\Models\Cohost;
 use App\Models\HostHomeBlockedDate;
 use App\Models\Hosthomecohost;
@@ -1827,11 +1828,20 @@ class HostHomeController extends Controller
         
     }
 
-
     
     /**
      * @lrd:start
-     * this is used to delete the host home details the {hosthome} is the hosthome id 
+     * This method is used to delete the host home details. The `{hosthome}` parameter 
+     * represents the ID of the host home that is to be deleted.
+     * 
+     * The method returns the following status codes:
+     * - `200 OK`: If the host home is successfully deleted.
+     * - `403 Forbidden`: If the host home cannot be deleted due to active bookings 
+     *   that do not meet the necessary conditions, such as pending wallet deposits 
+     *   or unresolved security deposits.
+     * 
+     * Note: The host home cannot be deleted if there are certain active bookings 
+     * associated with it that do not meet specific conditions.
      * @lrd:end
      */
     public function destroy($id)
@@ -1839,9 +1849,48 @@ class HostHomeController extends Controller
         
         $user = User::find(auth()->id());
 
-        $cohost = Cohost::where('user_id',$user->id)->first();
         $hostHome = HostHome::find($id); 
         $host = User::find($hostHome->user_id);
+
+        // Efficiently check for conditions on active bookings
+        $activeBooking = Booking::where('host_home_id', $id)
+        ->where('paymentStatus', 'success')
+        ->where(function ($query) {
+            $query->whereNull('addedToHostWallet')
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('pauseSecurityDepositToGuest')
+                            ->whereNull('securityDepositToGuest')
+                            ->orWhereNull('securityDepositToHost')
+                            ->orWhereNotNull('securityDepositToHost')
+                            ->whereNull('securityDepositToHostWallet');
+                });
+        })
+        ->first();
+
+        // If an active booking violates any condition, return an appropriate error message
+        if ($activeBooking) {
+            if ($activeBooking->addedToHostWallet === null) {
+                return response()->json([
+                    'message' => 'The host home cannot be deleted because the booking funds have not yet been added to the host\'s wallet.'
+                ], 403);
+            }
+
+            if ($activeBooking->addedToGuestWallet === null) {
+                if ($activeBooking->pauseSecurityDepositToGuest !== null && 
+                ($activeBooking->securityDepositToGuest === null || $activeBooking->securityDepositToHost === null)) {
+                    return response()->json([
+                        'message' => 'The host home cannot be deleted because the security deposit is paused and has not yet been released to the guest or host.'
+                    ], 403);
+                }
+
+                if ($activeBooking->securityDepositToHost !== null && $activeBooking->securityDepositToHostWallet === null) {
+                    return response()->json([
+                    'message' => 'The host home cannot be deleted because the security deposit has been released to the host but has not yet been added to the host\'s wallet.'
+                    ], 403);
+                }
+            }
+        }
+
         if ($user->co_host == true) {
             
             $hostHome->update([

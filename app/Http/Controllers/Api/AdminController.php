@@ -861,8 +861,12 @@ class AdminController extends Controller
     
     /**
      * @lrd:start
-     * accept the value of a user id and message send an object that contains message which is the message you want to send a user
-     * send this as object message use|required
+     * 
+     * Accepts the value of a user ID and a message. Sends an object that contains 
+     * the message you want to send to a user.
+     * The user cannot be banned if they are currently hosting or staying in an 
+     * apartment based on their active bookings.
+     * 
      * @lrd:end
      * @LRDparam message use|required
      */
@@ -873,6 +877,33 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
+
+        // Get the current date and time
+        $currentDateTime = Carbon::now();
+
+        // Check if the user is currently hosting and has a non-null checkOutNotification
+        $isHosting = Booking::where('hostId', $user->id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // Check if the user is currently staying and has a non-null checkOutNotification
+        $isStaying = Booking::where('user_id', $user->id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
+        if ($isHosting || $isStaying) {
+            return response()->json([
+                'message' => 'The user cannot be banned while they are hosting, staying in an apartment'
+            ], 403);
+        }
+
         $title = "Your account has been banned from shrbo";
         $viewToUse = 'emails.accountBanned';
         $formatedDate = now()->format('M j, Y h:ia');
@@ -989,10 +1020,13 @@ class AdminController extends Controller
      * @lrd:start
      * accept the value of a user id and message send an object that contains message which is the message you want to send a user
      * send this as object message use|required
+     * 
+     * The user cannot be suspended if they are currently hosting or staying in an 
+     * apartment based on their active bookings.
+     * 
      * @lrd:end
      * @LRDparam message use|required
-     */
-
+    */
     public function suspendGuest(Request $request, $id) {
 
         $data = $request->validate([
@@ -1000,6 +1034,33 @@ class AdminController extends Controller
         ]);
 
         $user = User::where('id', $id)->first();
+
+        // Get the current date and time
+        $currentDateTime = Carbon::now();
+
+        // Check if the user is currently hosting and has a non-null checkOutNotification
+        $isHosting = Booking::where('hostId', $user->id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // Check if the user is currently staying and has a non-null checkOutNotification
+        $isStaying = Booking::where('user_id', $user->id)
+                            ->where('paymentStatus', 'success')
+                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                            ->whereNotNull('checkOutNotification')
+                            ->exists();
+
+        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
+        if ($isHosting || $isStaying) {
+            return response()->json([
+                'message' => 'The user cannot be suspended while they are hosting, staying in an apartment'
+            ], 403);
+        }
+
         $title = "Your account has been suspended from shrbo";
         
         $formatedDate = now()->format('M j, Y h:ia');

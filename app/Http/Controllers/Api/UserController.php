@@ -1883,6 +1883,23 @@ class UserController extends Controller
         if (!$user) {
             abort(404, "User not found");
         }
+        
+        if ($user->email_verified_at == null && $user->google_id == null) {
+            abort(403, "Please verify your email address first");
+        }
+        
+        if ($user->is_active) {
+            return response("Your account is still active", 403);
+        }
+
+        if ($user->suspend != null) {
+            return response("Your account has been suspended", 403);
+        }
+
+        
+        if ($user->banned != null) {
+            return response("Your account has been suspended", 403);
+        }
 
         $identifier = $user->email . " " . request()->ip();
     
@@ -1941,6 +1958,23 @@ class UserController extends Controller
         
         if (!$user) {
             abort(404, "User not found");
+        }
+
+        if ($user->email_verified_at == null && $user->google_id == null) {
+            abort(403, "Please verify your email address first");
+        }
+        
+        if ($user->is_active) {
+            return response("Your account is still active", 403);
+        }
+
+        if ($user->suspend != null) {
+            return response("Your account has been suspended", 403);
+        }
+
+        
+        if ($user->banned != null) {
+            return response("Your account has been suspended", 403);
         }
 
         $identifier = $user->email . " " . request()->ip();

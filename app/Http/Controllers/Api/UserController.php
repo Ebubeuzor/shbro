@@ -8,6 +8,7 @@ use App\Http\Requests\CreateOrUpdateAboutUserRequest;
 use App\Http\Requests\FilterHomepageLocationRequest;
 use App\Http\Requests\FilterHomepageRequest;
 use App\Http\Requests\FilterHostHomesDatesRequest;
+use App\Http\Requests\ReactivatingAccountRequest;
 use App\Http\Requests\RequestPayRequest;
 use Illuminate\Support\Facades\Notification as UserNotification;
 use App\Http\Requests\StoreCreateUserBankAccountRequest;
@@ -17,6 +18,7 @@ use App\Http\Requests\UpdateUserInfoForMobileAppUsers;
 use App\Http\Requests\UpdateUserNumberRequest;
 use App\Http\Requests\UserDetailsUpdateRequest;
 use App\Http\Requests\VerifyOtpRequest;
+use App\Http\Requests\VerifyOtpRequestForReactivatingAccountRequest;
 use App\Http\Resources\AllReservationsResource;
 use App\Http\Resources\BookedResource;
 use App\Http\Resources\GuestReviewsResource;
@@ -55,6 +57,7 @@ use App\Models\UserWallet;
 use App\Models\Wishlistcontainer;
 use App\Models\WishlistContainerItem;
 use App\Models\WishlistControllerItem;
+use App\Otp\ReactivingAccountOtp;
 use App\Otp\UserUpdateNumberOtp;
 use Carbon\Carbon;
 use FFMpeg\FFMpeg;
@@ -68,6 +71,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Jlorente\Laravel\CreditCards\Facades\CreditCardValidator;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 use Twilio\Rest\Client;
@@ -1766,70 +1770,190 @@ class UserController extends Controller
 
     }
 
-    //  /**
-    //  * @lrd:start
-    //  * Send OTP for changing the user's phone number.
-    //  * This method is responsible for sending an OTP to the user's email for verifying a change in their phone number.
-    //  * @lrd:end
-    //  */
-    // public function sendOtpForPhoneNumberChange(UpdateUserNumberRequest $request)
-    // {
-    //     $data = $request->validated();
-    //     $userid = auth()->id();
-    //     $user = User::find($userid);
+    /**
+     * @lrd:start
+     * Send OTP for reactivating the user's account.
+     *
+     * This method is responsible for sending a One-Time Password (OTP) to the user's email.
+     * The OTP is required for verifying the reactivation of the user's account or changing their phone number.
+     * The OTP is sent via email, and its status is returned as a response.
+     * 
+     * @param ReactivatingAccountRequest $request The validated request containing the user's email.
+     * 
+     * @return string The status of the OTP sending process.
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the user with the provided email is not found.
+     * @lrd:end
+    */
+    public function sendOtpForReactivingAccountChange(ReactivatingAccountRequest $request)
+    {
+        $data = $request->validated();
+        $userEmail = $data['email'];
+        // Define the throttle key using the email or IP address
+        $throttleKey = Str::lower($userEmail) . '1|' . request()->ip();
 
-    //     $otp = Otp::identifier($user->email)->send(
-    //         new UserUpdateNumberOtp(
-    //             id: $userid,
-    //             phone_number: $data['new_number']
-    //         ),
-    //         UserNotification::route('mail', $user->email)
-    //     );
-    
-    //     return __($otp['status']);
-    // }
-
-    // /**
-    //  * @lrd:start
-    //  * Verify the OTP provided by the user for changing their phone number.
-    //  * This method verifies the OTP provided by the user for changing their phone number.
-    //  * @lrd:end
-    //  */
-    // public function verifyOtp(VerifyOtpRequest $request) {
-
-    //     $data = $request->validated();
-    //     $userid = auth()->id();
-    //     $user = User::find($userid);
-    
-    //     $otp = Otp::identifier($user->email)->attempt($data['otp_code']);
-    
-    //     if($otp['status'] != Otp::OTP_PROCESSED)
-    //     {
-    //         abort(403, __($otp['status']));
-    //     }
-    
-    //     return response("Phone number sucessfully Changed");
-    // }
-
-    // /**
-    //  * @lrd:start
-    //  * Resend the OTP for changing the user's phone number.
-    //  * This method resends the OTP for changing the user's phone number.
-    //  * @lrd:end
-    //  */
-    // public function resendOtp() {
-
-    //     $userid = auth()->id();
-    //     $user = User::find($userid);
+        // Check if the user is locked out due to too many login attempts
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response([
+                'message' => 'Too many attempts. Please try again later.'
+            ], 429);
+        }
         
-    //     $otp = Otp::identifier($user->email)->update();
+        RateLimiter::hit($throttleKey, 60 * 60); 
+
+        $user = User::where('email',$userEmail)->first();
+        
+        if (!$user) {
+            abort(404, "User not found");
+        }
+        
+        if ($user->email_verified_at == null && $user->google_id == null) {
+            abort(403, "Please verify your email address first");
+        }
+        
+        if ($user->is_active) {
+            return response("Your account is still active", 403);
+        }
+
+        if ($user->suspend != null) {
+            return response("Your account has been suspended", 403);
+        }
+
+        
+        if ($user->banned != null) {
+            return response("Your account has been suspended", 403);
+        }
+
+        $identifier = $user->email . " " . request()->ip();
+
+        $otp = Otp::identifier($identifier)->send(
+            new ReactivingAccountOtp(
+                email: $data['email']
+            ),
+            UserNotification::route('mail', $user->email)
+        );
     
-    //     if($otp['status'] != Otp::OTP_SENT)
-    //     {
-    //         abort(403, __($otp['status']));
-    //     }
-    //     return __($otp['status']);
-    // }
+
+        if ($otp['status'] != Otp::OTP_SENT) {
+            abort(403, __($otp['status']));
+        }
+
+        return __($otp['status']);
+    }
+
+    /**
+     * @lrd:start
+     * Verify the OTP provided by the user for reactivating their account.
+     *
+     * This method verifies the OTP submitted by the user for reactivating their account.
+     * The OTP is associated with the user's email and is checked for validity. 
+     * 
+     * It includes rate limiting to prevent abuse by restricting the number of requests
+     * within a specified time frame and a 429 error is returned. 
+     * 
+     * If the OTP is successfully verified, the user's account is reactivated.
+     * 
+     * @param VerifyOtpRequest $request The validated request containing the OTP code.
+     * 
+     * @return \Illuminate\Http\Response A success message indicating the phone number has been changed.
+     * 
+     * @throws \Illuminate\Auth\Access\AuthorizationException If the OTP verification fails.
+     * @lrd:end
+    */
+    public function verifyOtpForReactivingAccount(VerifyOtpRequestForReactivatingAccountRequest $request) {
+
+        $data = $request->validated();
+        
+        $userEmail = $data['email'];
+
+        // Define the throttle key using the email or IP address
+        $throttleKey = Str::lower($userEmail) . '2|' . request()->ip();
+
+        // Check if the user is locked out due to too many attempts
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response([
+                'message' => 'Too many attempts. Please try again later.'
+            ], 429);
+        }
+        
+        RateLimiter::hit($throttleKey, 60 * 60); 
+
+        $user = User::where('email',$userEmail)->first();
+        
+        if (!$user) {
+            abort(404, "User not found");
+        }
+
+        $identifier = $user->email . " " . request()->ip();
+    
+        $otp = Otp::identifier($identifier)->attempt($data['otp_code']);
+    
+        if($otp['status'] != Otp::OTP_PROCESSED)
+        {
+            abort(403, __($otp['status']));
+        }
+
+        $token = $user->createToken('main')->plainTextToken;
+
+        return response()->json([
+            'message' => __($otp['status']),
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
+
+    /**
+     * @lrd:start
+     * Resend the OTP for reactivating the user's account.
+     *
+     * This method resends the One-Time Password (OTP) to the user's email.
+     * The OTP is required for verifying the reactivation of the user's account.
+     * It includes rate limiting to prevent abuse by restricting the number of requests
+     * within a specified time frame and a 429 error is returned. 
+     * If the user does not exist, a 404 error is returned. If the OTP cannot be sent, a 403 error is returned.
+     * 
+     * @param ReactivatingAccountRequest $request The validated request containing the user's email.
+     * 
+     * @return string The status of the OTP resend process.
+     * 
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException If the user with the provided email is not found.
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException If the OTP cannot be sent.
+     * @lrd:end
+    */
+    public function resendOtpForReactivingAccount(ReactivatingAccountRequest $request) {
+
+        $data = $request->validated();
+        
+        $userEmail = $data['email'];
+        // Define the throttle key using the email or IP address
+        $throttleKey = Str::lower($userEmail) . '3|' . request()->ip();
+
+        // Check if the user is locked out due to too many attempts
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            return response([
+                'message' => 'Too many attempts. Please try again later.'
+            ], 429);
+        }
+
+        RateLimiter::hit($throttleKey, 60 * 60); 
+
+        $user = User::where('email',$userEmail)->first();
+        
+        if (!$user) {
+            abort(404, "User not found");
+        }
+
+        $identifier = $user->email . " " . request()->ip();
+
+        $otp = Otp::identifier($identifier)->update();
+    
+        if($otp['status'] != Otp::OTP_SENT)
+        {
+            abort(403, __($otp['status']));
+        }
+
+        return __($otp['status']);
+    }
 
     /**
      * @lrd:start

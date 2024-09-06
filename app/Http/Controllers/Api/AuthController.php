@@ -64,11 +64,15 @@ class AuthController extends Controller
         $user = User::where('email', $socialiteUser->getEmail())->first();
 
         if (!$user) {
+            do {
+                $remember_token = Str::random(40);
+            } while (User::where('remember_token', $remember_token)->exists());
+
             $user = User::create([
                 'name' => $socialiteUser->getName(),
                 'email' => $socialiteUser->getEmail(),
                 'google_id' => $socialiteUser->getId(),
-                'remember_token' => Str::random(40)
+                'remember_token' => $remember_token
             ]);
 
             Mail::to($user->email)->send(new WelcomeMail($user));
@@ -134,11 +138,16 @@ class AuthController extends Controller
             $user = User::where('email', $googleUser['email'])->first();
 
             if (!$user) {
+                
+                do {
+                    $remember_token = Str::random(40);
+                } while (User::where('remember_token', $remember_token)->exists());
+                
                 $user = User::create([
                     'name' => $googleUser['name'],
                     'email' => $googleUser['email'],
                     'google_id' => $googleUser['sub'],
-                    'remember_token' => Str::random(40)
+                    'remember_token' => $remember_token
                 ]);
 
                 Mail::to($user->email)->send(new WelcomeMail($user));
@@ -146,6 +155,9 @@ class AuthController extends Controller
                 return response("Your account has been deactivated", 422);
             }
             elseif ($user->suspend != null) {
+                return response("Your account has been suspended", 422);
+            }
+            elseif ($user->banned != null) {
                 return response("Your account has been suspended", 422);
             }
 
@@ -210,11 +222,16 @@ class AuthController extends Controller
 
         if ($existingUser) {
             // Update the existing guest account to nullify the is_guest flag
+            
+            do {
+                $remember_token = Str::random(40);
+            } while (User::where('remember_token', $remember_token)->exists());
+            
             $existingUser->update([
                 'name' => $data['name'],
                 'is_guest' => null,
                 'password' => Hash::make($data['password']),
-                'remember_token' => Str::random(40)
+                'remember_token' => $remember_token
             ]);
     
             $user = $existingUser;
@@ -232,11 +249,16 @@ class AuthController extends Controller
                         
 
                 if ($decryptedCohostemail == $data['email']) {
+                    
+                    do {
+                        $remember_token = Str::random(40);
+                    } while (User::where('remember_token', $remember_token)->exists());
+                    
                     $user = User::create([
                         'name' => $data['name'],
                         'email' => $data['email'],
                         'password' => Hash::make($data['password']),
-                        'remember_token' => Str::random(40),
+                        'remember_token' => $remember_token,
                         'co_host' => 1
                     ]);
 
@@ -251,11 +273,16 @@ class AuthController extends Controller
                 abort(400, "Invalid host or cohost authorization ");
             }
         }else {
+            
+            do {
+                $remember_token = Str::random(40);
+            } while (User::where('remember_token', $remember_token)->exists());
+            
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
-                'remember_token' => Str::random(40)
+                'remember_token' => $remember_token
             ]);
     
             UserWallet::create([
@@ -403,6 +430,9 @@ class AuthController extends Controller
                     return response("Your account has been deactivated", 422);
                 }
                 if ($user->suspend != null) {
+                    return response("Your account has been suspended", 422);
+                }
+                if ($user->banned != null) {
                     return response("Your account has been suspended", 422);
                 }
                 if ($user->email_verified_at != null) {

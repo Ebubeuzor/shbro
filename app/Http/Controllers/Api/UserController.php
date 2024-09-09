@@ -1974,7 +1974,7 @@ class UserController extends Controller
 
         
         if ($user->banned != null) {
-            return response("Your account has been suspended", 403);
+            return response("Your account has been banned", 403);
         }
 
         $identifier = $user->email . " " . request()->ip();

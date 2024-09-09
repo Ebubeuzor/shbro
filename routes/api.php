@@ -274,6 +274,10 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/mobile/sendOtpForReactivingAccountChange', [UserController::class, 'sendOtpForReactivingAccountChange']);
     Route::post('/mobile/verifyOtpForReactivingAccount', [UserController::class, 'verifyOtpForReactivingAccount']);
     Route::post('/mobile/resendOtpForReactivingAccount', [UserController::class, 'resendOtpForReactivingAccount']);
+    
+    Route::post('/mobile/sendOtpForChangeOfPassword', [ForgotPassword::class, 'sendOtpForPasswordReset']);
+    Route::post('/mobile/verifyOtpForChangeOfPassword', [ForgotPassword::class, 'verifyOtpForPasswordReset']);
+    Route::post('/mobile/resendOtpForChangeOfPassword', [ForgotPassword::class, 'resendOtpForPasswordReset']);
 
     Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
 

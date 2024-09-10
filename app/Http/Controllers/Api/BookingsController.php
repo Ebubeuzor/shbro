@@ -137,6 +137,11 @@ class BookingsController extends Controller
             return;
         }
 
+        
+        if ($hostHome->reservation == "Approve or decline requests" && $hostHome->user_id == $userId) {
+            abort(400, "A host can't make a booking request on their apartment");
+        }
+
         $acceptRequest = AcceptGuestRequest::where('user_id', $userId)
                         ->where('host_home_id', $hostHome->id)
                         ->first();

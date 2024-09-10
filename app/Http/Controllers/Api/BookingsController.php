@@ -374,7 +374,7 @@ class BookingsController extends Controller
                     }
                     break;
                 case '5% Weekly discount':
-                    if ($durationOfStay >= 7 && !$discounts->contains('discount', '10% Monthly discount')) {
+                    if ($durationOfStay >= 7 && ($discounts->contains('discount', '10% Monthly discount') && $durationOfStay < 31)) {
                         $price *= 0.95;
                     }
                     break;

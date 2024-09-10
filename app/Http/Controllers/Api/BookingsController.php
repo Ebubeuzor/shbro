@@ -465,7 +465,7 @@ class BookingsController extends Controller
         $hosthome = HostHome::findOrFail($hostHomeId);
         
         if ($hosthome->reservation == "Approve or decline requests" && $hosthome->user_id == $user->id) {
-            abort(400, "A host can't make a booking request on their apartment");
+            return response()->json(['error' => "A host can't make a booking request on their apartment"],400);
         }
         // Check if the user has already made a request today
         $lastRequest = AcceptGuestRequest::where('user_id', $user->id)

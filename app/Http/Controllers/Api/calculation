@@ -1,0 +1,663 @@
+public function bookApartment(BookingApartmentRequest $request, $hostHomeId, $userId)
+    {
+        $data = $request->validated();
+        
+        $this->validateBookingEligibility($userId);
+        
+        $hostHome = HostHome::findOrFail($hostHomeId);
+        
+        $this->validateReservationRequest($hostHome, $userId);
+
+        [$checkIn, $checkOut] = $this->validateAndParseDates($data['check_in'], $data['check_out']);
+
+        $dateDifference = $checkOut->diff($checkIn)->days;
+
+        $this->checkForExistingBookings($hostHome->id, $checkIn, $checkOut);
+
+        $booking = $this->createInitialBooking($checkIn, $checkOut, $data, $userId, $hostHome);
+
+        $priceDetails = $this->calculatePrice($hostHome, $checkIn, $checkOut, $dateDifference);
+
+        $this->updateBookingWithPriceDetails($booking, $priceDetails, $hostHome);
+
+        $paymentData = $this->preparePaymentData($booking, $priceDetails['total'], $userId);
+
+        return response([
+            'payment_link' => Paystack::getAuthorizationUrl($paymentData)
+        ]);
+    }
+
+    private function validateBookingEligibility($userId)
+    {
+        $user = User::findOrFail($userId);
+        
+        if (Cohost::where('user_id', auth()->id())->exists()) {
+            abort(400, "Cohosts aren't allowed to book");
+        }
+
+        if ($user->verified !== "Verified" || $user->phone === null) {
+            abort(400, "Please verify your account by uploading a valid government ID and verifying your phone number.");
+        }
+    }
+
+    private function validateReservationRequest($hostHome, $userId)
+    {
+        if ($hostHome->reservation !== "Approve or decline requests") {
+            return;
+        }
+
+        $acceptRequest = AcceptGuestRequest::where('user_id', $userId)
+                        ->where('host_home_id', $hostHome->id)
+                        ->first();
+
+        if (!$acceptRequest) {
+            abort(400, "Please make a booking request before making a reservation.");
+        }
+
+        if ($acceptRequest->approved === null) {
+            abort(400, "Please wait for the host to approve.");
+        }
+
+        if ($acceptRequest->approved !== "approved") {
+            abort(400, "Your request wasn't approved. Please make another request.");
+        }
+
+        if ($acceptRequest->bookingstatus !== null) {
+            abort(400, "You have already booked. Please make another request.");
+        }
+    }
+
+    private function validateAndParseDates($checkInString, $checkOutString)
+    {
+        $checkIn = \DateTime::createFromFormat('d/m/Y', $checkInString);
+        $checkOut = \DateTime::createFromFormat('d/m/Y', $checkOutString);
+
+        $currentDate = new \DateTime();
+        if ($checkIn < $currentDate || $checkOut < $currentDate) {
+            abort(400, "Invalid date. Dates must be present or future dates.");
+        }
+
+        if ($checkOut <= $checkIn) {
+            abort(400, "Invalid date range. Check-out must be after check-in.");
+        }
+
+        return [$checkIn, $checkOut];
+    }
+
+    private function checkForExistingBookings($hostHomeId, $checkIn, $checkOut)
+    {
+        $isBooked = Booking::where('host_home_id', $hostHomeId)
+            ->where('paymentStatus', 'success')
+            ->where(function ($query) use ($checkIn, $checkOut) {
+                $query->where(function ($q) use ($checkIn, $checkOut) {
+                    $q->whereDate('check_in', '<=', $checkIn)
+                      ->whereDate('check_out', '>', $checkIn);
+                })->orWhere(function ($q) use ($checkIn, $checkOut) {
+                    $q->whereDate('check_in', '<', $checkOut)
+                      ->whereDate('check_out', '>=', $checkOut);
+                })->orWhere(function ($q) use ($checkIn, $checkOut) {
+                    $q->whereDate('check_in', '>=', $checkIn)
+                      ->whereDate('check_out', '<=', $checkOut);
+                });
+            })
+            ->exists();
+
+        if ($isBooked) {
+            $bookedDates = $this->getBookedDates($hostHomeId, $checkIn, $checkOut);
+            abort(400, [
+                'message' => 'This Home is already booked for the selected dates',
+                'booked_dates' => $bookedDates
+            ]);
+        }
+    }
+
+    private function getBookedDates($hostHomeId, $checkIn, $checkOut)
+    {
+        return Booking::where('host_home_id', $hostHomeId)
+            ->where('paymentStatus', 'success')
+            ->where(function ($query) use ($checkIn, $checkOut) {
+                $query->where(function ($q) use ($checkIn, $checkOut) {
+                    $q->whereDate('check_in', '<=', $checkIn)
+                      ->whereDate('check_out', '>', $checkIn);
+                })->orWhere(function ($q) use ($checkIn, $checkOut) {
+                    $q->whereDate('check_in', '<', $checkOut)
+                      ->whereDate('check_out', '>=', $checkOut);
+                });
+            })
+            ->get(['check_in', 'check_out'])
+            ->map(function ($booking) {
+                return [
+                    date('jS F Y', strtotime($booking->check_in)) . ' - ' . date('jS F Y', strtotime($booking->check_out))
+                ];
+            })
+            ->flatten()
+            ->toArray();
+    }
+
+    private function createInitialBooking($checkIn, $checkOut, $data, $userId, $hostHome)
+    {
+        return Booking::create([
+            'check_in' => $checkIn->format('Y-m-d'),
+            'check_out' => $checkOut->format('Y-m-d'),
+            'adults' => $data['adults'],
+            'children' => $data['children'],
+            'pets' => $data['pets'],
+            'infants' => $data['infants'],
+            'duration_of_stay' => $checkOut->diff($checkIn)->days,
+            'user_id' => $userId,
+            'host_home_id' => $hostHome->id,
+            'hostId' => $hostHome->user_id,
+        ]);
+    }
+
+    private function updateBookingWithPriceDetails($booking, $priceDetails, $hostHome)
+    {
+        $booking->update([
+            'guest_service_charge' => $priceDetails['guestServiceCharge'],
+            'host_service_charge' => $priceDetails['hostServiceCharge'],
+            'vat_charge' => $priceDetails['tax'],
+            'priceForANight' => $hostHome->actualPrice,
+            'hostBalance' => $priceDetails['hostBalance'],
+            'profit' => $priceDetails['taxAndFees'],
+        ]);
+    }
+
+    private function preparePaymentData($booking, $total, $userId)
+    {
+        $user = User::find($userId);
+        $recentToken = $user->tokens->last();
+
+        return [
+            'amount' => $total,
+            'email' => $user->email,
+            'reference' => Paystack::genTranxRef(),
+            'currency' => 'NGN',
+            'callback_url' => route('callback', [
+                'userId' => $user->id,
+                'bookingId' => $booking->id,
+                'usertoken' => $recentToken->token,
+                'userrem' => $user->remember_token,
+                'hostHomeId' => $booking->host_home_id,
+                'mobile_request' => request('mobile_request', 'empty'),
+            ]),
+            'channels' => ['card'],
+        ];
+    }
+
+    private function calculatePrice($hostHome, $checkIn, $checkOut, $dateDifference)
+    {
+        $standardDiscounts = Hosthomediscount::where('host_home_id', $hostHome->id)->get();
+        $customDiscounts = HostHomeCustomDiscount::where('host_home_id', $hostHome->id)->get();
+        $reservedPrices = $this->getReservedPrices($hostHome->id, $checkIn, $checkOut);
+
+        $basePrice = $this->calculateBasePrice($hostHome, $checkIn, $checkOut, $reservedPrices, $standardDiscounts, $customDiscounts);
+        $weekendPrice = $this->calculateWeekendPrice($hostHome, $checkIn, $checkOut, $reservedPrices, $standardDiscounts, $customDiscounts);
+
+        $totalPrice = $basePrice + $weekendPrice;
+        $guestServiceCharge = $totalPrice * $this->guestServicesCharge;
+        $tax = $totalPrice * $this->tax;
+        $taxAndFees = $guestServiceCharge + $tax;
+
+        $total = ($totalPrice + intval($hostHome->security_deposit) + $taxAndFees) * 100;
+        $hostServiceCharge = $totalPrice * $this->hostServicesCharge;
+        $hostBalance = $totalPrice - $hostServiceCharge;
+
+        return [
+            'total' => $total,
+            'guestServiceCharge' => $guestServiceCharge,
+            'hostServiceCharge' => $hostServiceCharge,
+            'tax' => $tax,
+            'taxAndFees' => $taxAndFees,
+            'hostBalance' => $hostBalance,
+        ];
+    }
+
+    private function getReservedPrices($hostHomeId, $checkIn, $checkOut)
+    {
+        return ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
+            ->whereBetween('date', [$checkIn->format('Y-m-d'), $checkOut->format('Y-m-d')])
+            ->get();
+    }
+
+    private function calculateBasePrice($hostHome, $checkIn, $checkOut, $reservedPrices, $standardDiscounts, $customDiscounts)
+    {
+        $basePrice = 0;
+        $currentDate = clone $checkIn;
+
+        while ($currentDate < $checkOut) {
+            $reservedPrice = $reservedPrices->firstWhere('date', $currentDate->format('Y-m-d'));
+            
+            if ($reservedPrice) {
+                $price = $this->calculateDiscountedPrice($reservedPrice->price, $standardDiscounts, $customDiscounts, $hostHome->bookingCount, $checkOut->diff($checkIn)->days);
+            } elseif (!$this->isWeekend($currentDate) || is_null($hostHome->weekendPrice)) {
+                $price = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $hostHome->bookingCount, $checkOut->diff($checkIn)->days);
+            } else {
+                $price = 0; // Weekend price will be calculated separately
+            }
+
+            $basePrice += $price;
+            $currentDate->modify('+1 day');
+        }
+
+        return $basePrice;
+    }
+
+    private function calculateWeekendPrice($hostHome, $checkIn, $checkOut, $reservedPrices, $standardDiscounts, $customDiscounts)
+    {
+        $weekendPrice = 0;
+        $currentDate = clone $checkIn;
+
+        while ($currentDate < $checkOut) {
+            if ($this->isWeekend($currentDate) && !is_null($hostHome->weekendPrice) && !$reservedPrices->contains('date', $currentDate->format('Y-m-d'))) {
+                $price = $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $hostHome->bookingCount, $checkOut->diff($checkIn)->days);
+                $weekendPrice += $price;
+            }
+            $currentDate->modify('+1 day');
+        }
+
+        return $weekendPrice;
+    }
+
+    private function isWeekend($date)
+    {
+        return $date->format('N') >= 6;
+    }
+
+    private function calculateDiscountedPrice($price, $standardDiscounts, $customDiscounts, $bookingCount, $durationOfStay)
+    {
+        if ($standardDiscounts->isNotEmpty()) {
+            return $this->applyStandardDiscounts($price, $standardDiscounts, $bookingCount, $durationOfStay);
+        } else {
+            return $this->applyCustomDiscounts($price, $customDiscounts, $durationOfStay);
+        }
+    }
+
+    private function applyStandardDiscounts($price, $discounts, $bookingCount, $durationOfStay)
+    {
+        foreach ($discounts as $discount) {
+            switch ($discount->discount) {
+                case '20% New listing promotion':
+                    if ($bookingCount < 3) {
+                        $price *= 0.8;
+                    }
+                    break;
+                case '5% Weekly discount':
+                    if ($durationOfStay >= 7 && !$discounts->contains('discount', '10% Monthly discount')) {
+                        $price *= 0.95;
+                    }
+                    break;
+                case '10% Monthly discount':
+                    if ($durationOfStay >= 30) {
+                        $price *= 0.9;
+                    }
+                    break;
+            }
+        }
+        return $price;
+    }
+
+    private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay)
+    {
+        $maxDiscount = 0;
+        foreach ($customDiscounts as $customDiscount) {
+            $discountDays = $this->getDiscountDays($customDiscount->duration);
+            if ($durationOfStay >= $discountDays && $customDiscount->discount_percentage > $maxDiscount) {
+                $maxDiscount = $customDiscount->discount_percentage;
+            }
+        }
+        return $price * (1 - $maxDiscount / 100);
+    }
+
+    private function getDiscountDays($duration)
+    {
+        switch ($duration) {
+            case '1 week': return 7;
+            case '2 weeks': return 14;
+            case '3 weeks': return 21;
+            case '1 month': return 30;
+            case '2 months': return 60;
+            case '3 months': return 90;
+            default: return PHP_INT_MAX;
+        }
+    }
+
+    // public function bookApartment(BookingApartmentRequest $request, $hostHomeId, $userId)
+    // {
+    //     $data = $request->validated();
+        
+    //     $cohost = Cohost::where('user_id', auth()->id())->first();
+
+    //     if ($cohost) {
+    //         abort(400, "Cohost arent allowed to book");
+    //     }
+
+    //     $user = User::find($userId);
+        
+    //     if ($user->verified != "Verified" || $user->phone == null) {
+    //         abort(400, "Please verify your account by uploading a valid government ID and verifying your phone number.");
+    //     }        
+
+    //     $hostHome = HostHome::find($hostHomeId);
+        
+    //     $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
+    //                 ->where('host_home_id',$hostHomeId)
+    //                 ->first();
+
+    //     if ($hostHome->reservation == "Approve or decline requests" && !$acceptRequest) {
+    //         abort(400, "Please make a booking request before making a reservation.");
+    //     }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->approved == null) {
+    //         abort(400, "Please wait for the host to approve.");
+    //     }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->approved != "approved") {
+    //         abort(400, "Your request wasn't approved please make another request");
+    //     }elseif ($hostHome->reservation == "Approve or decline requests" && $acceptRequest->bookingstatus != null) {
+    //         abort(400, "You have already booked please make another request");
+    //     }
+
+    //     // Convert check_in and check_out to DateTime objects
+    //     $checkIn = \DateTime::createFromFormat('d/m/Y', $data['check_in']);
+    //     $checkOut = \DateTime::createFromFormat('d/m/Y', $data['check_out']);
+
+    //     // Ensure that check_in and check_out are present or future dates
+    //     $currentDate = new \DateTime();
+    //     if ($checkIn < $currentDate || $checkOut < $currentDate) {
+    //         return response("Invalid date. Dates must be present or future dates.", 400);
+    //     }
+
+    //     $dateDifference = $checkOut->diff($checkIn)->days;
+
+    //     // Retrieve the booking with the specified hostHomeId
+    //     $bookings = Booking::where('host_home_id', $hostHomeId)
+    //         ->where('paymentStatus', 'success')
+    //         ->get();
+
+    //     foreach ($bookings as $booking) {
+    //         // Check if the selected dates are valid
+    //         if (!$checkIn || !$checkOut) {
+    //             return response("Invalid date format", 400);
+    //         }
+
+    //         // Check if the check-out date is after the check-in date
+    //         if ($checkOut <= $checkIn) {
+    //             return response("Invalid date range", 400);
+    //         }
+
+    //         // Check if the HostHome is already booked for the selected dates
+    //         $isBooked = Booking::where('host_home_id', $hostHomeId)
+    //             ->where('id', '!=', $booking->id)
+    //             ->where('paymentStatus', 'success')
+    //             ->where(function ($query) use ($checkIn, $checkOut) {
+    //                 $query->where(function ($query) use ($checkIn, $checkOut) {
+    //                     $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
+    //                         ->whereRaw('? < DATE(check_out)', [$checkIn->format('Y-m-d')]);
+    //                 })->orWhere(function ($query) use ($checkIn, $checkOut) {
+    //                     $query->whereRaw('? > DATE(check_in)', [$checkOut->format('Y-m-d')])
+    //                         ->whereRaw('? <= DATE(check_out)', [$checkOut->format('Y-m-d')]);
+    //                 })->orWhere(function ($query) use ($checkIn, $checkOut) {
+    //                     $query->whereRaw('? = DATE(check_in)', [$checkIn->format('Y-m-d')])
+    //                         ->whereRaw('? = DATE(check_out)', [$checkOut->format('Y-m-d')]);
+    //                 });
+    //             })
+    //             ->exists();
+
+    //         if ($isBooked) {
+    //             $bookedDates = Booking::where('host_home_id', $hostHomeId)
+    //                 ->where('id', '!=', $booking->id)
+    //                 ->where(function ($query) use ($checkIn, $checkOut) {
+    //                     $query->where(function ($query) use ($checkIn, $checkOut) {
+    //                         $query->whereRaw('? >= DATE(check_in)', [$checkIn->format('Y-m-d')])
+    //                             ->whereRaw('? < DATE(check_out)', [$checkIn->format('Y-m-d')]);
+    //                     })->orWhere(function ($query) use ($checkIn, $checkOut) {
+    //                         $query->whereRaw('? > DATE(check_in)', [$checkOut->format('Y-m-d')])
+    //                             ->whereRaw('? <= DATE(check_out)', [$checkOut->format('Y-m-d')]);
+    //                     });
+    //                 })
+    //                 ->pluck('check_in', 'check_out');
+
+    //             foreach ($bookedDates as $checkOutDate => $checkInDate) {
+    //                 $formattedCheckIn = date('jS F Y', strtotime($checkInDate));
+    //                 $formattedCheckOut = date('jS F Y', strtotime($checkOutDate));
+
+    //                 $formattedDates[] = "{$formattedCheckIn} - {$formattedCheckOut}";
+    //             }
+
+    //             return response([
+    //                 'message' => 'This Home is already booked for the selected dates',
+    //                 'booked_dates' => $formattedDates,
+    //                 'dateDifference' => $dateDifference
+    //             ], 400);
+    //         }
+    //     }
+
+
+    //     $booking = new Booking();
+    //     if (!is_null($checkIn) && !is_null($checkOut)) {
+    //         $booking->check_in = $checkIn->format('Y-m-d');
+    //         $booking->check_out = $checkOut->format('Y-m-d');
+    //     }
+        
+    //     // Fetch standard discounts for the host home
+    //     $standardDiscounts = Hosthomediscount::where('host_home_id', $hostHomeId)->get();
+
+    //     // Fetch custom discounts for the host home
+    //     $customDiscounts = HostHomeCustomDiscount::where('host_home_id', $hostHomeId)->get();
+
+    //     $reservedPrices = ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
+    //     ->where('date', '>=', $checkIn->format('Y-m-d'))
+    //     ->where('date', '<', $checkOut->format('Y-m-d'))
+    //     ->get();
+
+    //     $bookingPrice = 0;
+    //     $reservedDaysDiscountedPrice = 0;
+    //     $reservedDays = 0;
+
+    //     if ($reservedPrices->isNotEmpty()) {
+    //         $reservedDays +=  count($reservedPrices);
+    //         $uniquePricesWithOccurrences = $reservedPrices->mapToGroups(function ($item, $key) {
+    //             return [$item->price => 1];
+    //         })->map(function ($item, $key) {
+    //             return [
+    //                 'price' => $key,
+    //                 'occurrences' => $item->sum(),
+    //             ];
+    //         })->values();
+
+    //         $uniquePricesWithOccurrences->each(function($item) use($standardDiscounts, $customDiscounts,$dateDifference, $hostHome, &$reservedDaysDiscountedPrice) {
+    //             $price = $this->calculateDiscountedPrice($item['price'], $standardDiscounts, $customDiscounts,$dateDifference, $hostHome->bookingCount);
+    //             $reservedDaysDiscountedPrice += $price * $item['occurrences'];
+    //         });
+            
+    //     }
+
+    //     $weekendPrice = 0;
+    //     $currentDate = \DateTime::createFromFormat('Y-m-d', $checkIn->format('Y-m-d'));
+    //     $currentDate->modify('+1 day'); // Subtract one day from the check-out date
+    //     $checkOutMinusOneDay = \DateTime::createFromFormat('Y-m-d', $checkOut->format('Y-m-d'));
+        
+    //     $totalWeekends = 0;
+        
+    //     while ($currentDate <= $checkOutMinusOneDay) {
+    //         $currentDateFormatted = $currentDate->format('Y-m-d');
+    //         if ($this->isWeekend($currentDateFormatted) && !is_null($hostHome->weekendPrice) && !$this->isDateReserved($currentDateFormatted, $reservedPrices)) {
+    //             $totalWeekends++;
+    //             if (intval($hostHome->weekendPrice) != 0) {
+    //                 $weekendPrice += $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $dateDifference, $hostHome->bookingCount);
+    //             } else {
+    //                 $weekendPrice = 0;
+    //             }
+    //         }
+    //         $currentDate->modify('+1 day'); // Move to the next day
+    //     }
+        
+        
+    //     $discountedPrice = $this->calculateDiscountedPrice($hostHome->actualPrice, $standardDiscounts, $customDiscounts, $dateDifference,$hostHome->bookingCount);
+        
+    //     $bookingPrice = $discountedPrice;
+        
+    //     $total = 0;
+        
+    //     $priceFactor = $dateDifference - $reservedDays - $totalWeekends;
+
+    //     if ($weekendPrice == 0) {
+    //         $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor > 0 ? $priceFactor : 0));
+    //         $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
+    //         $tax = ($reservedDaysDiscountedPrice * $this->tax);
+    //         $taxAndFees = $fees + $tax;
+    //         $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+    //     }else {
+
+    //         $reservedDaysDiscountedPrice += ($bookingPrice * ($priceFactor >= 0 ? $priceFactor : 0));
+    //         $reservedDaysDiscountedPrice += $priceFactor >= 0 ? $weekendPrice : 0;
+    //         $fees = ($reservedDaysDiscountedPrice * $this->guestServicesCharge);
+    //         $tax = ($reservedDaysDiscountedPrice * $this->tax);
+    //         $taxAndFees = $fees + $tax;
+    //         $total += ( $reservedDaysDiscountedPrice + intval($hostHome->security_deposit) + intval($taxAndFees)) * 100;
+    //     }
+        
+    //     $totalForHost = ($total/100) - (intval($hostHome->security_deposit) + intval($taxAndFees));
+    //     $hostfee = $totalForHost * $this->hostServicesCharge;
+    //     $hostBalance = $totalForHost - $hostfee;
+
+    //     $booking->adults = $data['adults'];
+    //     $booking->children = $data['children'];
+    //     $booking->pets = $data['pets'];
+    //     $booking->infants = $data['infants'];
+    //     $booking->duration_of_stay = $dateDifference;
+    //     $booking->check_in = $checkIn->format('Y-m-d');
+    //     $booking->check_out = $checkOut->format('Y-m-d');
+    //     $booking->user_id = $user->id;
+    //     $booking->guest_service_charge = $fees;
+    //     $booking->host_service_charge = $hostfee;
+    //     $booking->vat_charge = $tax;
+    //     $booking->priceForANight = $hostHome->actualPrice;
+    //     $booking->hostBalance = $hostBalance;
+    //     $booking->host_home_id = $hostHome->id;
+    //     $booking->profit = $taxAndFees;
+    //     $booking->hostId = $hostHome->user_id;
+    //     $booking->save();
+        
+    //     // Generate a payment reference
+    //     $reference = Paystack::genTranxRef();
+
+    //     $recentToken = $user->tokens->last();
+        
+        
+    //     $data2 = [
+    //         'amount' => $total, // Paystack expects amount in kobo
+    //         'email' => $user->email,
+    //         'reference' => $reference,
+    //         'currency' => 'NGN',
+    //         'callback_url' => route('callback', [
+    //             'userId' => $user->id,
+    //             'bookingId' => $booking->id,
+    //             'usertoken' => $recentToken->token,
+    //             'userrem' => $user->remember_token,
+    //             'hostHomeId' => $hostHome->id,
+    //             'mobile_request' => empty($data['mobile_request']) ? "empty" : $data['mobile_request'],
+    //         ]),
+    //         'channels' => ['card'],
+    //     ];
+
+    //     return response([
+    //         'payment_link' => Paystack::getAuthorizationUrl($data2)
+    //     ]);
+    // }
+
+    // private function isDateReserved($date, $reservedPrices)
+    // {
+    //     return $reservedPrices->contains('date', $date);
+    // }
+    
+
+    // private function isWeekend($date)
+    // {
+    //     if (!$date instanceof \DateTime) {
+    //         $date = \DateTime::createFromFormat('Y-m-d', $date);
+    //     }
+
+    //     return $date->format('N') >= 6; 
+    // }
+
+    // private function calculateDiscountedPrice($actualPrice, $standardDiscounts, $customDiscounts, $durationOfStay = 0, $bookingCount)
+    // {
+    //     $discountedPrice = $actualPrice;
+
+    //     if (count($standardDiscounts) != 0) {
+    //         $discountedPrice = $this->applyDiscount($discountedPrice, $standardDiscounts, $durationOfStay,$bookingCount);
+    //     }else{
+
+    //         $discountedPrice = $this->applyCustomDiscounts($discountedPrice, $customDiscounts, $durationOfStay);
+            
+    //     }
+
+    //     return $discountedPrice;
+    // }
+
+    // private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay = 0)
+    // {
+    //     $returnPrice = 0;
+    //     foreach ($customDiscounts as $customDiscount) {
+    //         switch ($customDiscount->duration) {
+    //             case '1 week':
+    //                 $returnPrice = $durationOfStay >= 7 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             case '2 weeks':
+    //                 $returnPrice = $durationOfStay >= 14 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             case '3 weeks':
+    //                 $returnPrice = $durationOfStay >= 21 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             case '1 month':
+    //                 $returnPrice = $durationOfStay >= 30 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             case '2 months':
+    //                 $returnPrice = $durationOfStay >= 60 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             case '3 months':
+    //                 $returnPrice = $durationOfStay >= 90 ? $price - ($price * ($customDiscount->discount_percentage / 100)) : ($returnPrice == 0 ? $price : $returnPrice);
+    //                 break;
+    //             default:
+    //                 $returnPrice = $price;
+    //                 break;
+    //         }
+    //     }
+    //     return $returnPrice;
+    // }
+
+
+    // private function applyDiscount($price, $discounts, $durationOfStay = 0, $bookingCount)
+    // {
+        
+    //     $returnPrice = $price;
+        
+    //     foreach ($discounts as $discount) {
+    //         switch ($discount->discount) {
+    //             case '20% New listing promotion':
+    //                 $returnPrice = $bookingCount < 3 ? $returnPrice - ($returnPrice * 0.2) : $returnPrice;
+    //                 break;
+    //             case '5% Weekly discount':
+    //                 $newListingPromotion = collect($discounts)->contains('discount', '10% Monthly discount');
+
+    //                 if ($durationOfStay >= 30 && $newListingPromotion){
+    //                     break;
+    //                 }else {
+    //                     $returnPrice = $durationOfStay >= 7 ? $returnPrice - ($returnPrice * 0.05) : $returnPrice;
+    //                 }
+    //                 break;
+    //                 case '10% Monthly discount':
+    //                     $newListingPromotion = collect($discounts)->contains('discount', '5% Weekly discount');
+        
+    //                 if ($durationOfStay < 30 && $newListingPromotion){
+    //                     break;
+    //                 }
+    //                 else{
+    //                     $returnPrice = $durationOfStay >= 30 ? $returnPrice - ($returnPrice * 0.1) : $returnPrice;
+    //                 }
+    //                 break;
+    //             default:
+    //                 break;
+    //         }
+    //     }
+
+    //     return $returnPrice;
+
+    // }

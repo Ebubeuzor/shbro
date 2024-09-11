@@ -962,16 +962,6 @@ class HostHomeController extends Controller
             abort(404, "Hosthome not found");
         }
 
-        // Check if the new price is the same as the host home's actualPrice
-        if ($newPrice == $hostHome->actualPrice) {
-            // Delete reserved prices for the specified date range
-            ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->delete();
-
-            return response("Reserved prices deleted for the specified date range because the price is reverted to actualPrice", 200);
-        }
-
         // Update prices for the specified date range
         ReservedPricesForCertainDay::where('host_home_id', $hostHomeId)
             ->whereBetween('date', [$startDate, $endDate])

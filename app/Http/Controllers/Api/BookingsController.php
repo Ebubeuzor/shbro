@@ -337,15 +337,18 @@ class BookingsController extends Controller
     {
         $weekendPrice = 0;
         $currentDate = clone $checkIn;
+        $count = 0;
 
         while ($currentDate < $checkOut) {
             if ($this->isWeekend($currentDate) && !is_null($hostHome->weekendPrice) && !$reservedPrices->contains('date', $currentDate->format('Y-m-d'))) {
                 $price = $this->calculateDiscountedPrice($hostHome->weekendPrice, $standardDiscounts, $customDiscounts, $hostHome->bookingCount, $checkOut->diff($checkIn)->days);
                 $weekendPrice += $price;
+                $count++;
             }
             $currentDate->modify('+1 day');
         }
 
+        info(['count' => $count]);
         return $weekendPrice;
     }
 

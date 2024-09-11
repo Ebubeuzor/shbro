@@ -354,7 +354,7 @@ class BookingsController extends Controller
 
     private function isWeekend($date)
     {
-        return $date->format('N') >= 6;
+        return $date->format('N') == 1 || $date->format('N') == 6;
     }
 
     private function calculateDiscountedPrice($price, $standardDiscounts, $customDiscounts, $bookingCount, $durationOfStay)

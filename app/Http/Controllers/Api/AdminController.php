@@ -407,6 +407,24 @@ class AdminController extends Controller
         );
 
     }
+    /**
+     * @lrd:start
+     * this gets all the new bookings the admin
+     * @lrd:end
+     */
+    public function newBookings() {
+
+        // Get the current date and time
+        $today = Carbon::today();
+        $activeReservations = Booking::where('created_at',$today)// Check if check_out is after the current date
+        ->where('paymentStatus', 'success')
+        ->get();
+
+        return AllBookingsResource::collection(
+            $activeReservations
+        );
+
+    }
     
     
     /**

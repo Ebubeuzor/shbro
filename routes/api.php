@@ -165,6 +165,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
         Route::get('getAllAdminUsers', [AdminController::class, 'getAllAdminUsers']);
         Route::get('getServiceCharges', [AdminController::class, 'getServiceCharges']);
         Route::get('bookings', [AdminController::class, 'bookings']);
+        Route::get('newBookings', [AdminController::class, 'newBookings']);
         Route::get('hosts', [AdminController::class, 'hosts']);
         Route::get('receivablePayable', [AdminController::class, 'receivablePayable']);
         Route::get('cancelledTrips', [AdminController::class, 'cancelledTrips']);

@@ -416,8 +416,8 @@ class AdminController extends Controller
 
         // Get the current date and time
         $today = Carbon::today();
-        $activeReservations = Booking::where('created_at',$today)// Check if check_out is after the current date
-        ->where('paymentStatus', 'success')
+        $activeReservations = Booking::where('paymentStatus', 'success')
+        ->where('created_at',$today)
         ->get();
 
         return AllBookingsResource::collection(

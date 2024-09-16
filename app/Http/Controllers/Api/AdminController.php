@@ -635,7 +635,7 @@ class AdminController extends Controller
         // Count the total number of unapproved homes created today
         $unApprovedHomesCount = HostHome::whereDate('created_at', $today)
             ->orWhere('updated_at',$today)
-            ->where('verified', '!=', 1)
+            ->where('verified', false)
             ->count();
 
         // Count the total number of users created today

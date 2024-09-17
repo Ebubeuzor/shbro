@@ -442,13 +442,15 @@ class BookingsController extends Controller
 
     /**
      * @lrd:start
+     * check_in: The check-in date in the format dd/mm/YYYY.
+     * check_out: The check-out date in the format dd/mm/YYYY.
      * This is the method for a guest to make a request to a host about booking your apartment
      * The channel for broadcasting the message is "messenger.{receiver}", where "receiver" is the ID of the authenticated user
      * After broadcasting the message, the system listens for the "MessageSent" event.
      * @lrd:end
      * 
      */
-    public function makeRequestToBook(?int $receiverId = null,$hostHomeId)
+    public function makeRequestToBook(?int $receiverId = null,$hostHomeId, $check_in, $check_out)
     {
         
         $cohost = Cohost::where('user_id', auth()->id())->first();
@@ -458,6 +460,14 @@ class BookingsController extends Controller
         }
 
         
+        $checkIn = Carbon::createFromFormat('d/m/Y', $check_in);
+        $checkOut = Carbon::createFromFormat('d/m/Y', $check_out);
+
+        $checkInDateForDatabase = $checkIn->format('Y-m-d');
+        $checkOutDateForDatabase = $checkOut->format('Y-m-d');
+
+        $checkInDateForDisplay = $checkIn->format('F j, Y');
+        $checkOutDateForDisplay = $checkOut->format('F j, Y');
 
         $user = User::findOrFail(auth()->id());
         
@@ -470,6 +480,7 @@ class BookingsController extends Controller
         if ($hosthome->reservation == "Approve or decline requests" && $hosthome->user_id == $user->id) {
             return response()->json(['error' => "A host can't make a booking request on their apartment"],400);
         }
+
         // Check if the user has already made a request today
         $lastRequest = AcceptGuestRequest::where('user_id', $user->id)
         ->where('host_home_id', $hosthome->id)
@@ -479,7 +490,7 @@ class BookingsController extends Controller
         if ($lastRequest) {
             return response()->json(['error' => 'You have already made a request today'], 400);
         }
-        $messageToHost = $user->name . " has requested to book your apartment please approve or decline";
+        $messageToHost = $user->name . " has requested to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay please approve or decline";
         $chat = new ChatRepository();
         $message = $chat->sendMessages([
             'message' => $messageToHost,
@@ -497,6 +508,8 @@ class BookingsController extends Controller
         $acceptRequest->user_id = $user->id;
         $acceptRequest->host_id = $receiverId;
         $acceptRequest->host_home_id = $hostHomeId;
+        $acceptRequest->checkOut = $checkOutDateForDatabase;
+        $acceptRequest->checkIn = $checkInDateForDatabase;
         $acceptRequest->save();
 
 
@@ -513,7 +526,7 @@ class BookingsController extends Controller
         $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId, $hostHomeId);
         $userToReceive = User::whereId($receiverId)->first();
         Mail::to($user->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
-        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment"));
+        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay"));
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId, $hostHomeId)
@@ -842,8 +855,11 @@ class BookingsController extends Controller
 
         Mail::to($host->email)->queue(new BookingCancellation($host, $guest, $hostHome, $formatedDate, $checkInDate, $checkOutDate, $title));
 
+        
         // Save the Canceltrip record
         $cancelTrip->save();
+        
+        Cache::flush();
 
         // Return a response
         return response()->json(['message' => 'Trip successfully cancelled'], 200);

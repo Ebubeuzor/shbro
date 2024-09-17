@@ -56,11 +56,15 @@ class HostHomeResource extends JsonResource
         // });
 
         $bookingRequestStatus = null;
+        $checkInRequest = null;
+        $checkOutRequest = null;
 
         foreach($this->acceptedRequest as $bookrequest){
 
             if ($bookrequest->user_id == auth()->id() && $bookrequest->approved == "approved" && $bookrequest->host_home_id == $this->id && $bookrequest->bookingstatus == null) {
-                $bookingRequestStatus = "approved";    
+                $bookingRequestStatus = "approved";   
+                $checkInRequest = $bookrequest->checkIn;    
+                $checkOutRequest = $bookrequest->checkOut;     
             }
 
         }
@@ -112,6 +116,8 @@ class HostHomeResource extends JsonResource
             'listing_status' => $this->listing_status,
             'vat' => $tax,
             'bookingRequestStatus' => $bookingRequestStatus,
+            'checkInRequest' => $checkInRequest,
+            'checkOutRequest' => $checkOutRequest,
             'ratings' => $ratings,
             'guest_fee' => $guestServicesCharge,
             'adminStatus' => "Pending Approval",

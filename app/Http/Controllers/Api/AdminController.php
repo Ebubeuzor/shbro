@@ -153,7 +153,7 @@ class AdminController extends Controller
         return CancelTripsResource::collection(
             Canceltrip::latest()->get()
         );
-
+ 
     }
     
 

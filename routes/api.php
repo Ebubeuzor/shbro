@@ -56,7 +56,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('sendNotificationToUser', [NotifyController::class, 'sendNotificationToUser']);
     
     Route::delete('notification/{notification}', [NotifyController::class, 'destroy']);
-    Route::post('makeRequestToBook/{receiverId}/{hostHomeId}', [BookingsController::class, 'makeRequestToBook']);
+    Route::post('makeRequestToBook/{receiverId}/{hostHomeId}/{check_in}/{check_out}', [BookingsController::class, 'makeRequestToBook']);
     
     Route::get('logout', [AuthController::class, 'logout']);
 

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string("approved")->nullable();
             $table->string("bookingstatus")->nullable();
+            $table->string("checkOut");
+            $table->string("checkIn");
             $table->foreignId('message_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('host_id')->constrained('users', 'id')->onDelete('cascade');

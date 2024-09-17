@@ -442,8 +442,8 @@ class BookingsController extends Controller
 
     /**
      * @lrd:start
-     * check_in: The check-in date in the format dd/mm/YYYY.
-     * check_out: The check-out date in the format dd/mm/YYYY.
+     * check_in: The check-in date in the format YYYY-mm-dd.
+     * check_out: The check-out date in the format YYYY-mm-dd.
      * This is the method for a guest to make a request to a host about booking your apartment
      * The channel for broadcasting the message is "messenger.{receiver}", where "receiver" is the ID of the authenticated user
      * After broadcasting the message, the system listens for the "MessageSent" event.
@@ -460,8 +460,8 @@ class BookingsController extends Controller
         }
 
         
-        $checkIn = Carbon::createFromFormat('d/m/Y', $check_in);
-        $checkOut = Carbon::createFromFormat('d/m/Y', $check_out);
+        $checkIn = Carbon::createFromFormat('Y-m-d', $check_in);
+        $checkOut = Carbon::createFromFormat('Y-m-d', $check_out);
 
         $checkInDateForDatabase = $checkIn->format('Y-m-d');
         $checkOutDateForDatabase = $checkOut->format('Y-m-d');

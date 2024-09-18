@@ -69,6 +69,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -626,7 +627,6 @@ class UserController extends Controller
                 
             }
             
-            Cache::flush();
 
         }
         elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){
@@ -642,14 +642,12 @@ class UserController extends Controller
                 $formatedDate = now()->format('M j, Y h:ia');
                 NotifyAdminsAboutGovernmentId::dispatch($admins, 'Urgent: User Submitted Government ID for Verification', $formatedDate);
             });
-            Cache::flush();
         }else{
             return response("Please fill out all fields",422);
         }
         
         $user->save();
-        $cacheKey = "user_info_{$user->id}";
-        Cache::forget($cacheKey);
+        Cache::flush();
         return response("Updated successfully");
 
     }
@@ -1607,7 +1605,18 @@ class UserController extends Controller
             $user = User::findOrFail($userid);
                 
             // Retrieve the user's bank account information
-            $userBankInfo = Userbankinfo::where('user_id', $user->id)->distinct()->get();
+            $userBankInfo = Userbankinfo::where('user_id', $user->id)
+            ->distinct()
+            ->get()
+            ->map(function ($bankInfo) {
+                // Get the bank logo from Paystack
+                $bankLogo = $this->getBankLogoFromPaystack($bankInfo->bank_name);
+                
+                // Add the logo URL to the bank info
+                $bankInfo->bank_logo = $bankLogo;
+                
+                return $bankInfo;
+            });
 
             return response([
                 "data" => $userBankInfo
@@ -1686,7 +1695,30 @@ class UserController extends Controller
             return response("User or bank account information not found", 404);
         }
     }
+    
+    private function getBankLogoFromPaystack($bankName)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer sk_test_9e95c1866aa5437777d2fd286c23bc9df8a3fcea',
+        ])->get('https://api.paystack.co/bank');
 
+        if ($response->successful()) {
+            $banks = $response->json()['data'];
+            $bank = collect($banks)->firstWhere('name', $bankName);
+            
+            if ($bank) {
+                // Construct the logo URL using the bank's slug
+                $logoUrl = "https://nigerianbanks.xyz/logo/{$bank['slug']}.png";
+                
+                return [
+                    'logo' => $logoUrl,
+                ];
+            }
+        }
+
+        return null;
+    }
+    
     /**
      * @lrd:start
      * This is to delete a user card as you can see it accept 

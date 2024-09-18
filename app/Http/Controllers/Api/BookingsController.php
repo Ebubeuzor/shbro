@@ -390,19 +390,37 @@ class BookingsController extends Controller
         }
         return $price;
     }
-
+    
     private function applyCustomDiscounts($price, $customDiscounts, $durationOfStay)
     {
-        $maxDiscount = 0;
+        $applicableDiscounts = [];
         foreach ($customDiscounts as $customDiscount) {
             $discountDays = $this->getDiscountDays($customDiscount->duration);
-            if ($durationOfStay >= $discountDays && $customDiscount->discount_percentage > $maxDiscount) {
-                $maxDiscount = $customDiscount->discount_percentage;
+            if ($durationOfStay >= $discountDays) {
+                $applicableDiscounts[] = [
+                    'days' => $discountDays,
+                    'percentage' => $customDiscount->discount_percentage
+                ];
             }
         }
-        return $price * (1 - $maxDiscount / 100);
+    
+        // Sort applicable discounts by days (descending) and then by percentage (descending)
+        usort($applicableDiscounts, function($a, $b) {
+            if ($a['days'] == $b['days']) {
+                return $b['percentage'] - $a['percentage'];
+            }
+            return $b['days'] - $a['days'];
+        });
+    
+        // Apply the first (highest) discount if any are applicable
+        if (!empty($applicableDiscounts)) {
+            $highestDiscount = $applicableDiscounts[0]['percentage'];
+            return $price * (1 - $highestDiscount / 100);
+        }
+    
+        return $price; // No discount applied
     }
-
+    
     private function getDiscountDays($duration)
     {
         switch ($duration) {

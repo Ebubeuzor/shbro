@@ -624,8 +624,8 @@ class BookingsController extends Controller
 
         // Trigger appropriate notifications
         $user = User::find($request->user_id);
-        $subject = ($action === 'accept') ? 'Booking Request Accepted' : 'Booking Request Declined';
-        $statusMessage = ($action === 'accept') ? 'Your booking request has been accepted.' : 'Your booking request has been declined.';
+        $subject = ($action == 'accept') ? 'Booking Request Accepted' : 'Booking Request Declined';
+        $statusMessage = ($action == 'accept') ? 'Your booking request has been accepted.' : 'Your booking request has been declined.';
         $this->sendNotification($user, $statusMessage, $subject, $action, $host_home_id);
         Cache::flush();
         return response()->json(['message'=> "The request has been successfully {$action}d."]);

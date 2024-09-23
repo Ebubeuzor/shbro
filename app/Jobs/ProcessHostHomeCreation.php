@@ -173,10 +173,9 @@ class ProcessHostHomeCreation implements ShouldQueue
                 }
 
                 if ($isFirstHome && $hostStatus == 0) {
-                    $hostHome->user()->update([
-                        "host" => 1,
-                    ]);
-                    
+                    $host->host = 1;
+                    $host->save();
+
                     Mail::to($host->email)->queue(new FirstHomeWelcomeMessageMail($host));
                 }
 

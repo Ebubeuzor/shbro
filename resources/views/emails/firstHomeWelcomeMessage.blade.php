@@ -86,7 +86,7 @@
                                         <table border="0" cellspacing="0" cellpadding="0" class="mobile-button-container">
                                             <tr>
                                                 <td align="center" style="border-radius: 3px;" bgcolor="#4CAF50">
-                                                    <a href="https://shortletbooking.com/host-dashboard" target="_blank" style="font-size: 16px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 15px 25px; border-radius: 3px; border: 1px solid #4CAF50; display: inline-block;" class="mobile-button">Access Your Host Dashboard</a>
+                                                    <a href="https://shortletbooking.com/Listings" target="_blank" style="font-size: 16px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 15px 25px; border-radius: 3px; border: 1px solid #4CAF50; display: inline-block;" class="mobile-button">Access Your Host Dashboard</a>
                                                 </td>
                                             </tr>
                                         </table>

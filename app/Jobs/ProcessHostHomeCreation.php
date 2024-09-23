@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Events\NewNotificationEvent;
 use App\Mail\ApartmentCreationApprovalRequest;
+use App\Mail\FirstHomeWelcomeMessageMail;
 use App\Mail\NewApartmentpendingApproval;
 use App\Mail\NotificationMail;
 use App\Models\Cohost;
@@ -91,10 +92,12 @@ class ProcessHostHomeCreation implements ShouldQueue
         $hostHome->service_fee = 0;
         $hostHome->tax = 0;
         $hostHome->total = 0;
-
+        
+        $host = User::find($hostHome->user_id);
+        $isFirstHome = $host->hosthomes->isEmpty(); 
 
         try {
-            DB::transaction(function () use ($hostHome, $data,$user,$cohost) {
+            DB::transaction(function () use ($hostHome, $data,$user,$cohost,$host,$isFirstHome) {
                 $hostHome->save();
 
 
@@ -141,7 +144,6 @@ class ProcessHostHomeCreation implements ShouldQueue
                     ProcessNotice::dispatch($notice, $hostHome->id);
                 }
 
-                $host = User::find($hostHome->user_id);
 
                 if (!$cohost) {
                     $message = "Your listing has been created now awaiting admin approval";
@@ -168,6 +170,10 @@ class ProcessHostHomeCreation implements ShouldQueue
                     
                     $this->clearAllCache();
 
+                }
+
+                if ($isFirstHome && $host->host == 0) {
+                    Mail::to($host->email)->queue(new FirstHomeWelcomeMessageMail($host));
                 }
 
                 if ($host->hostcohosts()->exists()) {

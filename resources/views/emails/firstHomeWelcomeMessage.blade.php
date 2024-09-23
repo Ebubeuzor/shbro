@@ -76,7 +76,7 @@
                                             <li>Once approved, your property will be live on our platform, ready to attract guests from around the world.</li>
                                             <li>A Shrbo expert will personally reach out to you to ensure your listing is optimized for success.</li>
                                         </ul>
-                                        <p>This is an exciting time, and we're here to support you every step of the way. If you have any questions or need assistance, don't hesitate to contact our dedicated host support team at hosts@shortletbooking.com.</p>
+                                        <p>This is an exciting time, and we're here to support you every step of the way. If you have any questions or need assistance, don't hesitate to contact our support team at info@shortletbooking.com.</p>
                                         <p>Thank you for choosing Shrbo as your hosting partner. Together, we'll create amazing experiences for travelers and unlock the full potential of your property.</p>
                                         <p>Best regards,<br>The Shrbo Team</p>
                                     </td>

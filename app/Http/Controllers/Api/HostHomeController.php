@@ -1628,10 +1628,6 @@ class HostHomeController extends Controller
         $hostHome->update([
             "verified" => 1,
         ]);
-        
-        $hostHome->user()->update([
-            "host" => 1,
-        ]);
 
 
         $message = "Your home listing has been approved!.";

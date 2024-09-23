@@ -95,9 +95,9 @@ class ProcessHostHomeCreation implements ShouldQueue
         
         $host = User::find($hostHome->user_id);
         $isFirstHome = $host->hosthomes->isEmpty(); 
-
+        $hostStatus = $host->host;
         try {
-            DB::transaction(function () use ($hostHome, $data,$user,$cohost,$host,$isFirstHome) {
+            DB::transaction(function () use ($hostHome, $data,$user,$cohost,$host,$isFirstHome, $hostStatus) {
                 $hostHome->save();
 
 
@@ -172,7 +172,11 @@ class ProcessHostHomeCreation implements ShouldQueue
 
                 }
 
-                if ($isFirstHome && $host->host == 0) {
+                if ($isFirstHome && $hostStatus == 0) {
+                    $hostHome->user()->update([
+                        "host" => 1,
+                    ]);
+                    
                     Mail::to($host->email)->queue(new FirstHomeWelcomeMessageMail($host));
                 }
 
@@ -202,6 +206,8 @@ class ProcessHostHomeCreation implements ShouldQueue
                         }
                     });
                 }
+
+
 
             });
         } catch (\Exception $e) {

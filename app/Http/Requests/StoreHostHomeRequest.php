@@ -84,7 +84,7 @@ class StoreHostHomeRequest extends FormRequest
     protected function isBase64($value)
     {
         // Define a regex pattern for the base64 data URI that accepts various video formats
-        $pattern = '/^data:video\/(?:mp4|webm|hevc|ogg|avi|mov|wmv|flv|mkv);base64,[A-Za-z0-9+\/=]+$/';
+        $pattern = '/^data:video\/(?:mp4|webm|hevc|ogg|avi|mov|quicktime|wmv|flv|mkv);base64,[A-Za-z0-9+\/=]+$/';
     
         // Check if the value matches the pattern
         return preg_match($pattern, $value) === 1;

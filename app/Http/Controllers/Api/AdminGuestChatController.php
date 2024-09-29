@@ -398,6 +398,10 @@ class AdminGuestChatController extends Controller
             abort(400, "Another admin has already joined the chat");
         }
 
+        if ($chatsToUpdate->created_at >= now()->addMinutes(15)) {
+            abort(400, "Session has already expired");
+        }
+
         // Update the first message with admin_id and start_convo timestamp
         $chatsToUpdate->first()->update([
             'admin_id' => $admin->id,
@@ -441,6 +445,7 @@ class AdminGuestChatController extends Controller
         $latestChatsSubquery = AdminGuestChat::selectRaw('MAX(id) as latest_id')
             ->whereNull('admin_id')
             ->whereNull('start_convo')
+            ->where('created_at', '<', now()->subMinutes(15))
             ->groupBy('session_id');
     
         // Use the subquery to get the full rows of the latest chats

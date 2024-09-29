@@ -270,16 +270,21 @@ class ProcessHostHomeUpdate implements ShouldQueue
         ]);
 
         $video = $ffmpeg->open($absolutePath);
-        $format = new \FFMpeg\Format\Video\WebM(); // WebM format
+        $format = new \FFMpeg\Format\Video\X264(); // WebM format
 
+        
         // Set lower bitrate for better compression
-        $format->setKiloBitrate(700); // Adjust as needed for better compression
+        $format->setKiloBitrate(1000); // Adjust as needed
+
+        // Set audio codec and bitrate
+        $format->setAudioCodec("aac");
+        $format->setAudioKiloBitrate(128);
 
         // Resize the video to maintain aspect ratio
         $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(1280, 720), \FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_INSET)->synchronize();
 
-        // Define the output path and extension (always .webm)
-        $newPath = public_path('videos/' . Str::random() . '.webm');
+        // Define the output path and extension (always .mp4)
+        $newPath = public_path('videos/' . Str::random() . '.mp4');
 
         $video->save($format, $newPath);
 

@@ -55,14 +55,6 @@ class ProcessHostHomeCreation implements ShouldQueue
         ]);
 
         try {
-            $existingApartment = $this->checkExistingApartment();
-            if ($existingApartment) {
-                Log::info("Apartment already exists, skipping creation", [
-                    'user_id' => $this->userId,
-                    'host_home_id' => $existingApartment->id,
-                ]);
-                return;
-            }
 
             return DB::transaction(function () {
                 $user = User::findOrFail($this->userId);

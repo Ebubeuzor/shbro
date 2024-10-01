@@ -407,68 +407,30 @@ class HostHomeController extends Controller
      */
     public function store(StoreHostHomeRequest $request)
     {
+        // Validate and get data
         $data = $request->validated();
-        $userId = auth()->id();
-        $uniqueKey = 'apartment_creation_' . $this->uniqueId($userId, $data);
 
-        try {
-            $result = DB::transaction(function () use ($data, $userId, $uniqueKey) {
-                // Acquire a lock to prevent concurrent processing
-                $lock = Cache::lock($uniqueKey, 10);
-                
-                if (!$lock->get()) {
-                    return ['status' => 'in_progress', 'message' => 'Your apartment creation is already in progress'];
-                }
+        // Find user
+        $user = User::find(auth()->id());
 
-                // Check if a job has already been dispatched
-                if (Cache::has($uniqueKey)) {
-                    $lock->release();
-                    return ['status' => 'in_progress', 'message' => 'Your apartment creation is already in progress'];
-                }
-
-                // Set a cache key to prevent duplicate submissions
-                Cache::put($uniqueKey, true, now()->addHours(1));
-
-                // Find user
-                $user = User::findOrFail($userId);
-
-                // Dispatch job
-                ProcessHostHomeCreation::dispatch($data, $user->id)
-                    ->delay(now()->addSeconds(5))
-                    ->onQueue('apartments');
-
-                $lock->release();
-                return ['status' => 'success', 'message' => 'Apartment creation initiated'];
-            }, 5);
-
-            if ($result['status'] === 'in_progress') {
-                return response()->json(['message' => $result['message']], 409);
-            }
-
-            return response()->json(['message' => 'Apartment creation initiated'], 201);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to initiate apartment creation', [
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json(['message' => 'Failed to process your request'], 500);
+        // Check if a job is already in progress or was recently completed for this user
+        $jobKey = "apartment_creation_job_{$user->id}";
+        if (Cache::has($jobKey)) {
+            return response([
+                "error" => "An apartment creation is already in progress or was recently completed for this user."
+            ], 409);
         }
-    }
 
-    private function uniqueId($userId, $data)
-    {
-        $keyFields = [
-            $userId,
-            $data['title'] ?? '',
-            $data['address'] ?? '',
-            $data['property_type'] ?? '',
-            date('Y-m-d')
-        ];
-        
-        return md5(implode('|', $keyFields));
+        // Set a flag in cache to indicate that a job has been dispatched
+        Cache::put($jobKey, true, now()->addMinutes(15));
+
+        // Dispatch job
+        ProcessHostHomeCreation::dispatch($data, $user->id);
+
+        // Return response
+        return response([
+            "ok" => "Apartment creation process started"
+        ], 202);
     }
 
     

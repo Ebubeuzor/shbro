@@ -33,11 +33,13 @@ class ProcessHostHomeCreation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 1;
+    public $tries = 1; // Changed from 5 to 1
+    public $maxExceptions = 1; // Changed from 3 to 1
     public $timeout = 600; // 10 minutes
-
+    
     private $data;
     private $userId;
+    private $attempt = 0;
 
     public function __construct($data, $userId)
     {
@@ -47,28 +49,22 @@ class ProcessHostHomeCreation implements ShouldQueue
 
     public function handle()
     {
-        $lockKey = 'apartment_creation_lock_' . $this->userId;
-        $cacheKey = 'apartment_created_' . $this->uniqueId();
+        $this->attempt++;
+        Log::info("Starting apartment creation attempt {$this->attempt}", [
+            'user_id' => $this->userId,
+        ]);
 
         try {
-            $lock = Cache::lock($lockKey, 300); // 5 minutes lock
-
-            if (!$lock->get()) {
-                Log::info("Apartment creation job skipped - another job is in progress", [
-                    'user_id' => $this->userId
+            $existingApartment = $this->checkExistingApartment();
+            if ($existingApartment) {
+                Log::info("Apartment already exists, skipping creation", [
+                    'user_id' => $this->userId,
+                    'host_home_id' => $existingApartment->id,
                 ]);
                 return;
             }
 
-            if (Cache::has($cacheKey)) {
-                Log::info("Apartment creation job skipped - already processed", [
-                    'user_id' => $this->userId
-                ]);
-                $lock->release();
-                return;
-            }
-
-            DB::transaction(function () use ($cacheKey) {
+            return DB::transaction(function () {
                 $user = User::findOrFail($this->userId);
                 $cohost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohost ? $cohost->host_id : $user->id;
@@ -89,22 +85,21 @@ class ProcessHostHomeCreation implements ShouldQueue
                 // Handle notifications and emails
                 $this->handleNotifications($hostHome, $host, $user, $cohost);
                 
-                // Mark as processed
-                Cache::put($cacheKey, true, now()->addDay());
-
+                $this->clearAllCache();
+                
                 Log::info("Apartment creation completed successfully", [
                     'user_id' => $this->userId,
                     'host_home_id' => $hostHome->id,
+                    'attempt' => $this->attempt
                 ]);
-            }, 5); 
-
+                
+                return $hostHome;
+            }, 1); 
         } catch (Throwable $exception) {
             $this->handleError($exception);
             throw $exception;
-        } finally {
-            if (isset($lock)) {
-                $lock->release();
-            }
+        }finally {
+            $this->clearAllCache();
         }
     }
 
@@ -349,30 +344,12 @@ class ProcessHostHomeCreation implements ShouldQueue
     {
         Log::error("Failed to create apartment", [
             'user_id' => $this->userId,
+            'attempt' => $this->attempt,
             'error' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString()
         ]);
         
-        $user = User::find($this->userId);
-        Mail::to($user->email)->queue(new ApartmentCreationFailedMail($user));
-        
-        Notification::create([
-            'user_id' => $this->userId,
-            'Message' => 'We encountered an issue while creating your listing. Our team has been notified and will look into it.'
-        ]);
-    }
-
-    public function uniqueId()
-    {
-        $keyFields = [
-            $this->userId,
-            $this->data['title'] ?? '',
-            $this->data['address'] ?? '',
-            $this->data['property_type'] ?? '',
-            date('Y-m-d')
-        ];
-        
-        return md5(implode('|', $keyFields));
+        $this->storeProgress();
     }
 
     private function storeProgress()
@@ -380,6 +357,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         $key = "apartment_progress_{$this->userId}";
         Cache::put($key, [
             'data' => $this->data,
+            'progress' => $this->attempt,
             'timestamp' => now()
         ], now()->addHours(24));
     }

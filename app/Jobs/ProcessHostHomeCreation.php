@@ -183,14 +183,22 @@ class ProcessHostHomeCreation implements ShouldQueue
         $video = $ffmpeg->open($absolutePath);
         $format = new X264();
 
+        // Get original video dimensions
+        $dimensions = $video->getStreams()->videos()->first()->getDimensions();
+        $width = $dimensions->getWidth();
+        $height = $dimensions->getHeight();
+
+        // Calculate target bitrate based on resolution
+        $targetBitrate = $this->calculateTargetBitrate($width, $height);
+
         // Improved settings for better quality
-        $format->setKiloBitrate(2000)  // Higher bitrate for better quality
+        $format->setKiloBitrate($targetBitrate)
                ->setAudioCodec("aac")
                ->setAudioKiloBitrate(192);  // Better audio quality
 
-        // Resize video while maintaining aspect ratio
+        // Maintain original resolution if it's 1080p or lower, otherwise scale down to 1080p
         $video->filters()
-              ->resize(new Dimension(1280, 720), 'preserve_aspect_ratio')
+              ->resize(new Dimension(min($width, 1920), min($height, 1080)), 'preserve_aspect_ratio')
               ->synchronize();
 
         $newPath = public_path('videos/' . Str::random() . '.mp4');
@@ -199,6 +207,18 @@ class ProcessHostHomeCreation implements ShouldQueue
         return 'videos/' . basename($newPath);
     }
 
+    private function calculateTargetBitrate($width, $height)
+    {
+        $pixels = $width * $height;
+        if ($pixels <= 921600) {  // 1280x720 or smaller
+            return 2500;  // 2.5 Mbps
+        } elseif ($pixels <= 2073600) {  // 1920x1080 or smaller
+            return 5000;  // 5 Mbps
+        } else {  // Larger than 1080p
+            return 8000;  // 8 Mbps
+        }
+    }
+    
     private function processRelatedData($hostHome, $host, $user, $cohost)
     {
         // Process additional rules

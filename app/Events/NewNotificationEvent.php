@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Notification;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -28,19 +29,26 @@ class NewNotificationEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        info($this->userId);
         return new PrivateChannel('App.Models.User.' . $this->userId);
 
     }
     
     public function broadcastWith()
     {
+        // Fetch all notifications for the user, ordered from latest to oldest
+        $notifications = Notification::where('user_id', $this->userId)
+        ->latest()
+        ->get()
+        ->map(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'message' => $notification->message,
+                'time' => $notification->created_at,
+            ];
+        });
+
         return [
-            'notification' => [
-                'id' => $this->notification->id,
-                'message' => $this->notification->Message,
-                'time' => $this->notification->created_at,
-            ],
+            'notifications' => $notifications
         ];
     }
 

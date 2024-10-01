@@ -65,8 +65,13 @@
                                         @if ($status == "Accepted")
 
                                             <p>Please proceed with the payment process through your Shrbo account to secure your booking. Once payment is confirmed, you will receive all the necessary information about your stay, including how to check-in.</p>
+
+                                            <p>If you do not complete the booking process within 24 hours, your request will be automatically cancelled.</p>
+
                                             <p>If you have any questions or need further assistance, please feel free to reach out. We're here to make your stay as enjoyable as possible.</p>
+
                                             <p>Thank you for choosing {{$hosthome->title}}, and see you soon!</p>
+                                            
                                             <div>
                                                 <a href="https://shortletbooking.com/ListingInfoMain/{{$hosthome->id}}">Click to book your apartment</a>
                                             </div>

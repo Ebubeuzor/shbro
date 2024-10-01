@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
+use App\Jobs\CancelUnbookedRequest;
 use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\AcceptOrDeclineGuestMail;
 use App\Mail\BookingCancellation;
@@ -615,6 +616,10 @@ class BookingsController extends Controller
         // Update the booking status based on the action
         if ($action === 'accept') {
             $request->approved = 'approved';
+
+            // Dispatch the job to cancel if not booked within 24 hours
+            CancelUnbookedRequest::dispatch($request->id)->delay(now()->addHours(24));
+            
         } else {
             $request->approved = 'declined';
         }

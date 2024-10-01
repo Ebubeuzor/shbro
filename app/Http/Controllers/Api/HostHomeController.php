@@ -407,32 +407,68 @@ class HostHomeController extends Controller
      */
     public function store(StoreHostHomeRequest $request)
     {
-        // Start timing
-        $startTime = microtime(true);
-
-        // Validate and get data
         $data = $request->validated();
+        $userId = auth()->id();
+        $uniqueKey = 'apartment_creation_' . $this->uniqueId($userId, $data);
 
-        // Find user
-        $user = User::find(auth()->id());
+        try {
+            $result = DB::transaction(function () use ($data, $userId, $uniqueKey) {
+                // Acquire a lock to prevent concurrent processing
+                $lock = Cache::lock($uniqueKey, 10);
+                
+                if (!$lock->get()) {
+                    return ['status' => 'in_progress', 'message' => 'Your apartment creation is already in progress'];
+                }
 
-        // Dispatch job
-        ProcessHostHomeCreation::dispatch($data, $user->id);
+                // Check if a job has already been dispatched
+                if (Cache::has($uniqueKey)) {
+                    $lock->release();
+                    return ['status' => 'in_progress', 'message' => 'Your apartment creation is already in progress'];
+                }
 
-        // End timing
-        $endTime = microtime(true);
+                // Set a cache key to prevent duplicate submissions
+                Cache::put($uniqueKey, true, now()->addHours(1));
 
-        // Calculate execution time
-        $executionTime = $endTime - $startTime;
+                // Find user
+                $user = User::findOrFail($userId);
 
-        // Log the execution time
-        Log::info('Store method execution time: ' . $executionTime . ' seconds');
+                // Dispatch job
+                ProcessHostHomeCreation::dispatch($data, $user->id)
+                    ->delay(now()->addSeconds(5))
+                    ->onQueue('apartments');
 
-        // Return response
-        return response([
-            "ok" => "Created",
-            "execution_time" => $executionTime
-        ], 201);
+                $lock->release();
+                return ['status' => 'success', 'message' => 'Apartment creation initiated'];
+            }, 5);
+
+            if ($result['status'] === 'in_progress') {
+                return response()->json(['message' => $result['message']], 409);
+            }
+
+            return response()->json(['message' => 'Apartment creation initiated'], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to initiate apartment creation', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json(['message' => 'Failed to process your request'], 500);
+        }
+    }
+
+    private function uniqueId($userId, $data)
+    {
+        $keyFields = [
+            $userId,
+            $data['title'] ?? '',
+            $data['address'] ?? '',
+            $data['property_type'] ?? '',
+            date('Y-m-d')
+        ];
+        
+        return md5(implode('|', $keyFields));
     }
 
     

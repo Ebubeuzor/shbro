@@ -24,7 +24,7 @@ return new class extends Migration
             $table->integer("bedroom");
             $table->integer("beds");
             $table->integer("bathrooms");
-            $table->string("video");
+            $table->string("video")->nullable();
             $table->string("title");
             $table->text("description");
             $table->string("reservation");

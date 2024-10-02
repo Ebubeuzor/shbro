@@ -182,31 +182,53 @@ class ProcessHostHomeCreation implements ShouldQueue
 
         $video = $ffmpeg->open($absolutePath);
 
-        // Get original video dimensions, duration, and file size
-        $dimensions = $video->getStreams()->videos()->first()->getDimensions();
-        $duration = $video->getFormat()->get('duration');
-        $width = $dimensions->getWidth();
-        $height = $dimensions->getHeight();
+        // Get original video details
+        $originalFormat = $video->getFormat();
+        $originalDuration = $originalFormat->get('duration');
+        $originalBitrate = $originalFormat->get('bit_rate');
         $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
 
-        // Calculate target bitrate based on resolution, duration, and original file size
-        $targetBitrate = $this->calculateTargetBitrate($width, $height, $duration, $originalFileSize);
+        // Calculate target bitrate (aim for 70% of original, but cap it)
+        $targetBitrate = min($originalBitrate * 0.7, 1000000); // Cap at 1Mbps
 
         $format = new \FFMpeg\Format\Video\X264();
-        $format->setKiloBitrate($targetBitrate)
-               ->setAudioKiloBitrate(128)
+        $format->setKiloBitrate($targetBitrate / 1000) // Convert to kbps
+               ->setAudioKiloBitrate(64) // Reduced audio bitrate
                ->setAudioCodec('aac')
                ->setVideoCodec('libx264');
 
-        // Set additional parameters
+        // Set additional parameters for better compression
         $format->setAdditionalParameters([
-            '-preset', 'slow',
-            '-crf', '23'
+            '-preset', 'slow', // Slower preset for better compression
+            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality but larger size)
+            '-maxrate', $targetBitrate . 'k',
+            '-bufsize', ($targetBitrate * 2) . 'k'
         ]);
 
         $newPath = public_path('videos/' . Str::random() . '.mp4');
 
+        // Add logging
+        Log::info('Video Compression Details', [
+            'original_size' => $originalFileSize . ' MB',
+            'original_bitrate' => $originalBitrate,
+            'target_bitrate' => $targetBitrate
+        ]);
+
         $video->save($format, $newPath);
+
+        $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
+
+        Log::info('Compression Result', [
+            'original_size' => $originalFileSize . ' MB',
+            'new_size' => $newFileSize . ' MB',
+            'size_change' => ($newFileSize - $originalFileSize) . ' MB',
+        ]);
+
+        // If new file is larger, keep the original
+        if ($newFileSize > $originalFileSize) {
+            unlink($newPath);
+            return $relativePath;
+        }
 
         return 'videos/' . basename($newPath);
     }

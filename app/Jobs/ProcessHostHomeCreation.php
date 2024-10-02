@@ -181,7 +181,6 @@ class ProcessHostHomeCreation implements ShouldQueue
         ]);
 
         $video = $ffmpeg->open($absolutePath);
-        $format = new X264('aac'); // Changed from 'libx264' to 'aac' for audio codec
 
         // Get original video dimensions, duration, and file size
         $dimensions = $video->getStreams()->videos()->first()->getDimensions();
@@ -193,15 +192,20 @@ class ProcessHostHomeCreation implements ShouldQueue
         // Calculate target bitrate based on resolution, duration, and original file size
         $targetBitrate = $this->calculateTargetBitrate($width, $height, $duration, $originalFileSize);
 
-        // Compression settings (no resizing)
+        $format = new \FFMpeg\Format\Video\X264();
         $format->setKiloBitrate($targetBitrate)
                ->setAudioKiloBitrate(128)
-               ->addAdditionalParameter('-preset', 'slow')
-               ->addAdditionalParameter('-crf', '23');
+               ->setAudioCodec('aac')
+               ->setVideoCodec('libx264');
 
-        // No resizing filter applied here
+        // Set additional parameters
+        $format->setAdditionalParameters([
+            '-preset', 'slow',
+            '-crf', '23'
+        ]);
 
         $newPath = public_path('videos/' . Str::random() . '.mp4');
+
         $video->save($format, $newPath);
 
         return 'videos/' . basename($newPath);

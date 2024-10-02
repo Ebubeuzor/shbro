@@ -181,25 +181,26 @@ class ProcessHostHomeCreation implements ShouldQueue
         ]);
 
         $video = $ffmpeg->open($absolutePath);
-        $format = new X264();
+        $format = new X264('libx264');
 
-        // Get original video dimensions
+        // Get original video dimensions, duration, and file size
         $dimensions = $video->getStreams()->videos()->first()->getDimensions();
+        $duration = $video->getFormat()->get('duration');
         $width = $dimensions->getWidth();
         $height = $dimensions->getHeight();
+        $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
 
-        // Calculate target bitrate based on resolution
-        $targetBitrate = $this->calculateTargetBitrate($width, $height);
+        // Calculate target bitrate based on resolution, duration, and original file size
+        $targetBitrate = $this->calculateTargetBitrate($width, $height, $duration, $originalFileSize);
 
-        // Improved settings for better quality
+        // Improved settings for better compression
         $format->setKiloBitrate($targetBitrate)
-               ->setAudioCodec("aac")
-               ->setAudioKiloBitrate(192);  // Better audio quality
+               ->setAudioCodec('aac')
+               ->setAudioKiloBitrate(128)
+               ->addAdditionalParameter('-preset', 'slow')
+               ->addAdditionalParameter('-crf', '23');
 
-        // Maintain original resolution if it's 1080p or lower, otherwise scale down to 1080p
-        $video->filters()
-              ->resize(new Dimension(min($width, 1920), min($height, 1080)), 'preserve_aspect_ratio')
-              ->synchronize();
+        $video->filters()->synchronize();
 
         $newPath = public_path('videos/' . Str::random() . '.mp4');
         $video->save($format, $newPath);
@@ -207,17 +208,42 @@ class ProcessHostHomeCreation implements ShouldQueue
         return 'videos/' . basename($newPath);
     }
 
-    private function calculateTargetBitrate($width, $height)
+    private function calculateTargetBitrate($width, $height, $duration, $originalFileSize)
     {
         $pixels = $width * $height;
-        if ($pixels <= 921600) {  // 1280x720 or smaller
-            return 2500;  // 2.5 Mbps
-        } elseif ($pixels <= 2073600) {  // 1920x1080 or smaller
-            return 5000;  // 5 Mbps
-        } else {  // Larger than 1080p
-            return 8000;  // 8 Mbps
-        }
+        
+        // Calculate target file size based on original size and resolution
+        $targetFileSizeMB = $this->calculateTargetFileSize($originalFileSize, $width, $height);
+        
+        $targetBitsPerPixel = ($targetFileSizeMB * 8 * 1024 * 1024) / ($pixels * $duration);
+        
+        // Convert bits per pixel to kbps
+        $targetKbps = ($targetBitsPerPixel * $pixels) / 1000;
+        
+        // Ensure bitrate is within reasonable bounds
+        return max(1000, min($targetKbps, 8000));
     }
+
+    private function calculateTargetFileSize($originalFileSize, $width, $height)
+    {
+        $pixels = $width * $height;
+        
+        // Base target size on original file size, but with some constraints
+        $targetFileSizeMB = $originalFileSize * 0.7; // Aim for 70% of original size as a starting point
+        
+        // Adjust based on resolution
+        if ($pixels <= 921600) {  // 1280x720 or smaller
+            $targetFileSizeMB = min($targetFileSizeMB, 20); // Cap at 20MB for smaller resolutions
+        } elseif ($pixels <= 2073600) {  // 1920x1080 or smaller
+            $targetFileSizeMB = min($targetFileSizeMB, 50); // Cap at 50MB for 1080p
+        } else {  // Larger than 1080p
+            $targetFileSizeMB = min($targetFileSizeMB, 100); // Cap at 100MB for higher resolutions
+        }
+        
+        // Ensure a minimum target size
+        return max($targetFileSizeMB, 5); // Minimum target size of 5MB
+    }
+    
     
     private function processRelatedData($hostHome, $host, $user, $cohost)
     {

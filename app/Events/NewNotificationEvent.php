@@ -32,24 +32,27 @@ class NewNotificationEvent implements ShouldBroadcast
         return new PrivateChannel('App.Models.User.' . $this->userId);
 
     }
-    
+
     public function broadcastWith()
     {
         // Fetch all notifications for the user, ordered from latest to oldest
         $notifications = Notification::where('user_id', $this->userId)
-        ->latest()
-        ->get()
-        ->map(function ($notification) {
+            ->latest()
+            ->paginate(10);
+    
+        // Apply map on the collection of the paginator
+        $notifications->getCollection()->transform(function ($notification) {
             return [
                 'id' => $notification->id,
-                'message' => $notification->Message,
+                'message' => $notification->Message,  // Assuming 'Message' is a property, ensure case sensitivity
                 'time' => $notification->created_at,
             ];
         });
-
+    
         return [
             'notifications' => $notifications
         ];
     }
+    
 
 }

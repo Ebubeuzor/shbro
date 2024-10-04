@@ -26,7 +26,7 @@ class NotifyController extends Controller
     {
         $user = Auth::user();
         return NotificationResource::collection(
-            Notification::where("user_id",$user->id)->latest()->get()
+            Notification::where("user_id",$user->id)->latest()->paginate(10)
         );
     }
     

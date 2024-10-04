@@ -42,7 +42,7 @@ class NewNotificationEvent implements ShouldBroadcast
         ->map(function ($notification) {
             return [
                 'id' => $notification->id,
-                'message' => $notification->message,
+                'message' => $notification->Message,
                 'time' => $notification->created_at,
             ];
         });

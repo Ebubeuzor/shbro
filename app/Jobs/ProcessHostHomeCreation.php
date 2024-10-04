@@ -223,7 +223,7 @@ class ProcessHostHomeCreation implements ShouldQueue
             'new_size' => $newFileSize . ' MB',
             'size_change' => ($newFileSize - $originalFileSize) . ' MB',
         ]);
-
+ 
         // If new file is larger, keep the original
         if ($newFileSize > $originalFileSize) {
             unlink($newPath);

@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Jlorente\Laravel\CreditCards\Facades\CreditCardValidator;
 use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
+use Throwable;
 use Twilio\Rest\Client;
 
 class UserController extends Controller
@@ -2987,29 +2988,47 @@ class UserController extends Controller
         ]);
 
         $videoBase64 = $request->input('video');
-        $videoPath = $this->saveVideo($videoBase64);
+        $this->processVideo($videoBase64);
 
-        // Call a method to convert and compress the video
-        $convertedPath = $this->convertAndCompressVideo($videoPath);
+        return response()->json(['done' => "Done"], 200);
+    }
 
-        // Optionally remove the original uncompressed file
-        File::delete(public_path($videoPath));
-
-        return response()->json(['path' => $convertedPath], 200);
+    private function processVideo($videoBase64)
+    {
+        try {
+            // Save the original video
+            $originalPath = $this->saveVideo($videoBase64);
+            
+            // Convert and compress the video
+            $processedPath = $this->convertAndCompressVideo($originalPath);
+            
+            // Clean up the original file after successful processing
+            if ($originalPath !== $processedPath) {
+                // Only delete the original if it's different from the processed path
+                if (File::exists(public_path($originalPath))) {
+                    Log::info("Deleting original video: " . public_path($originalPath));
+                    File::delete(public_path($originalPath));
+                } else {
+                    Log::warning("Original video not found for deletion: " . public_path($originalPath));
+                }
+            }
+            
+            return $processedPath;
+        } catch (Throwable $e) {
+            Log::error("Video processing failed: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     private function saveVideo($video)
     {
-        // Check if video is base64 string
-        if (preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
-            $videoData = substr($video, strpos($video, ',') + 1);
-            $videoType = strtolower($matches[1]);
-
-            // Decode base64 video data
-            $decodedVideo = base64_decode($videoData);
-        } else {
+        if (!preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
             throw new \Exception('Invalid video format');
         }
+
+        $videoData = substr($video, strpos($video, ',') + 1);
+        $videoType = strtolower($matches[1]);
+        $decodedVideo = base64_decode($videoData);
 
         $dir = 'videos/';
         $file = Str::random() . '.' . $videoType;
@@ -3017,16 +3036,10 @@ class UserController extends Controller
         $relativePath = $dir . $file;
 
         if (!File::exists($absolutePath)) {
-            if (!File::makeDirectory($absolutePath, 0755, true)) {
-                throw new \Exception('Failed to create directory: ' . $absolutePath);
-            }
+            File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Save the decoded video to the file
-        $filePath = $absolutePath . '/' . $file;
-        if (!file_put_contents($filePath, $decodedVideo)) {
-            throw new \Exception('Failed to save video');
-        }
+        file_put_contents($absolutePath . $file, $decodedVideo);
 
         return $relativePath;
     }
@@ -3036,26 +3049,88 @@ class UserController extends Controller
         $absolutePath = public_path($relativePath);
         $ffmpeg = FFMpeg::create([
             'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
-            'ffprobe.binaries' => 'ffprobe', // Assuming ffprobe is in the system's PATH
-            'timeout'          => 3600, // The timeout for the underlying process
-            'ffmpeg.threads'   => 12,   // The number of threads that FFMpeg should use
+            'ffprobe.binaries' => 'ffprobe',
+            'timeout'          => 3600,
+            'ffmpeg.threads'   => 12,
         ]);
 
         $video = $ffmpeg->open($absolutePath);
-        $format = new \FFMpeg\Format\Video\WebM(); // WebM format
 
-        // Set lower bitrate for better compression
-        $format->setKiloBitrate(700); // Adjust as needed for better compression
+        // Get original video dimensions
+        $dimensions = $ffmpeg
+            ->getFFProbe()
+            ->streams($absolutePath)
+            ->videos()
+            ->first()
+            ->getDimensions();
 
-        // Resize the video to maintain aspect ratio
-        $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(1280, 720), \FFMpeg\Filters\Video\ResizeFilter::RESIZEMODE_INSET)->synchronize();
+        // Get original video details
+        $originalFormat = $video->getFormat();
+        $originalDuration = $originalFormat->get('duration');
+        $originalBitrate = $originalFormat->get('bit_rate');
+        $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
 
-        // Define the output path and extension (always .webm)
-        $newPath = public_path('videos/' . Str::random() . '.webm');
+        // Calculate target bitrate (aim for 70% of original, minimum 500kbps, maximum 2Mbps)
+        $targetBitrate = min(max($originalBitrate * 0.7, 500000), 2000000);
 
-        $video->save($format, $newPath);
+        $format = new \FFMpeg\Format\Video\X264();
+        $format->setKiloBitrate($targetBitrate / 1000) // Convert to kbps
+            ->setAudioKiloBitrate(128) // Increased audio bitrate for better quality
+            ->setAudioCodec('aac')
+            ->setVideoCodec('libx264');
 
-        return 'videos/' . basename($newPath);
+        // Set additional parameters for better compression while maintaining quality
+        $format->setAdditionalParameters([
+            '-preset', 'medium', // Balance between compression speed and quality
+            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality)
+            '-profile:v', 'main', // Main profile for better compatibility
+            '-level', '4.0', // Compatibility level
+            '-movflags', '+faststart', // Enable fast start for web playback
+            '-pix_fmt', 'yuv420p' // Pixel format for better compatibility
+        ]);
+
+        $newFileName = Str::random() . '.mp4';
+        $newRelativePath = 'videos/' . $newFileName;
+        $newPath = public_path($newRelativePath);
+
+        // Log compression attempt
+        Log::info('Starting Video Compression', [
+            'original_path' => $absolutePath,
+            'original_size' => $originalFileSize . ' MB',
+            'original_bitrate' => $originalBitrate,
+            'target_bitrate' => $targetBitrate,
+            'dimensions' => $dimensions->getWidth() . 'x' . $dimensions->getHeight()
+        ]);
+
+        try {
+            $video->save($format, $newPath);
+            
+            $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
+
+            Log::info('Compression Result', [
+                'original_size' => $originalFileSize . ' MB',
+                'new_size' => $newFileSize . ' MB',
+                'size_reduction' => ($originalFileSize - $newFileSize) . ' MB',
+            ]);
+
+            // Verify the new video is playable
+            $newVideo = $ffmpeg->open($newPath);
+            $newDuration = $newVideo->getFormat()->get('duration');
+            
+            // If new file is larger or duration is significantly different, keep the original
+            if ($newFileSize > $originalFileSize || abs($newDuration - $originalDuration) > 1) {
+                unlink($newPath);
+                return $relativePath;
+            }
+
+            return $newRelativePath;
+        } catch (\Exception $e) {
+            Log::error('Video compression failed: ' . $e->getMessage());
+            if (file_exists($newPath)) {
+                unlink($newPath);
+            }
+            return $relativePath; // Return original path if compression fails
+        }
     }
 
 

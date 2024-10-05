@@ -136,8 +136,16 @@ class ProcessHostHomeCreation implements ShouldQueue
             // Convert and compress the video
             $processedPath = $this->convertAndCompressVideo($originalPath);
             
-            // Clean up the original file
-            File::delete(public_path($originalPath));
+            // Clean up the original file after successful processing
+            if ($originalPath !== $processedPath) {
+                // Only delete the original if it's different from the processed path
+                if (File::exists(public_path($originalPath))) {
+                    Log::info("Deleting original video: " . public_path($originalPath));
+                    File::delete(public_path($originalPath));
+                } else {
+                    Log::warning("Original video not found for deletion: " . public_path($originalPath));
+                }
+            }
             
             return $processedPath;
         } catch (Throwable $e) {
@@ -258,43 +266,6 @@ class ProcessHostHomeCreation implements ShouldQueue
             return $relativePath; // Return original path if compression fails
         }
     }
-
-    private function calculateTargetBitrate($width, $height, $duration, $originalFileSize)
-    {
-        $pixels = $width * $height;
-        
-        // Calculate target file size based on original size and resolution
-        $targetFileSizeMB = $this->calculateTargetFileSize($originalFileSize, $width, $height);
-        
-        $targetBitsPerPixel = ($targetFileSizeMB * 8 * 1024 * 1024) / ($pixels * $duration);
-        
-        // Convert bits per pixel to kbps
-        $targetKbps = ($targetBitsPerPixel * $pixels) / 1000;
-        
-        // Ensure bitrate is within reasonable bounds
-        return max(1000, min($targetKbps, 8000));
-    }
-
-    private function calculateTargetFileSize($originalFileSize, $width, $height)
-    {
-        $pixels = $width * $height;
-        
-        // Base target size on original file size, but with some constraints
-        $targetFileSizeMB = $originalFileSize * 0.7; // Aim for 70% of original size as a starting point
-        
-        // Adjust based on resolution
-        if ($pixels <= 921600) {  // 1280x720 or smaller
-            $targetFileSizeMB = min($targetFileSizeMB, 20); // Cap at 20MB for smaller resolutions
-        } elseif ($pixels <= 2073600) {  // 1920x1080 or smaller
-            $targetFileSizeMB = min($targetFileSizeMB, 50); // Cap at 50MB for 1080p
-        } else {  // Larger than 1080p
-            $targetFileSizeMB = min($targetFileSizeMB, 100); // Cap at 100MB for higher resolutions
-        }
-        
-        // Ensure a minimum target size
-        return max($targetFileSizeMB, 5); // Minimum target size of 5MB
-    }
-    
     
     private function processRelatedData($hostHome, $host, $user, $cohost)
     {

@@ -182,55 +182,81 @@ class ProcessHostHomeCreation implements ShouldQueue
 
         $video = $ffmpeg->open($absolutePath);
 
+        // Get original video dimensions
+        $dimensions = $ffmpeg
+            ->getFFProbe()
+            ->streams($absolutePath)
+            ->videos()
+            ->first()
+            ->getDimensions();
+
         // Get original video details
         $originalFormat = $video->getFormat();
         $originalDuration = $originalFormat->get('duration');
         $originalBitrate = $originalFormat->get('bit_rate');
         $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
 
-        // Calculate target bitrate (aim for 70% of original, but cap it)
-        $targetBitrate = min($originalBitrate * 0.7, 1000000); // Cap at 1Mbps
+        // Calculate target bitrate (aim for 70% of original, minimum 500kbps, maximum 2Mbps)
+        $targetBitrate = min(max($originalBitrate * 0.7, 500000), 2000000);
 
         $format = new \FFMpeg\Format\Video\X264();
         $format->setKiloBitrate($targetBitrate / 1000) // Convert to kbps
-               ->setAudioKiloBitrate(64) // Reduced audio bitrate
-               ->setAudioCodec('aac')
-               ->setVideoCodec('libx264');
+            ->setAudioKiloBitrate(128) // Increased audio bitrate for better quality
+            ->setAudioCodec('aac')
+            ->setVideoCodec('libx264');
 
-        // Set additional parameters for better compression
+        // Set additional parameters for better compression while maintaining quality
         $format->setAdditionalParameters([
-            '-preset', 'slow', // Slower preset for better compression
-            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality but larger size)
-            '-maxrate', $targetBitrate . 'k',
-            '-bufsize', ($targetBitrate * 2) . 'k'
+            '-preset', 'medium', // Balance between compression speed and quality
+            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality)
+            '-profile:v', 'main', // Main profile for better compatibility
+            '-level', '4.0', // Compatibility level
+            '-movflags', '+faststart', // Enable fast start for web playback
+            '-pix_fmt', 'yuv420p' // Pixel format for better compatibility
         ]);
 
-        $newPath = public_path('videos/' . Str::random() . '.mp4');
+        $newFileName = Str::random() . '.mp4';
+        $newRelativePath = 'videos/' . $newFileName;
+        $newPath = public_path($newRelativePath);
 
-        // Add logging
-        Log::info('Video Compression Details', [
+        // Log compression attempt
+        Log::info('Starting Video Compression', [
+            'original_path' => $absolutePath,
             'original_size' => $originalFileSize . ' MB',
             'original_bitrate' => $originalBitrate,
-            'target_bitrate' => $targetBitrate
+            'target_bitrate' => $targetBitrate,
+            'dimensions' => $dimensions->getWidth() . 'x' . $dimensions->getHeight()
         ]);
 
-        $video->save($format, $newPath);
+        try {
+            $video->save($format, $newPath);
+            
+            $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
 
-        $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
+            Log::info('Compression Result', [
+                'original_size' => $originalFileSize . ' MB',
+                'new_size' => $newFileSize . ' MB',
+                'size_reduction' => ($originalFileSize - $newFileSize) . ' MB',
+            ]);
 
-        Log::info('Compression Result', [
-            'original_size' => $originalFileSize . ' MB',
-            'new_size' => $newFileSize . ' MB',
-            'size_change' => ($newFileSize - $originalFileSize) . ' MB',
-        ]);
- 
-        // If new file is larger, keep the original
-        if ($newFileSize > $originalFileSize) {
-            unlink($newPath);
-            return $relativePath;
+            // Verify the new video is playable
+            $newVideo = $ffmpeg->open($newPath);
+            $newDuration = $newVideo->getFormat()->get('duration');
+            
+            // If new file is larger or duration is significantly different, keep the original
+            if ($newFileSize > $originalFileSize || abs($newDuration - $originalDuration) > 1) {
+                unlink($newPath);
+                return $relativePath;
+            }
+
+            return $newRelativePath;
+        } catch (\Exception $e) {
+            Log::error('Video compression failed: ' . $e->getMessage());
+            if (file_exists($newPath)) {
+                unlink($newPath);
+            }
+            return $relativePath; // Return original path if compression fails
         }
-
-        return 'videos/' . basename($newPath);
     }
 
     private function calculateTargetBitrate($width, $height, $duration, $originalFileSize)

@@ -374,17 +374,17 @@ class BookingsController extends Controller
             switch ($discount->discount) {
                 case '20% New listing promotion':
                     if ($bookingCount < 3) {
-                        $price *= 0.2;
+                        $price *= 0.8;
                     }
                     break;
                 case '5% Weekly discount':
                     if ($durationOfStay >= 7 && ($discounts->contains('discount', '10% Monthly discount') && $durationOfStay < 31)) {
-                        $price *= 0.05;
+                        $price *= 0.95;
                     }
                     break;
                 case '10% Monthly discount':
                     if ($durationOfStay >= 30) {
-                        $price *= 0.1;
+                        $price *= 0.9;
                     }
                     break;
             }

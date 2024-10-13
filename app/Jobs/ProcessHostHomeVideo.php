@@ -107,8 +107,8 @@ class ProcessHostHomeVideo implements ShouldQueue
     {
         $absolutePath = public_path($relativePath);
         $ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
-            'ffprobe.binaries' => 'ffprobe',
+            'ffmpeg.binaries'  => '/usr/bin/ffmpeg',
+            'ffprobe.binaries' => '/usr/bin/ffprobe',
             'timeout'          => 3600,
             'ffmpeg.threads'   => 12,
         ]);

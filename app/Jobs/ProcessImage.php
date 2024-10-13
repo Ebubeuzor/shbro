@@ -20,7 +20,7 @@ use Spatie\LaravelImageOptimizer\Facades\ImageOptimizer;
 
 class ProcessImage implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels,Batchable;
 
     public $tries = 3;
 

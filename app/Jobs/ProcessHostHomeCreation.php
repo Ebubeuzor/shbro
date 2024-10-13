@@ -33,355 +33,124 @@ class ProcessHostHomeCreation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 1; // Changed from 5 to 1
-    public $maxExceptions = 1; // Changed from 3 to 1
-    public $timeout = 600; // 10 minutes
+    public $tries = 1;
+    public $maxExceptions = 1;
+    public $timeout = 300;
     
     private $data;
     private $userId;
-    private $attempt = 0;
+    private $jobKey;
 
     public function __construct($data, $userId)
     {
         $this->data = $data;
         $this->userId = $userId;
+        $this->jobKey = "apartment_creation_job_{$userId}";
     }
 
     public function handle()
     {
-        $this->attempt++;
-        Log::info("Starting apartment creation attempt {$this->attempt}", [
-            'user_id' => $this->userId,
-        ]);
+        Log::info("Starting apartment creation", ['user_id' => $this->userId]);
 
         try {
+            $this->updateProgress('started', 0);
 
             return DB::transaction(function () {
+                // 1. Get user and host information
                 $user = User::findOrFail($this->userId);
                 $cohost = Cohost::where('user_id', $user->id)->first();
                 $hostId = $cohost ? $cohost->host_id : $user->id;
                 $host = User::findOrFail($hostId);
                 
-                // Create and save the main HostHome record
-                $hostHome = $this->createHostHome($host, $cohost);
+                $this->updateProgress('processing', 25);
+
+                // 2. Create basic HostHome record
+                $hostHome = $this->createBasicHostHome($host, $cohost);
                 
-                // Process video
-                if (isset($this->data['hosthomevideo'])) {
-                    $hostHome->video = $this->processVideo($this->data['hosthomevideo']);
-                    $hostHome->save();
-                }
+                $this->updateProgress('processing', 50);
+
+                // 3. Dispatch all related jobs
+                $this->dispatchRelatedJobs($hostHome, $host, $user, $cohost);
                 
-                // Process all related data
-                $this->processRelatedData($hostHome, $host, $user, $cohost);
-                
-                // Handle notifications and emails
-                $this->handleNotifications($hostHome, $host, $user, $cohost);
-                
-                $this->clearAllCache();
-                
-                Log::info("Apartment creation completed successfully", [
+                $this->updateProgress('completed', 100);
+
+                Log::info("Basic apartment creation completed, related jobs dispatched", [
                     'user_id' => $this->userId,
                     'host_home_id' => $hostHome->id,
-                    'attempt' => $this->attempt
                 ]);
                 
                 return $hostHome;
-            }, 1); 
+            }, 1);
         } catch (Throwable $exception) {
             $this->handleError($exception);
             throw $exception;
-        }finally {
-            $this->clearAllCache();
+        } finally {
+            Cache::lock($this->jobKey)->release();
         }
     }
 
-    private function createHostHome($host, $cohost)
+    private function updateProgress($status, $percentage)
+    {
+        Cache::put($this->jobKey, [
+            'status' => $status,
+            'percentage' => $percentage,
+            'updated_at' => now(),
+        ], now()->addHours(24));
+    }
+
+    private function createBasicHostHome($host, $cohost)
     {
         $this->validateData();
         
-        $hostHome = new HostHome();
-        $hostHome->user_id = $cohost ? $cohost->host_id : $host->id;
-        $hostHome->property_type = $this->data['property_type'];
-        $hostHome->guest_choice = $this->data['guest_choice'];
-        $hostHome->address = $this->data['address'];
-        $hostHome->guests = $this->data['guest'];
-        $hostHome->bedroom = $this->data['bedrooms'];
-        $hostHome->beds = $this->data['beds'];
-        $hostHome->bathrooms = $this->data['bathrooms'];
-        $hostHome->title = $this->data['title'];
-        $hostHome->description = $this->data['description'];
-        $hostHome->reservation = $this->data['reservation'];
-        $hostHome->actualPrice = $this->data['price'];
-        $hostHome->price = 0;
-        $hostHome->check_out_time = $this->data['check_out_time'];
-        $hostHome->host_type = $this->data['host_type'];
-        $hostHome->check_in_time = $this->data['checkin'];
-        $hostHome->cancellation_policy = $this->data['cancelPolicy'];
-        $hostHome->security_deposit = $this->data['securityDeposit'];
-        $hostHome->service_fee = 0;
-        $hostHome->tax = 0;
-        $hostHome->total = 0;
-        
-        $hostHome->save();
-        
-        return $hostHome;
+        return HostHome::create([
+            'user_id' => $cohost ? $cohost->host_id : $host->id,
+            'property_type' => $this->data['property_type'],
+            'guest_choice' => $this->data['guest_choice'],
+            'address' => $this->data['address'],
+            'guests' => $this->data['guest'],
+            'bedroom' => $this->data['bedrooms'],
+            'beds' => $this->data['beds'],
+            'bathrooms' => $this->data['bathrooms'],
+            'title' => $this->data['title'],
+            'description' => $this->data['description'],
+            'reservation' => $this->data['reservation'],
+            'actualPrice' => $this->data['price'],
+            'price' => 0,
+            'check_out_time' => $this->data['check_out_time'],
+            'host_type' => $this->data['host_type'],
+            'check_in_time' => $this->data['checkin'],
+            'cancellation_policy' => $this->data['cancelPolicy'],
+            'security_deposit' => $this->data['securityDeposit'],
+            'service_fee' => 0,
+            'tax' => 0,
+            'total' => 0,
+        ]);
     }
 
-    private function processVideo($videoBase64)
+    private function dispatchRelatedJobs($hostHome, $host, $user, $cohost)
     {
-        try {
-            // Save the original video
-            $originalPath = $this->saveVideo($videoBase64);
-            
-            // Convert and compress the video
-            $processedPath = $this->convertAndCompressVideo($originalPath);
-            
-            // Clean up the original file after successful processing
-            if ($originalPath !== $processedPath) {
-                // Only delete the original if it's different from the processed path
-                if (File::exists(public_path($originalPath))) {
-                    Log::info("Deleting original video: " . public_path($originalPath));
-                    File::delete(public_path($originalPath));
-                } else {
-                    Log::warning("Original video not found for deletion: " . public_path($originalPath));
-                }
-            }
-            
-            return $processedPath;
-        } catch (Throwable $e) {
-            Log::error("Video processing failed: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    private function saveVideo($video)
-    {
-        if (!preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
-            throw new \Exception('Invalid video format');
-        }
-
-        $videoData = substr($video, strpos($video, ',') + 1);
-        $videoType = strtolower($matches[1]);
-        $decodedVideo = base64_decode($videoData);
-
-        $dir = 'videos/';
-        $file = Str::random() . '.' . $videoType;
-        $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
-
-        if (!File::exists($absolutePath)) {
-            File::makeDirectory($absolutePath, 0755, true);
-        }
-
-        file_put_contents($absolutePath . $file, $decodedVideo);
-
-        return $relativePath;
-    }
-
-    private function convertAndCompressVideo($relativePath)
-    {
-        $absolutePath = public_path($relativePath);
-        $ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => '/usr/bin/ffmpeg',
-            'ffprobe.binaries' => '/usr/bin/ffprobe',
-            'timeout'          => 3600,
-            'ffmpeg.threads'   => 12,
+        // Create individual jobs
+        $videoJob = new ProcessHostHomeVideo($this->data['hosthomevideo'], $hostHome->id);
+        $imageJob = new ProcessHostHomeImages($this->data['hosthomephotos'], $hostHome->id);
+        $detailsJob = new ProcessHostHomeDetails($this->data, $hostHome->id);
+        $notificationJob = new ProcessHostHomeNotifications($hostHome->id, $this->userId, [
+            'is_cohost' => $user->co_host,
+            'host_id' => $host->id,
         ]);
 
-        $video = $ffmpeg->open($absolutePath);
-
-        // Get original video dimensions
-        $dimensions = $ffmpeg
-            ->getFFProbe()
-            ->streams($absolutePath)
-            ->videos()
-            ->first()
-            ->getDimensions();
-
-        // Get original video details
-        $originalFormat = $video->getFormat();
-        $originalDuration = $originalFormat->get('duration');
-        $originalBitrate = $originalFormat->get('bit_rate');
-        $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
-
-        // Calculate target bitrate (aim for 70% of original, minimum 500kbps, maximum 2Mbps)
-        $targetBitrate = min(max($originalBitrate * 0.7, 500000), 2000000);
-
-        $format = new \FFMpeg\Format\Video\X264();
-        $format->setKiloBitrate($targetBitrate / 1000) // Convert to kbps
-            ->setAudioKiloBitrate(128) // Increased audio bitrate for better quality
-            ->setAudioCodec('aac')
-            ->setVideoCodec('libx264');
-
-        // Set additional parameters for better compression while maintaining quality
-        $format->setAdditionalParameters([
-            '-preset', 'medium', // Balance between compression speed and quality
-            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality)
-            '-profile:v', 'main', // Main profile for better compatibility
-            '-level', '4.0', // Compatibility level
-            '-movflags', '+faststart', // Enable fast start for web playback
-            '-pix_fmt', 'yuv420p' // Pixel format for better compatibility
-        ]);
-
-        $newFileName = Str::random() . '.mp4';
-        $newRelativePath = 'videos/' . $newFileName;
-        $newPath = public_path($newRelativePath);
-
-        // Log compression attempt
-        Log::info('Starting Video Compression', [
-            'original_path' => $absolutePath,
-            'original_size' => $originalFileSize . ' MB',
-            'original_bitrate' => $originalBitrate,
-            'target_bitrate' => $targetBitrate,
-            'dimensions' => $dimensions->getWidth() . 'x' . $dimensions->getHeight()
-        ]);
-
-        try {
-            $video->save($format, $newPath);
-            
-            $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
-
-            Log::info('Compression Result', [
-                'original_size' => $originalFileSize . ' MB',
-                'new_size' => $newFileSize . ' MB',
-                'size_reduction' => ($originalFileSize - $newFileSize) . ' MB',
-            ]);
-
-            // Verify the new video is playable
-            $newVideo = $ffmpeg->open($newPath);
-            $newDuration = $newVideo->getFormat()->get('duration');
-            
-            // If new file is larger or duration is significantly different, keep the original
-            if ($newFileSize > $originalFileSize || abs($newDuration - $originalDuration) > 1) {
-                unlink($newPath);
-                return $relativePath;
-            }
-
-            return $newRelativePath;
-        } catch (\Exception $e) {
-            Log::error('Video compression failed: ' . $e->getMessage());
-            if (file_exists($newPath)) {
-                unlink($newPath);
-            }
-            return $relativePath; // Return original path if compression fails
-        }
-    }
-    
-    private function processRelatedData($hostHome, $host, $user, $cohost)
-    {
-        // Process additional rules
-        if (!empty(trim($this->data['additionalRules'] ?? ''))) {
-            Hosthomerule::create([
-                'rule' => $this->data['additionalRules'],
-                'host_home_id' => $hostHome->id
-            ]);
-        }
-
-        // Dispatch jobs for processing related data
-        $this->dispatchRelatedJobs($hostHome);
-    }
-
-    private function dispatchRelatedJobs($hostHome)
-    {
-        // Images
-        foreach ($this->data['hosthomephotos'] as $base64Image) {
-            ProcessImage::dispatch($base64Image, $hostHome->id)->delay(now()->addSeconds(5));
-        }
-        
-        // Amenities
-        foreach ($this->data['amenities'] as $amenity) {
-            ProcessOffer::dispatch($amenity, $hostHome->id)->delay(now()->addSeconds(2));
-        }
-        
-        // Other related data
-        $relatedData = [
-            'hosthomedescriptions' => ProcessDescription::class,
-            'reservations' => ProcessReservation::class,
-            'discounts' => ProcessDiscount::class,
-            'rules' => ProcessRule::class,
-            'notice' => ProcessNotice::class,
+        // Chain the jobs together and dispatch them in sequence
+        $chain = [
+            $videoJob->onQueue('videos'),
+            $imageJob->onQueue('images'),
+            $detailsJob->onQueue('details'),
+            $notificationJob->onQueue('notifications')
         ];
 
-        foreach ($relatedData as $key => $jobClass) {
-            if (!empty($this->data[$key])) {
-                foreach ($this->data[$key] as $item) {
-                    $jobClass::dispatch($item, $hostHome->id)->delay(now()->addSeconds(2));
-                }
-            }
-        }
-    }
+        // Dispatch the chain
+        dispatch($videoJob)
+            ->chain($chain);
 
-    private function handleNotifications($hostHome, $host, $user, $cohost)
-    {
-        if (!$cohost) {
-            $this->sendHostNotification($host, $hostHome);
-        }
-
-        if ($user->co_host) {
-            $this->handleCohostApproval($hostHome, $host, $user);
-        }
-
-        $this->handleFirstHomeNotification($host);
-        $this->notifyCohosts($host, $hostHome);
-        $this->notifyAdmins($hostHome, $host, $user);
-    }
-
-    private function sendHostNotification($host, $hostHome)
-    {
-        $message = "Your listing has been created and is awaiting admin approval";
-        $title = "Listing Created Successfully.";
-        
-        Mail::to($host->email)->queue(new NewApartmentpendingApproval($host, $hostHome, $title));
-        
-        $notification = Notification::create([
-            'user_id' => $host->id,
-            'Message' => $message
-        ]);
-        
-        event(new NewNotificationEvent($notification, $notification->id, $host->id));
-    }
-
-    private function handleCohostApproval($hostHome, $host, $user)
-    {
-        $hostHome->update([
-            'approvedByHost' => false,
-            'needApproval' => true
-        ]);
-        
-        Mail::to($host->email)->queue(new ApartmentCreationApprovalRequest($hostHome, $host, $user));
-    }
-
-    private function handleFirstHomeNotification($host)
-    {
-        $isFirstHome = $host->hosthomes->isEmpty();
-        if ($isFirstHome && $host->host == 0) {
-            $host->host = 1;
-            $host->save();
-            
-            Mail::to($host->email)->queue(new FirstHomeWelcomeMessageMail($host));
-        }
-    }
-
-    private function notifyCohosts($host, $hostHome)
-    {
-        if ($host->hostcohosts()->exists()) {
-            $coHosts = $host->hostcohosts()->with('user')->get()->unique('user.email');
-            
-            foreach ($coHosts as $coHost) {
-                CreateHomesForCohosts::dispatch($coHost->user_id, $coHost->host_id, $hostHome->id);
-            }
-        }
-    }
-
-    private function notifyAdmins($hostHome, $host, $user)
-    {
-        if (!$user->co_host) {
-            $title = "New Apartment Created: Admin Action Required";
-            User::whereNotNull('adminStatus')
-                ->chunk(100, function ($admins) use ($hostHome, $title, $host) {
-                    NotifyAdmins::dispatch($admins, $hostHome, $host, $title);
-                });
-        }
+        Log::info("Dispatched video, image, details, and notification processing jobs in sequence", ['host_home_id' => $hostHome->id]);
     }
 
     private function validateData()
@@ -404,22 +173,10 @@ class ProcessHostHomeCreation implements ShouldQueue
     {
         Log::error("Failed to create apartment", [
             'user_id' => $this->userId,
-            'attempt' => $this->attempt,
             'error' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
         ]);
         
-        $this->storeProgress();
-    }
-
-    private function storeProgress()
-    {
-        $key = "apartment_progress_{$this->userId}";
-        Cache::put($key, [
-            'data' => $this->data,
-            'progress' => $this->attempt,
-            'timestamp' => now()
-        ], now()->addHours(24));
+        $this->updateProgress('failed', 0);
     }
 
     public function failed(Throwable $exception)
@@ -432,15 +189,15 @@ class ProcessHostHomeCreation implements ShouldQueue
         $user = User::find($this->userId);
         Mail::to($user->email)->queue(new ApartmentCreationFailedMail($user));
         
-        // You might want to create a notification here as well
+        // Create a notification for the user
+        // Assuming you have a Notification model
         Notification::create([
             'user_id' => $this->userId,
             'Message' => 'We encountered an issue while creating your listing. Our team has been notified and will look into it.'
         ]);
-    }
 
-    private function clearAllCache()
-    {
-        Cache::clear();
+        $this->updateProgress('failed', 0);
+        Cache::lock($this->jobKey)->release();
     }
+    
 }

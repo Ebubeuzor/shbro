@@ -102,7 +102,9 @@ class AdminController extends Controller
             event(new NewNotificationEvent($notification, $notification->id, $user->id));
             
             $formatedDate = $userWallet->updated_at->format('M j, Y h:ia');
-            Mail::to($user->email)->queue(new PaymentRequestApproved($user,$deductedAmount,$title,$formatedDate));
+            Mail::to($user->email)->queue(
+                (new PaymentRequestApproved($user,$deductedAmount,$title,$formatedDate))->onQueue('emails')
+            );
 
             return response()->json(['message' => 'Payment request approved successfully.']);
         } catch (\Exception $e) {
@@ -927,7 +929,9 @@ class AdminController extends Controller
         $title = "Your account has been banned from shrbo";
         $viewToUse = 'emails.accountBanned';
         $formatedDate = now()->format('M j, Y h:ia');
-        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
+        Mail::to($user->email)->queue(
+            (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
+        );
         
         $user->update([
             "banned" => "banned"
@@ -950,7 +954,9 @@ class AdminController extends Controller
                 ]);
 
                 // Send the ban notification email to the cohost's user
-                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+                Mail::to($cohostUser->email)->queue(
+                    (new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse))->onQueue('emails')
+                );
             }
         }
 
@@ -997,14 +1003,16 @@ class AdminController extends Controller
         User::chunk(100, function ($users) use ($request, $formatedDate) {
             foreach ($users as $user) {
                 $title = "A message for everyone";
-                Mail::to($user->email)->queue(new RevisedServiceCharges(
-                    $user, 
-                    $title, 
-                    $request->guest_services_charge, 
-                    $request->host_services_charge, 
-                    $request->tax, 
-                    $formatedDate
-                ));
+                Mail::to($user->email)->queue(
+                    (new RevisedServiceCharges(
+                        $user, 
+                        $title, 
+                        $request->guest_services_charge, 
+                        $request->host_services_charge, 
+                        $request->tax, 
+                        $formatedDate
+                    ))->onQueue('emails')
+                );
             }
         });
         
@@ -1085,7 +1093,9 @@ class AdminController extends Controller
         
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountSuspension';
-        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
+        Mail::to($user->email)->queue(
+            (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
+        );
         
         $user->update([
             "suspend" => "suspend"
@@ -1107,7 +1117,9 @@ class AdminController extends Controller
                 ]);
 
                 // Send the ban notification email to the cohost's user
-                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+                Mail::to($cohostUser->email)->queue(
+                    (new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse))->onQueue('emails')
+                );
             }
         }
         Cache::flush();
@@ -1132,7 +1144,9 @@ class AdminController extends Controller
         
         $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
-        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
+        Mail::to($user->email)->queue(
+            (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
+        );
         $user->update([
             "banned" => null
         ]);
@@ -1154,7 +1168,9 @@ class AdminController extends Controller
                 ]);
 
                 // Send the ban notification email to the cohost's user
-                Mail::to($cohostUser->email)->queue(new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse));
+                Mail::to($cohostUser->email)->queue(
+                    (new AccountNotice($cohostUser, $data['message'], $title, $formatedDate, $viewToUse))->onQueue('emails')
+                );
             }
         }
 
@@ -1180,7 +1196,9 @@ class AdminController extends Controller
         
         $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
-        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse));
+        Mail::to($user->email)->queue(
+            (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
+        );
         
         $user->update([
             "suspend" => null
@@ -1240,7 +1258,9 @@ class AdminController extends Controller
         $title = "Your account has been terminated";
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountDeletion';
-        Mail::to($user->email)->queue(new AccountNotice($user,$data['message'], $title,$formatedDate,$viewToUse));
+        Mail::to($user->email)->queue(
+            (new AccountNotice($user,$data['message'], $title,$formatedDate,$viewToUse))->onQueue('emails')
+        );
         $user->forceDelete();
         $user->hosthomes()->forceDelete();
         Cache::flush();
@@ -1268,7 +1288,9 @@ class AdminController extends Controller
         // Define a closure to send emails, to avoid code repetition
         $sendEmails = function($users) use ($data, &$title) {
             foreach ($users as $user) {
-                Mail::to($user->email)->queue(new AdminToUsers($user, $data['message'], $title));
+                Mail::to($user->email)->queue(
+                    (new AdminToUsers($user, $data['message'], $title))->onQueue('emails')
+                );
             }
         };
 

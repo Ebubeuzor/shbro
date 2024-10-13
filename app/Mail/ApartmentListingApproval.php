@@ -13,6 +13,9 @@ class ApartmentListingApproval extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $backoff = [10, 30, 60];
+    
     /**
      * Create a new message instance.
      *

@@ -50,10 +50,7 @@ class UpdateDescription implements ShouldQueue
                 ->where('description', $hosthomedescription)
                 ->first();
 
-            if ($existingDescription) {
-                // Update existing description
-                $existingDescription->update(['description' => $hosthomedescription]);
-            } else {
+            if (!$existingDescription) {
                 // Create new description
                 $descriptionData = ['description' => $hosthomedescription, 'host_home_id' => $hosthomeid];
                 $this->createDescriptions($descriptionData);

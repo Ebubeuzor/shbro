@@ -313,7 +313,9 @@ class AdminGuestChatController extends Controller
                         $message = $authUser->name . " has requested assistance for a certain matter";
                         
                         $formatedDate = now()->format('M j, Y h:ia');
-                        Mail::to($user->email)->queue(new AdminGuestChatForAdminsNotification($authUser, $message, "A guest requires Assistance",$formatedDate,$user));
+                        Mail::to($user->email)->queue(
+                            (new AdminGuestChatForAdminsNotification($authUser, $message, "A guest requires Assistance",$formatedDate,$user))->onQueue('emails')
+                        );
                     }
                 }
             });

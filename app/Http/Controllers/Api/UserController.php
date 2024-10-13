@@ -254,6 +254,12 @@ class UserController extends Controller
     /**
      * @lrd:start
      * this gets the tips of an auth user
+     * Navigation:
+     * - If url =listings`
+     *   Take user to page that contains the listings of homes that are available.
+     * 
+     * - If url = addGovernmentId`
+     *   Take user to page to upload their government ID for verification purposes.
      * @lrd:end
      */
     public function userTips()
@@ -467,7 +473,7 @@ class UserController extends Controller
     
             // If email was updated, send a verification email
             if ($emailUpdated) {
-                Mail::to($user->email)->queue(new VerifyYourEmail($user));
+                Mail::to($user->email)->queue((new VerifyYourEmail($user))->onQueue('emails'));
                 $user->update([
                     'email_verified_at' => null
                 ]);
@@ -616,15 +622,15 @@ class UserController extends Controller
             $notify->save();
             
             if ($data['status'] == "Verified") {
-                Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"));
+                Mail::to($user->email)->queue((new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"))->onQueue('emails'));
                 Cache::flush();
             }else {
                 $tip = new Tip();
                 $tip->user_id = $user;
                 $tip->message = "You Government id is " . $data['status'];
-                $tip->url = "/AddGovvernmentId";
+                $tip->url = "AddGovernmentId";
                 $tip->save();
-                Mail::to($user->email)->queue(new VerifyUser($user,$data['status'],'emails.governementIDUnverified',"Government ID Verification Incomplete"));
+                Mail::to($user->email)->queue((new VerifyUser($user,$data['status'],'emails.governementIDUnverified',"Government ID Verification Incomplete"))->onQueue('emails'));
                 
             }
             
@@ -1791,7 +1797,7 @@ class UserController extends Controller
 
         if ($user) {
             
-            Mail::to($user->email)->queue(new ActivateAccount($user));
+            Mail::to($user->email)->queue((new ActivateAccount($user))->onQueue('emails'));
             
             return response('Mail sent',204);
         }else {
@@ -2957,7 +2963,7 @@ class UserController extends Controller
 
             
             $title = "Withdrawal Requested";
-            Mail::to($user->email)->queue(new RequestPayMail($user,$amount,$title));
+            Mail::to($user->email)->queue((new RequestPayMail($user,$amount,$title))->onQueue('emails'));
 
             User::whereNotNull('adminStatus')->chunk(10, function ($admins) use($amount) {
                 try {

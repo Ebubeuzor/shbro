@@ -146,7 +146,9 @@ class ChatController extends Controller
 
                 // Send notification email to the receiver
                 $receiver = User::find($receiverId);
-                Mail::to($receiver->email)->queue(new NewMessageMail($receiver, 'You have a new message'));
+                Mail::to($receiver->email)->queue(
+                    (new NewMessageMail($receiver, 'You have a new message'))->onQueue('emails')
+                );
 
                 return response("ok", 200);
             } catch (\Throwable $th) {

@@ -44,8 +44,16 @@ class UpdateOffer implements ShouldQueue
     private function updateOffers($hosthome, array $amenities)
     {
         foreach ($amenities as $amenity) {
-            $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
-            $this->createOffers($amenityData);
+            
+            $existingAmenity = Hosthomeoffer::where('host_home_id', $hosthome)
+            ->where('offer', $amenity)
+            ->first();
+            
+            if (!$existingAmenity) {
+                $amenityData = ['offer' => $amenity, 'host_home_id' => $hosthome];
+                $this->createOffers($amenityData);
+            }
+
         }
     }
 

@@ -22,7 +22,10 @@ class VerificationController extends Controller
                 $user->is_active = true;
                 $user->save();
 
-                Mail::to($user->email)->queue(new EmailVerfied($user));
+                Mail::to($user->email)->queue(
+                    (new EmailVerfied($user))->onQueue('emails')
+                );
+                
                 $recentToken = $user->createToken('main')->plainTextToken;
 
                 

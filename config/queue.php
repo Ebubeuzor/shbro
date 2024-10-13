@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('QUEUE_CONNECTION', 'database'),
+    'default' => env('QUEUE_CONNECTION', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -69,6 +69,16 @@ return [
             'retry_after' => 90,
             'block_for' => null,
             'after_commit' => false,
+        ],
+
+        'queues' => [
+            'default',
+            'videos',
+            'images',
+            'single-image',
+            'details',
+            'notifications',
+            'emails',
         ],
 
     ],

@@ -75,7 +75,9 @@ class AuthController extends Controller
                 'remember_token' => $remember_token
             ]);
 
-            Mail::to($user->email)->send(new WelcomeMail($user));
+            Mail::to($user->email)->queue(
+                (new WelcomeMail($user))->onQueue('emails')
+            );
         }elseif (!$user->is_active) {
             return response()->json(["message" => "Your account has been deactivated"], 422);
         }
@@ -150,7 +152,9 @@ class AuthController extends Controller
                     'remember_token' => $remember_token
                 ]);
 
-                Mail::to($user->email)->send(new WelcomeMail($user));
+                Mail::to($user->email)->queue(
+                    (new WelcomeMail($user))->onQueue('emails')
+                );
             }elseif (!$user->is_active) {
                 return response("Your account has been deactivated", 422);
             }
@@ -291,8 +295,12 @@ class AuthController extends Controller
             ]);
         }
 
-        Mail::to($user->email)->queue(new WelcomeMail($user));
-        Mail::to($user->email)->queue(new VerifyYourEmail($user));
+        Mail::to($user->email)->queue(
+            (new WelcomeMail($user))->onQueue('emails')
+        );
+        Mail::to($user->email)->queue(
+            (new VerifyYourEmail($user))->onQueue('emails')
+        );
     
         Cache::flush();
         $routeLink = route('verification.notice');

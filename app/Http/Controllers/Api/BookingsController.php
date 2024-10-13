@@ -544,8 +544,12 @@ class BookingsController extends Controller
 
         $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId, $hostHomeId);
         $userToReceive = User::whereId($receiverId)->first();
-        Mail::to($user->email)->queue(new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"));
-        Mail::to($userToReceive->email)->queue(new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay"));
+        Mail::to($user->email)->queue(
+            (new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"))->onQueue('emails')
+        );
+        Mail::to($userToReceive->email)->queue(
+            (new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay"))->onQueue('emails')
+        );
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId, $hostHomeId)
@@ -645,7 +649,9 @@ class BookingsController extends Controller
      */
     private function sendNotification(User $user, string $message, string $subject, string $status, int $hosthomeid)
     {
-        Mail::to($user->email)->queue(new AcceptOrDeclineGuestMail($user, $message, $subject,$status,$hosthomeid));
+        Mail::to($user->email)->queue(
+            (new AcceptOrDeclineGuestMail($user, $message, $subject,$status,$hosthomeid))->onQueue('emails')
+        );
     }
 
 
@@ -746,9 +752,13 @@ class BookingsController extends Controller
                 $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
                 $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
                 $checkInTime = $hostHome->check_in_time;
-                Mail::to($host->email)->queue(new SuccessfulBookingMessage($host, $user,$hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Your apartment has been booked"));
+                Mail::to($host->email)->queue(
+                    (new SuccessfulBookingMessage($host, $user,$hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Your apartment has been booked"))->onQueue('emails')
+                );
                 
-                Mail::to($user->email)->queue(new GuestBookingConfirmationReceipt($user, $hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Booking Confirmation Receipt"));
+                Mail::to($user->email)->queue(
+                    (new GuestBookingConfirmationReceipt($user, $hostHome,$checkInDate. " " . $checkInTime,$checkOutDate. " " . $booking->check_out_time, "Booking Confirmation Receipt"))->onQueue('emails')
+                );
 
                 $acceptRequest = AcceptGuestRequest::where('user_id',$userId)
                 ->where('host_home_id',$hostHomeId)
@@ -876,7 +886,9 @@ class BookingsController extends Controller
         $checkInDate = Carbon::createFromFormat('Y-m-d', $booking->check_in)->format('F j, Y');
         $checkOutDate = Carbon::createFromFormat('Y-m-d', $booking->check_out)->format('F j, Y');
 
-        Mail::to($host->email)->queue(new BookingCancellation($host, $guest, $hostHome, $formatedDate, $checkInDate, $checkOutDate, $title));
+        Mail::to($host->email)->queue(
+            (new BookingCancellation($host, $guest, $hostHome, $formatedDate, $checkInDate, $checkOutDate, $title))->onQueue('emails')
+        );
 
         
         // Save the Canceltrip record

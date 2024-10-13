@@ -45,8 +45,16 @@ class UpdateNotice implements ShouldQueue
     {
 
         foreach ($notices as $notice) {
-            $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome];
-            $this->createNotices($hosthomenoticeData);
+            $existingNotice = Hosthomenotice::where('notice', $notice)
+            ->where('host_home_id', $hosthome)
+            ->first();
+
+            if (!$existingNotice) {
+    
+                $hosthomenoticeData = ['notice' => $notice, 'host_home_id' => $hosthome];
+                $this->createNotices($hosthomenoticeData);
+
+            }
         }
     }
 

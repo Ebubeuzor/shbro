@@ -46,8 +46,14 @@ class UpdateRule implements ShouldQueue
     {
 
         foreach ($rules as $rule) {
-            $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome];
-            $this->createRules($hosthomeruleData);
+            $existingRule = Hosthomerule::where('rule', $rule)
+            ->where('hosthome_id', $hosthome)
+            ->first();
+
+            if (!$existingRule) {
+                $hosthomeruleData = ['rule' => $rule, 'host_home_id' => $hosthome];
+                $this->createRules($hosthomeruleData);
+            }
         }
     }
     

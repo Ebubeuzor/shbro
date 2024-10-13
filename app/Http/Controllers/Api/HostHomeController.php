@@ -411,26 +411,31 @@ class HostHomeController extends Controller
         $data = $request->validated();
 
         // Find user
-        $user = User::find(auth()->id());
+        $user = User::findOrFail(auth()->id());
 
-        // Check if a job is already in progress or was recently completed for this user
+        // Use a distributed lock instead of a simple cache
         $jobKey = "apartment_creation_job_{$user->id}";
-        if (Cache::has($jobKey)) {
+        $lock = Cache::lock($jobKey, 15 * 60);
+
+        if (!$lock->get()) {
             return response([
-                "error" => "An apartment creation is already in progress or was recently completed for this user."
+                "error" => "An apartment creation is already in progress for this user."
             ], 409);
         }
 
-        // Set a flag in cache to indicate that a job has been dispatched
-        Cache::put($jobKey, true, now()->addMinutes(15));
+        try {
+            // Dispatch job
+            ProcessHostHomeCreation::dispatch($data, $user->id);
 
-        // Dispatch job
-        ProcessHostHomeCreation::dispatch($data, $user->id);
-
-        // Return response
-        return response([
-            "ok" => "Apartment creation process started"
-        ], 202);
+            // Return response
+            return response([
+                "ok" => "Apartment creation process started",
+            ], 202);
+            
+        } catch (\Exception $e) {
+            $lock->release();
+            throw $e;
+        }
     }
 
     
@@ -916,7 +921,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         Cache::flush();
@@ -970,7 +977,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
         
         Cache::flush();
@@ -1011,7 +1020,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         Cache::flush();
@@ -1049,7 +1060,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         
@@ -1086,7 +1099,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
         
         Cache::flush();
@@ -1122,7 +1137,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
         
         Cache::flush();
@@ -1158,7 +1175,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
         
         Cache::flush();
@@ -1194,7 +1213,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         Cache::flush();
@@ -1250,7 +1271,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         Cache::flush();
@@ -1307,7 +1330,9 @@ class HostHomeController extends Controller
         $cohost = Cohost::where('user_id',$user->id)->first();
         if ($cohost) {
             $destination = "https://shortletbooking.com/Scheduler";
-            Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+            Mail::to($host->email)->queue(
+                (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+            );
         }
 
         
@@ -1368,7 +1393,9 @@ class HostHomeController extends Controller
             $cohost = Cohost::where('user_id',$user->id)->first();
             if ($cohost) {
                 $destination = "https://shortletbooking.com/Scheduler";
-                Mail::to($host->email)->queue(new CohostUpdateForHost($hostHome,$host,$user,$destination));
+                Mail::to($host->email)->queue(
+                    (new CohostUpdateForHost($hostHome,$host,$user,$destination))->onQueue('emails')
+                );
             }
             
             Cache::flush();
@@ -1434,7 +1461,9 @@ class HostHomeController extends Controller
             // If the user doesn't exist 
             if (!$user) {
                 // Send invitation to join shortlet bookings
-                Mail::to($data['email'])->send(new CoHostInvitationForNonUsers($host->remember_token, $data['email'], $host->id));
+                Mail::to($data['email'])->queue(
+                    (new CoHostInvitationForNonUsers($host->remember_token, $data['email'], $host->id))->onQueue('emails')
+                );
                 return response()->json(['message' => 'Invitation to join shortlet bookings has been sent'], 200);
             }else {
                 abort(400,"Existing Users can't be a cohost");
@@ -1636,7 +1665,9 @@ class HostHomeController extends Controller
         $notification->save();
         // Broadcast the NewNotificationEvent to notify the WebSocket clients
         event(new NewNotificationEvent($notification, $notification->id, $user->id));
-        Mail::to($user->email)->queue(new ListingApproved($user, $hostHome, $title));
+        Mail::to($user->email)->queue(
+            (new ListingApproved($user, $hostHome, $title))->onQueue('emails')
+        );
     
         Cache::flush();
         return response()->json(['message'=>'approved'],200);
@@ -1657,7 +1688,10 @@ class HostHomeController extends Controller
         $data = $request->validate([
             'message' => 'required'
         ]);
-        $title = "Your home was not approved";
+
+        $hostHome = HostHome::find($hosthomeid);
+
+        $title = "Your home $hostHome->title was not approved";
 
         $notify = new Notification();
         $notify->user_id = $user;
@@ -1667,11 +1701,10 @@ class HostHomeController extends Controller
         $tip = new Tip();
         $tip->user_id = $user;
         $tip->message = $data['message'];
-        $tip->url = "/EditHostHomes" . $hosthomeid;
+        $tip->url = "listings";
         $tip->save();
 
         $user = User::find($user);
-        $hostHome = HostHome::find($hosthomeid);
 
         $hostHome->update([
             'disapproved' => 'disapproved'
@@ -1685,7 +1718,9 @@ class HostHomeController extends Controller
         // Broadcast the NewNotificationEvent to notify the WebSocket clients
         event(new NewNotificationEvent($notification, $notification->id, $user->id));
 
-        Mail::to($user->email)->queue(new DisapproveHostHome($user,$data['message'],$hostHome,$title));
+        Mail::to($user->email)->queue(
+            (new DisapproveHostHome($user,$data['message'],$hostHome,$title))->onQueue('emails')
+        );
         
         Cache::flush();
         return response()->json(['message'=>'disapproved'],200);
@@ -1699,15 +1734,32 @@ class HostHomeController extends Controller
     public function update(UpdateHostHomeRequest $request, $hostHomeId)
     {
 
+        // Validate and get data
         $data = $request->validated();
-        
-        $user = User::find(auth()->id());
 
-        ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId);
+        // Find user
+        $user = User::findOrFail(auth()->id());
 
-        return response([
-            "ok" => "Updated"
-        ]);
+        // Use a distributed lock instead of a simple cache
+        $jobKey = "apartment_update_job_{$hostHomeId}";
+        $lock = Cache::lock($jobKey, 15 * 60);
+
+        if (!$lock->get()) {
+            return response([
+                "error" => "An apartment creation is already in progress for this user."
+            ], 409);
+        }
+
+        try {
+            ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId);
+
+            return response([
+                "ok" => "Updated"
+            ]);
+        }catch (\Exception $e) {
+            $lock->release();
+            throw $e;
+        }
     }
 
     
@@ -1907,7 +1959,9 @@ class HostHomeController extends Controller
                 'approvedByHost' => false,
                 'needApproval' => true
             ]);
-            Mail::to($host->email)->queue(new ApartmentDeleteApprovalRequest($hostHome,$host,$user));
+            Mail::to($host->email)->queue(
+                (new ApartmentDeleteApprovalRequest($hostHome,$host,$user))->onQueue('emails')
+            );
             $this->clearCacheForAllUsers();
             return response('Request has been sent to host',200);
         }else{

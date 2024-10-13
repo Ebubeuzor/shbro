@@ -35,22 +35,12 @@ class NewNotificationEvent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // Fetch all notifications for the user, ordered from latest to oldest
-        $notifications = Notification::where('user_id', $this->userId)
-            ->latest()
-            ->paginate(10);
-    
-        // Apply map on the collection of the paginator
-        $notifications->getCollection()->transform(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'message' => $notification->Message,  // Assuming 'Message' is a property, ensure case sensitivity
-                'time' => $notification->created_at,
-            ];
-        });
-    
         return [
-            'notifications' => $notifications
+            'notification' => [
+                'id' => $this->notification->id,
+                'message' => $this->notification->Message,
+                'time' => $this->notification->created_at,
+            ],
         ];
     }
     

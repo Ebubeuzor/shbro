@@ -114,6 +114,8 @@ class HostHomeResource extends JsonResource
             'cancelPolicy' => $this->cancellation_policy,
             'securityDeposit' => $this->security_deposit,
             'listing_status' => $this->listing_status,
+            'latitude' => $this->latitude ?? null,
+            'longitude' => $this->longitude ?? null,
             'vat' => $tax,
             'bookingRequestStatus' => $bookingRequestStatus,
             'checkInRequest' => $checkInRequest,

@@ -671,10 +671,14 @@ class UserController extends Controller
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $token = env('TWILIO_AUTH_TOKEN');
-        $twilio_sid = env('TWILIO_SID');
-        $twilio_verify_sid = env('TWILIO_VERIFY_SID');
-        
+
+
+        $token = config('services.twilio.auth_token');
+        $twilio_sid = config('services.twilio.sid');
+        $twilio_verify_sid = config('services.twilio.verify_sid');
+        info($token);
+        info($twilio_sid);
+        info($twilio_verify_sid);
         try {
             // Initialize Twilio client
             $twilio = new Client($twilio_sid, $token);
@@ -692,9 +696,11 @@ class UserController extends Controller
             return response("OTP sent", 200);
     
         } catch (\Twilio\Exceptions\RestException $e) {
+            info($e->getMessage());
             return response("Failed to send OTP. Please try again later.", 500);
-    
+            
         } catch (\Exception $e) {
+            info($e->getMessage());
             return response("An unexpected error occurred. Please try again later.", 500);
         }
             

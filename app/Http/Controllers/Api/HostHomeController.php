@@ -425,7 +425,7 @@ class HostHomeController extends Controller
 
         try {
             // Dispatch job
-            ProcessHostHomeCreation::dispatch($data, $user->id);
+            ProcessHostHomeCreation::dispatch($data, $user->id, $lock);
 
             // Return response
             return response([
@@ -1751,7 +1751,7 @@ class HostHomeController extends Controller
         }
 
         try {
-            ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId);
+            ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId, $lock);
 
             return response([
                 "ok" => "Updated"

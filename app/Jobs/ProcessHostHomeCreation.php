@@ -40,12 +40,14 @@ class ProcessHostHomeCreation implements ShouldQueue
     private $data;
     private $userId;
     private $jobKey;
+    private $lock;
 
-    public function __construct($data, $userId)
+    public function __construct($data, $userId,$lock)
     {
         $this->data = $data;
         $this->userId = $userId;
         $this->jobKey = "apartment_creation_job_{$userId}";
+        $this->lock = $lock;
     }
 
     public function handle()
@@ -85,7 +87,7 @@ class ProcessHostHomeCreation implements ShouldQueue
             $this->handleError($exception);
             throw $exception;
         } finally {
-            Cache::lock($this->jobKey)->release();
+            $this->lock->release();
         }
     }
 
@@ -121,6 +123,8 @@ class ProcessHostHomeCreation implements ShouldQueue
             'check_in_time' => $this->data['checkin'],
             'cancellation_policy' => $this->data['cancelPolicy'],
             'security_deposit' => $this->data['securityDeposit'],
+            'longitude' => $this->data['longitude'],
+            'latitude' => $this->data['latitude'],
             'service_fee' => 0,
             'tax' => 0,
             'total' => 0,
@@ -187,7 +191,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         ]);
         
         $user = User::find($this->userId);
-        Mail::to($user->email)->queue(new ApartmentCreationFailedMail($user));
+        Mail::to($user->email)->send(new ApartmentCreationFailedMail($user));
         
         // Create a notification for the user
         // Assuming you have a Notification model
@@ -197,7 +201,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         ]);
 
         $this->updateProgress('failed', 0);
-        Cache::lock($this->jobKey)->release();
+        $this->lock->release();
     }
     
 }

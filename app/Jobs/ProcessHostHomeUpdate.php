@@ -35,13 +35,15 @@ class ProcessHostHomeUpdate implements ShouldQueue
     private $data;
     private $user;
     private $hostHomeId;
+    private $lock;
     private $jobKey;
 
-    public function __construct($data, $user, $hostHomeId)
+    public function __construct($data, $user, $hostHomeId, $lock)
     {
         $this->data = $data;
         $this->user = $user;
         $this->hostHomeId = $hostHomeId;
+        $this->lock = $lock;
         $this->jobKey = "apartment_update_job_{$hostHomeId}";
     }
 
@@ -78,7 +80,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
             $this->handleError($exception);
             throw $exception;
         } finally {
-            Cache::lock($this->jobKey)->release();
+            $this->lock->release();
         }
     }
 
@@ -213,6 +215,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
         ]);
 
         $this->updateProgress('failed', 0);
-        Cache::lock($this->jobKey)->release();
+        $this->lock->release();
     }
 }

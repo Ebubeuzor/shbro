@@ -28,21 +28,21 @@ return new class extends Migration
             $table->string("title");
             $table->text("description");
             $table->string("reservation");
-            $table->string("advance_notice");
-            $table->string("preparation_time");
-            $table->string("availability_window");
+            $table->string("advance_notice")->nullable();
+            $table->string("preparation_time")->nullable();
+            $table->string("availability_window")->nullable();
             $table->string("price");
             $table->string("actualPrice");
             $table->string("weekendPrice")->nullable();
-            $table->string("bookingCount");
-            $table->string("host_type");
-            $table->string("check_in_time");
-            $table->string("check_out_time");
-            $table->string("cancellation_policy");
-            $table->string("security_deposit");
-            $table->integer('service_fee');
-            $table->integer('min_nights');
-            $table->integer('max_nights');
+            $table->string("bookingCount")->nullable();
+            $table->string("host_type")->nullable();
+            $table->string("check_in_time")->nullable();
+            $table->string("check_out_time")->nullable();
+            $table->string("cancellation_policy")->nullable();
+            $table->string("security_deposit")->nullable();
+            $table->integer('service_fee')->nullable();
+            $table->integer('min_nights')->nullable();
+            $table->integer('max_nights')->nullable();
             $table->integer('tax');
             $table->integer('total');
             $table->string('disapproved')->nullable();
@@ -52,6 +52,8 @@ return new class extends Migration
             $table->softDeletes();
             $table->string('banned')->nullable();
             $table->string('suspend')->nullable();
+            $table->string('longitude')->nullable();
+            $table->string('latitude')->nullable();
         });
     }
 

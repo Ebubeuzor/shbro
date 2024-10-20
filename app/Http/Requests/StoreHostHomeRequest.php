@@ -57,6 +57,8 @@ class StoreHostHomeRequest extends FormRequest
             'checkin' => "required ",
             'check_out_time' => "required ",
             'cancelPolicy' => "required",
+            'longitude' => "required",
+            'latitude' => "required",
             'securityDeposit' => "required|numeric",
         ];
     }

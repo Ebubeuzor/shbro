@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,10 +26,31 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('messanger.{receiver}', function ($user, $id) {
+Broadcast::channel('messanger.{receiver}', function ($user, $receiverId) {
+    Log::info('User is attempting to subscribe to channel', [
+        'user_id' => $user->id,
+        'receiver_id' => $receiverId
+    ]);
+
     // Check if the user is authenticated using Sanctum token
-    return (int) $user->id === (int) $id;
+    $isAuthorized = (int) $user->id === (int) $receiverId;
+    
+    if ($isAuthorized) {
+        Log::info('User successfully subscribed to channel', [
+            'user_id' => $user->id,
+            'receiver_id' => $receiverId
+        ]);
+    } else {
+        Log::warning('Unauthorized subscription attempt', [
+            'user_id' => $user->id,
+            'receiver_id' => $receiverId
+        ]);
+    }
+
+    return $isAuthorized;
 });
+
+
 
 Broadcast::channel('typing.{receiver}', function ($user, $id) {
     return (int) $user->id === (int) $id;

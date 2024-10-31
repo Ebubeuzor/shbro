@@ -23,7 +23,7 @@ class StoreHostHomeRequest extends FormRequest
             // You can add authorization logic here
             return true;
         } catch (Exception $e) {
-            Log::error('Authorization failed in StoreHostHomeRequest: ' . $e->getMessage());
+            Log::info('Authorization failed in StoreHostHomeRequest: ' . $e->getMessage());
             return false;
         }
     }
@@ -72,7 +72,7 @@ class StoreHostHomeRequest extends FormRequest
                 'securityDeposit' => "required|numeric|min:0",
             ];
         } catch (Exception $e) {
-            Log::error('Error in rules method: ' . $e->getMessage());
+            Log::info('Error in rules method: ' . $e->getMessage());
             throw new HttpResponseException(response()->json([
                 'message' => 'Error processing validation rules',
                 'errors' => ['system' => ['An unexpected error occurred']]
@@ -114,7 +114,7 @@ class StoreHostHomeRequest extends FormRequest
                 $this->validateFileContents($validator);
             });
         } catch (Exception $e) {
-            Log::error('Error in withValidator: ' . $e->getMessage());
+            Log::info('Error in withValidator: ' . $e->getMessage());
             throw new HttpResponseException(response()->json([
                 'message' => 'Error processing validation',
                 'errors' => ['system' => [$e->getMessage()]]
@@ -147,7 +147,7 @@ class StoreHostHomeRequest extends FormRequest
                 }
             }
         } catch (Exception $e) {
-            Log::error('Error validating file types: ' . $e->getMessage());
+            Log::info('Error validating file types: ' . $e->getMessage());
             throw new HttpResponseException(response()->json([
                 'message' => 'Error validating files',
                 'errors' => ['files' => [$e->getMessage()]]
@@ -167,7 +167,7 @@ class StoreHostHomeRequest extends FormRequest
             // Add any additional file content validation logic here
             // For example, checking image dimensions, video duration, etc.
         } catch (Exception $e) {
-            Log::error('Error validating file contents: ' . $e->getMessage());
+            Log::info('Error validating file contents: ' . $e->getMessage());
             throw new HttpResponseException(response()->json([
                 'message' => 'Error validating file contents',
                 'errors' => ['files' => [$e->getMessage()]]
@@ -196,7 +196,7 @@ class StoreHostHomeRequest extends FormRequest
                 ]);
             }
         } catch (Exception $e) {
-            Log::error('Error in prepareForValidation: ' . $e->getMessage());
+            Log::info('Error in prepareForValidation: ' . $e->getMessage());
             throw new HttpResponseException(response()->json([
                 'message' => 'Error preparing validation',
                 'errors' => ['system' => [$e->getMessage()]]
@@ -214,7 +214,7 @@ class StoreHostHomeRequest extends FormRequest
             $executionTime = $endTime - $this->startTime;
             Log::info('Validation time for StoreHostHomeRequest: ' . $executionTime . ' seconds');
         } catch (Exception $e) {
-            Log::error('Error in passedValidation: ' . $e->getMessage());
+            Log::info('Error in passedValidation: ' . $e->getMessage());
             // Don't throw exception here as validation has already passed
         }
     }

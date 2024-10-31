@@ -35,7 +35,6 @@ return new class extends Migration
             $table->string("actualPrice");
             $table->string("weekendPrice")->nullable();
             $table->string("bookingCount")->nullable();
-            $table->string("host_type")->nullable();
             $table->string("check_in_time")->nullable();
             $table->string("check_out_time")->nullable();
             $table->string("cancellation_policy")->nullable();

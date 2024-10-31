@@ -119,7 +119,6 @@ class ProcessHostHomeCreation implements ShouldQueue
             'actualPrice' => $this->data['price'],
             'price' => 0,
             'check_out_time' => $this->data['check_out_time'],
-            'host_type' => $this->data['host_type'],
             'check_in_time' => $this->data['checkin'],
             'cancellation_policy' => $this->data['cancelPolicy'],
             'security_deposit' => $this->data['securityDeposit'],

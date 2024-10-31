@@ -116,7 +116,6 @@ class ProcessHostHomeUpdate implements ShouldQueue
             'reservation' => $this->data['reservation'],
             'actualPrice' => $price,
             'check_out_time' => $this->data['check_out_time'],
-            'host_type' => $this->data['host_type'],
             'check_in_time' => $this->data['checkin'],
             'service_fee' => $service_fee,
             'tax' => $tax,

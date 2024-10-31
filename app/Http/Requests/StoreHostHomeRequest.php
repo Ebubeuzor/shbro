@@ -38,11 +38,8 @@ class StoreHostHomeRequest extends FormRequest
             'bathrooms' => "required",
             'amenities' => "required | array",
             'hosthomephotos' => "required | array | min:5",
-            'hosthomevideo' => ['required', function ($attribute, $value, $fail) {
-                if (!$this->isBase64($value)) {
-                    $fail('The ' . $attribute . ' must be a valid base64 encoded value.');
-                }
-            }],
+            'hosthomephotos.*' => 'file',
+            'hosthomevideo' => ['required', 'file'],
             'title' => "required",
             'hosthomedescriptions' => "required|array| min:2",
             'description' => "required",
@@ -52,7 +49,6 @@ class StoreHostHomeRequest extends FormRequest
             'discounts' => "required | array",
             'rules' => "required | array",
             'additionalRules' => "string",
-            'host_type' => "required",
             'notice' => "required | array",
             'checkin' => "required ",
             'check_out_time' => "required ",

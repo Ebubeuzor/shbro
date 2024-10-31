@@ -372,6 +372,34 @@ class UserController extends Controller
         //
     }
 
+    private function saveImageTest($imageFile)
+    {
+        if (!$imageFile->isValid()) {
+            throw new \Exception('Invalid image format or upload error');
+        }
+    
+        // Move the uploaded file to a permanent temporary path before optimization
+        $dir = 'images/';
+        $fileName = Str::random() . '.' . $imageFile->extension();
+        $absolutePath = public_path($dir);
+        $filePath = $absolutePath . '/' . $fileName;
+    
+        if (!File::exists($absolutePath)) {
+            File::makeDirectory($absolutePath, 0755, true);
+        }
+    
+        $imageFile->move($absolutePath, $fileName);
+    
+        // Now optimize the image at the permanent location
+        try {
+            ImageOptimizer::optimize($filePath);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+    
+        return $dir . $fileName;
+    }
+
     private function saveImage($image)
     {
         // Check if image is base64 string
@@ -2996,27 +3024,26 @@ class UserController extends Controller
     public function uploadBase64(Request $request)
     {
         $request->validate([
-            'video' => 'required|string', // Validate that the video is a base64 string
+            'image' => 'required|file', // Ensure the video is a file of a valid type
         ]);
 
-        $videoBase64 = $request->input('video');
-        $this->processVideo($videoBase64);
+        $videoFile = $request->file('image'); // Get the uploaded file
+        $this->saveImageTest($videoFile);
 
         return response()->json(['done' => "Done"], 200);
     }
 
-    private function processVideo($videoBase64)
+    private function processVideo($videoFile)
     {
         try {
-            // Save the original video
-            $originalPath = $this->saveVideo($videoBase64);
-            
+            // Save the original video file
+            $originalPath = $this->saveVideo($videoFile);
+
             // Convert and compress the video
             $processedPath = $this->convertAndCompressVideo($originalPath);
-            
+
             // Clean up the original file after successful processing
             if ($originalPath !== $processedPath) {
-                // Only delete the original if it's different from the processed path
                 if (File::exists(public_path($originalPath))) {
                     Log::info("Deleting original video: " . public_path($originalPath));
                     File::delete(public_path($originalPath));
@@ -3024,34 +3051,27 @@ class UserController extends Controller
                     Log::warning("Original video not found for deletion: " . public_path($originalPath));
                 }
             }
-            
+
             return $processedPath;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             Log::error("Video processing failed: " . $e->getMessage());
             throw $e;
         }
     }
 
-    private function saveVideo($video)
+    private function saveVideo($videoFile)
     {
-        if (!preg_match('/^data:video\/(\w+);base64,/', $video, $matches)) {
-            throw new \Exception('Invalid video format');
-        }
-
-        $videoData = substr($video, strpos($video, ',') + 1);
-        $videoType = strtolower($matches[1]);
-        $decodedVideo = base64_decode($videoData);
-
         $dir = 'videos/';
-        $file = Str::random() . '.' . $videoType;
+        $fileName = Str::random() . '.' . $videoFile->getClientOriginalExtension();
+        $relativePath = $dir . $fileName;
         $absolutePath = public_path($dir);
-        $relativePath = $dir . $file;
 
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        file_put_contents($absolutePath . $file, $decodedVideo);
+        // Move uploaded file to the desired location
+        $videoFile->move($absolutePath, $fileName);
 
         return $relativePath;
     }
@@ -3060,7 +3080,7 @@ class UserController extends Controller
     {
         $absolutePath = public_path($relativePath);
         $ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => 'ffmpeg', // Assuming ffmpeg is in the system's PATH
+            'ffmpeg.binaries'  => 'ffmpeg',
             'ffprobe.binaries' => 'ffprobe',
             'timeout'          => 3600,
             'ffmpeg.threads'   => 12,
@@ -3068,7 +3088,7 @@ class UserController extends Controller
 
         $video = $ffmpeg->open($absolutePath);
 
-        // Get original video dimensions
+        // Get original video details
         $dimensions = $ffmpeg
             ->getFFProbe()
             ->streams($absolutePath)
@@ -3076,36 +3096,33 @@ class UserController extends Controller
             ->first()
             ->getDimensions();
 
-        // Get original video details
         $originalFormat = $video->getFormat();
         $originalDuration = $originalFormat->get('duration');
         $originalBitrate = $originalFormat->get('bit_rate');
         $originalFileSize = filesize($absolutePath) / (1024 * 1024); // in MB
 
-        // Calculate target bitrate (aim for 70% of original, minimum 500kbps, maximum 2Mbps)
+        // Calculate target bitrate
         $targetBitrate = min(max($originalBitrate * 0.7, 500000), 2000000);
 
         $format = new \FFMpeg\Format\Video\X264();
-        $format->setKiloBitrate($targetBitrate / 1000) // Convert to kbps
-            ->setAudioKiloBitrate(128) // Increased audio bitrate for better quality
+        $format->setKiloBitrate($targetBitrate / 1000)
+            ->setAudioKiloBitrate(128)
             ->setAudioCodec('aac')
             ->setVideoCodec('libx264');
 
-        // Set additional parameters for better compression while maintaining quality
         $format->setAdditionalParameters([
-            '-preset', 'medium', // Balance between compression speed and quality
-            '-crf', '23', // Constant Rate Factor (18-28 is good, lower is better quality)
-            '-profile:v', 'main', // Main profile for better compatibility
-            '-level', '4.0', // Compatibility level
-            '-movflags', '+faststart', // Enable fast start for web playback
-            '-pix_fmt', 'yuv420p' // Pixel format for better compatibility
+            '-preset', 'medium',
+            '-crf', '23',
+            '-profile:v', 'main',
+            '-level', '4.0',
+            '-movflags', '+faststart',
+            '-pix_fmt', 'yuv420p'
         ]);
 
         $newFileName = Str::random() . '.mp4';
         $newRelativePath = 'videos/' . $newFileName;
         $newPath = public_path($newRelativePath);
 
-        // Log compression attempt
         Log::info('Starting Video Compression', [
             'original_path' => $absolutePath,
             'original_size' => $originalFileSize . ' MB',
@@ -3116,7 +3133,7 @@ class UserController extends Controller
 
         try {
             $video->save($format, $newPath);
-            
+
             $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
 
             Log::info('Compression Result', [
@@ -3125,11 +3142,9 @@ class UserController extends Controller
                 'size_reduction' => ($originalFileSize - $newFileSize) . ' MB',
             ]);
 
-            // Verify the new video is playable
             $newVideo = $ffmpeg->open($newPath);
             $newDuration = $newVideo->getFormat()->get('duration');
-            
-            // If new file is larger or duration is significantly different, keep the original
+
             if ($newFileSize > $originalFileSize || abs($newDuration - $originalDuration) > 1) {
                 unlink($newPath);
                 return $relativePath;
@@ -3141,10 +3156,9 @@ class UserController extends Controller
             if (file_exists($newPath)) {
                 unlink($newPath);
             }
-            return $relativePath; // Return original path if compression fails
+            return $relativePath;
         }
     }
-
 
 
     /**

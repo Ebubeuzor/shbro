@@ -71,54 +71,32 @@ class ProcessImage implements ShouldQueue
     }
 
     
-    private function saveImage($image)
+    private function saveImage($imageFile)
     {
-        // Check if image is base64 string
-        if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
-            $imageData = substr($image, strpos($image, ',') + 1);
-            $imageType = strtolower($matches[1]);
-
-            // Decode base64 image data
-            $decodedImage = base64_decode($imageData);
-
-            if ($decodedImage === false) {
-                throw new \Exception('Failed to decode image');
-            }
-        } else {
-            throw new \Exception('Invalid image format');
+        if (!$imageFile->isValid()) {
+            throw new \Exception('Invalid image format or upload error');
         }
-
-        $tempDir = sys_get_temp_dir();
-        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
-
-        // Save the decoded image to the temp file
-        if (!file_put_contents($tempFile, $decodedImage)) {
-            throw new \Exception('Failed to save image to temp file');
-        }
-
-        // Optimize the image
-        try {
-            ImageOptimizer::optimize($tempFile);
-        } catch (\Exception $e) {
-            Log::error('Image optimization failed: ' . $e->getMessage());
-        }
-
-        // Move the optimized image to the public directory
+    
+        // Move the uploaded file to a permanent temporary path before optimization
         $dir = 'images/';
-        $fileName = Str::random() . '.' . $imageType;
+        $fileName = Str::random() . '.' . $imageFile->extension();
         $absolutePath = public_path($dir);
-        $relativePath = $dir . $fileName;
         $filePath = $absolutePath . '/' . $fileName;
-
+    
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
-
-        if (!rename($tempFile, $filePath)) {
-            throw new \Exception('Failed to move optimized image to public directory');
+    
+        $imageFile->move($absolutePath, $fileName);
+    
+        // Now optimize the image at the permanent location
+        try {
+            ImageOptimizer::optimize($filePath);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
         }
-
-        return $relativePath;
+    
+        return $dir . $fileName;
     }
 
     private function deleteHostHome($hosthomeid)

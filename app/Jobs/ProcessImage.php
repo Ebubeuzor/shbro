@@ -54,7 +54,7 @@ class ProcessImage implements ShouldQueue
     {
         // Validate the input data
         $validator = Validator::make($data, [
-            'image' => 'string',
+            'image' => 'file',
             'host_home_id' => 'exists:App\Models\HostHome,id'
         ]);
 

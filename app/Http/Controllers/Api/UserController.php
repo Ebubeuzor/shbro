@@ -699,37 +699,43 @@ class UserController extends Controller
         $userid = auth()->id();
         $user = User::find($userid);
         
-
-
-        $token = config('services.twilio.auth_token');
-        $twilio_sid = config('services.twilio.sid');
-        $twilio_verify_sid = config('services.twilio.verify_sid');
-        info($token);
-        info($twilio_sid);
-        info($twilio_verify_sid);
         try {
-            // Initialize Twilio client
-            $twilio = new Client($twilio_sid, $token);
-    
-            // Send OTP
-            $twilio->verify->v2->services($twilio_verify_sid)
-                ->verifications
-                ->create($data['new_number'], "sms");
-    
-            // Update the user's record with the new phone number
-            $user->update([
-                'otp_phone_number' => $data['new_number']
-            ]);
-    
-            return response("OTP sent", 200);
-    
-        } catch (\Twilio\Exceptions\RestException $e) {
-            info($e->getMessage());
-            return response("Failed to send OTP. Please try again later.", 500);
+            // Generate 6 digit OTP
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             
+            // Store the new phone number and expiration
+            $user->update([
+                'otp_phone_number' => $data['new_number'],
+                'otp_expires_at' => now()->addMinutes(10)
+            ]);
+
+            // Store OTP in cache
+            Cache::put('phone_change_otp_' . $userid, $otp, now()->addMinutes(10));
+
+            // Send OTP via Infobip
+            $response = Http::withHeaders([
+                'Authorization' => 'App 849fb0ee63c09690e2cea723d51e7ecb-72e0d63a-a591-4f16-9677-9881b192c98b',
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ])->post('https://6kr2j.api.infobip.com/sms/2/text/advanced', [
+                'messages' => [[
+                    'destinations' => [
+                        ['to' => $data['new_number']]
+                    ],
+                    'from' => 'Shrbo',
+                    'text' => "Your Shrbo verification code is: $otp. Valid for 10 minutes."
+                ]]
+            ]);
+
+            if ($response->successful()) {
+                return response("OTP sent", 200);
+            }
+
+            throw new \Exception('Failed to send SMS: ' . $response->body());
+
         } catch (\Exception $e) {
             info($e->getMessage());
-            return response("An unexpected error occurred. Please try again later.", 500);
+            return response("Failed to send OTP. Please try again later.", 500);
         }
             
     }
@@ -746,26 +752,28 @@ class UserController extends Controller
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $token = "c263b0ec3657b2343b71039b26056bed";
-        $twilio_sid = "ACfbcb4c0b89648609a46a6d79f2e83a9b";
-        $twilio_verify_sid = "VAd4e17c040dbeea056f645e45381a3c3d";
-        $twilio = new Client($twilio_sid, $token);
-        $verification = $twilio->verify->v2->services($twilio_verify_sid)
-            ->verificationChecks
-            ->create([
-                'to' => $user->otp_phone_number, 
-                'code' => $data['otp_code']
-            ]);
+        // Check if OTP has expired
+        if ($user->otp_expires_at < now()) {
+            return response("OTP has expired", 400);
+        }
         
-        if ($verification->valid) {
+        // Get OTP from cache
+        $stored_otp = Cache::get('phone_change_otp_' . $userid);
+        
+        if ($stored_otp === $data['otp_code']) {
             // Update the user's phone number
-            $user->phone = $user->otp_phone_number; // Ensure 'new_number' is included in the request
-            $user->save();
+            $user->update([
+                'phone' => $user->otp_phone_number,
+                'otp_expires_at' => null
+            ]);
+            
+            // Clear the cached OTP
+            Cache::forget('phone_change_otp_' . $userid);
             
             return response("Phone number changed", 200);
         }
         
-        return response("Phone number not changed Invalid otp code", 400);
+        return response("Invalid OTP code", 400);
     }
 
     /**
@@ -981,39 +989,23 @@ class UserController extends Controller
      * Resend the OTP for changing the user's phone number.
      * This method resends the OTP for changing the user's phone number.
      * new_number you must include it in the request body when making the request
+     * If you need to wait for another otp to be sent and you made a rewuest you will get 429 error
      * @lrd:end
      */
     public function resendOtp(UpdateUserNumberRequest $request)
     {
-        $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
         
-        $token = env('TWILIO_AUTH_TOKEN');
-        $twilio_sid = env('TWILIO_SID');
-        $twilio_verify_sid = env('TWILIO_VERIFY_SID');
-        try {
-            // Initialize Twilio client
-            $twilio = new Client($twilio_sid, $token);
-    
-            // Send OTP
-            $twilio->verify->v2->services($twilio_verify_sid)
-                ->verifications
-                ->create($data['new_number'], "sms");
-    
-            // Update the user's record with the new phone number
-            $user->update([
-                'otp_phone_number' => $data['new_number']
-            ]);
-    
-            return response("OTP sent", 200);
-    
-        } catch (\Twilio\Exceptions\RestException $e) {
-            return response("Failed to send OTP. Please try again later.", 500);
-    
-        } catch (\Exception $e) {
-            return response("An unexpected error occurred. Please try again later.", 500);
+        // Check if we need to wait before resending
+        if ($user->otp_expires_at && $user->otp_expires_at > now()->subMinutes(9)) {
+            return response("Please wait before requesting another OTP", 429);
         }
+        
+        // Clear existing OTP
+        Cache::forget('phone_change_otp_' . $userid);
+        
+        return $this->sendOtpForPhoneNumberChange($request);
             
     }
 

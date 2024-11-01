@@ -22,6 +22,7 @@ return new class extends Migration
                 $table->string('password')->nullable();
                 $table->string('phone')->nullable();
                 $table->string('otp_phone_number')->nullable();
+                $table->timestamp('otp_expires_at')->nullable();
                 $table->string('verification_type')->nullable();
                 $table->string('government_id')->nullable();
                 $table->string('live_photo')->nullable();

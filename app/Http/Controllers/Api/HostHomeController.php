@@ -54,6 +54,7 @@ use App\Models\ReservedPricesForCertainDay;
 use App\Models\Tip;
 use App\Models\User;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -67,6 +68,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class HostHomeController extends Controller
 {
@@ -454,62 +456,143 @@ class HostHomeController extends Controller
      */
     private function storeFilesInPublic($request)
     {
-        // Initialize the array to store paths for photos and video
-        $storedFiles = [
-            'photos' => [],
-            'video' => null
-        ];
+        try {
+            // Initialize the array to store paths for photos and video
+            $storedFiles = [
+                'photos' => [],
+                'video' => null
+            ];
 
-        // Create a unique subdirectory within "public/uploads/hosthomes/"
-        $uniqueDir = 'hosthomes/' . 'temp_' . uniqid();
-        $basePath = public_path("uploads/{$uniqueDir}");
-        
-        // Create directory if it doesn't exist
-        if (!File::isDirectory($basePath)) {
-            File::makeDirectory($basePath, 0755, true);
-        }
+            // Create a unique subdirectory within "public/uploads/hosthomes/"
+            $uniqueDir = 'hosthomes/' . 'temp_' . uniqid();
+            $basePath = public_path("uploads/{$uniqueDir}");
+            
+            // Create directory if it doesn't exist
+            try {
+                if (!File::isDirectory($basePath)) {
+                    File::makeDirectory($basePath, 0755, true);
+                }
+            } catch (Exception $e) {
+                Log::error("Failed to create directory: {$basePath}", ['error' => $e->getMessage()]);
+                throw new RuntimeException("Unable to create upload directory");
+            }
 
-        // Process photos
-        if ($request->hasFile('hosthomephotos')) {
-            foreach ($request->file('hosthomephotos') as $index => $photo) {
-                // Ensure the file is valid
-                if ($photo->isValid()) {
-                    $filename = "photo_{$index}_" . time() . '.' . $photo->getClientOriginalExtension();
-                    $relativePath = "uploads/{$uniqueDir}/{$filename}";
-                    
-                    // Move the photo to the target directory
-                    $photo->move($basePath, $filename);
-                    
-                    // Store information about the photo
-                    $storedFiles['photos'][] = [
-                        'path' => $relativePath,
-                        'full_path' => public_path($relativePath),
-                        'original_name' => $photo->getClientOriginalName(),
-                        'mime_type' => $photo->getMimeType(),
-                    ];
+            // Process photos
+            if ($request->hasFile('hosthomephotos')) {
+                foreach ($request->file('hosthomephotos') as $index => $photo) {
+                    try {
+                        // Validate file before processing
+                        if (!$photo->isValid()) {
+                            Log::warning("Invalid photo upload", [
+                                'original_name' => $photo->getClientOriginalName(),
+                                'error' => $photo->getError()
+                            ]);
+                            continue;
+                        }
+
+                        // Validate mime type
+                        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                        if (!in_array($photo->getMimeType(), $allowedTypes)) {
+                            Log::warning("Invalid mime type for photo", [
+                                'mime_type' => $photo->getMimeType(),
+                                'original_name' => $photo->getClientOriginalName()
+                            ]);
+                            continue;
+                        }
+
+                        // Generate safe filename
+                        $filename = "photo_{$index}_" . time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+                        $relativePath = "uploads/{$uniqueDir}/{$filename}";
+                        
+                        // Move the photo with error handling
+                        if (!$photo->move($basePath, $filename)) {
+                            throw new RuntimeException("Failed to move uploaded photo");
+                        }
+                        
+                        // Verify file exists after move
+                        $fullPath = public_path($relativePath);
+                        if (!file_exists($fullPath) || !is_readable($fullPath)) {
+                            throw new RuntimeException("Moved file is not accessible: {$fullPath}");
+                        }
+
+                        // Store information about the photo
+                        $storedFiles['photos'][] = [
+                            'path' => $relativePath,
+                            'full_path' => $fullPath,
+                            'original_name' => $photo->getClientOriginalName(),
+                            'mime_type' => $photo->getMimeType(),
+                            'size' => filesize($fullPath),
+                        ];
+
+                    } catch (Exception $e) {
+                        Log::error("Failed to process photo upload", [
+                            'original_name' => $photo->getClientOriginalName(),
+                            'error' => $e->getMessage()
+                        ]);
+                        // Continue processing other photos
+                        continue;
+                    }
                 }
             }
-        }
 
-        // Process video
-        if ($request->hasFile('hosthomevideo') && $request->file('hosthomevideo')->isValid()) {
-            $video = $request->file('hosthomevideo');
-            $filename = "video_" . time() . '.' . $video->getClientOriginalExtension();
-            $relativePath = "uploads/{$uniqueDir}/{$filename}";
+            // Process video
+            if ($request->hasFile('hosthomevideo')) {
+                try {
+                    $video = $request->file('hosthomevideo');
+                    
+                    // Validate video file
+                    if (!$video->isValid()) {
+                        throw new RuntimeException("Invalid video upload: " . $video->getError());
+                    }
 
-            // Move the video to the target directory
-            $video->move($basePath, $filename);
+                    // Validate mime type
+                    $allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+                    if (!in_array($video->getMimeType(), $allowedTypes)) {
+                        throw new RuntimeException("Invalid video mime type: " . $video->getMimeType());
+                    }
+
+                    // Generate safe filename
+                    $filename = "video_" . time() . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
+                    $relativePath = "uploads/{$uniqueDir}/{$filename}";
+
+                    // Move the video with error handling
+                    if (!$video->move($basePath, $filename)) {
+                        throw new RuntimeException("Failed to move uploaded video");
+                    }
+
+                    // Verify file exists after move
+                    $fullPath = public_path($relativePath);
+                    if (!file_exists($fullPath) || !is_readable($fullPath)) {
+                        throw new RuntimeException("Moved video file is not accessible: {$fullPath}");
+                    }
+
+                    // Store information about the video
+                    $storedFiles['video'] = [
+                        'path' => $relativePath,
+                        'full_path' => $fullPath,
+                        'original_name' => $video->getClientOriginalName(),
+                        'mime_type' => $video->getMimeType(),
+                        'size' => filesize($fullPath),
+                    ];
+
+                } catch (Exception $e) {
+                    Log::error("Failed to process video upload", [
+                        'original_name' => $video->getClientOriginalName(),
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't rethrow - return what we have
+                }
+            }
+
+            return $storedFiles;
             
-            // Store information about the video
-            $storedFiles['video'] = [
-                'path' => $relativePath,
-                'full_path' => public_path($relativePath),
-                'original_name' => $video->getClientOriginalName(),
-                'mime_type' => $video->getMimeType(),
-            ];
+        } catch (Exception $e) {
+            Log::error("Critical error in file upload process", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-
-        return $storedFiles;
     }
 
 

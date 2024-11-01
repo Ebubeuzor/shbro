@@ -768,7 +768,7 @@ class UserController extends Controller
             ]);
             
             // Clear the cached OTP
-            Cache::forget('phone_change_otp_' . $userid);
+            Cache::flush();
             
             return response("Phone number changed", 200);
         }

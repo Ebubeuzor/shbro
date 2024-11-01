@@ -151,8 +151,11 @@ class ProcessHostHomeUpdate implements ShouldQueue
             $relatedJobs[] = (new ProcessHostHomeVideo($this->data['hosthomevideo'], $hostHome->id))->onQueue('videos');
         }
     
+        if (!empty($this->data['hosthomephotos'])) {
+            $relatedJobs[] = (new ProcessHostHomeImages($this->data['hosthomephotos'], $hostHome->id))->onQueue('images');
+        }
+    
         $relatedJobs[] = (new UpdateDescription($hostHome->id, $this->data['hosthomedescriptions']))->onQueue('details');
-        $relatedJobs[] = (new ProcessHostHomeImages($this->data['hosthomephotos'], $hostHome->id))->onQueue('images');
         $relatedJobs[] = (new UpdateOffer($hostHome->id, $this->data['amenities']))->onQueue('details');
         $relatedJobs[] = (new UpdateReservation($hostHome->id, $this->data['reservations']))->onQueue('details');
         $relatedJobs[] = (new UpdateDiscount($hostHome->id, $this->data['discounts']))->onQueue('details');

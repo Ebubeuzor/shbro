@@ -409,14 +409,14 @@ class HostHomeController extends Controller
     {
         // Validate and get data
         $data = $request->validated();
-
+        
         // Find user
         $user = User::findOrFail(auth()->id());
-
-        // Use a distributed lock instead of a simple cache
+        
+        // Use a distributed lock
         $jobKey = "apartment_creation_job_{$user->id}";
         $lock = Cache::lock($jobKey, 15 * 60);
-
+        
         if (!$lock->get()) {
             return response([
                 "error" => "An apartment creation is already in progress for this user."
@@ -424,19 +424,111 @@ class HostHomeController extends Controller
         }
 
         try {
-            // Dispatch job
-            ProcessHostHomeCreation::dispatch($data, $user->id, $lock);
-
-            // Return response
+            // Store files in public directory with unique identifiers
+            $storedFiles = $this->storeFilesInPublic($request);
+            
+            // Merge stored file paths into data
+            $data['hosthomephotos'] = $storedFiles['photos'];
+            $data['hosthomevideo'] = $storedFiles['video'];
+            
+            // Dispatch the job with the necessary data
+            ProcessHostHomeCreation::dispatch($data, $storedFiles['video'], $storedFiles['photos']);
+            
+            
             return response([
                 "ok" => "Apartment creation process started",
             ], 202);
             
         } catch (\Exception $e) {
+            // Clean up stored files if job dispatch fails
+            if (isset($storedFiles)) {
+                $this->cleanupPublicFiles($storedFiles);
+            }
             $lock->release();
             throw $e;
         }
     }
+
+    /**
+     * Store files in public directory
+     */
+    private function storeFilesInPublic($request)
+    {
+        $storedFiles = [
+            'photos' => [],
+            'video' => null
+        ];
+
+        // Create unique directory for this upload
+        $uniqueDir = 'temp_' . uniqid();
+        $basePath = public_path("uploads/hosthomes/{$uniqueDir}");
+        
+        if (!File::isDirectory($basePath)) {
+            File::makeDirectory($basePath, 0755, true);
+        }
+
+        // Store photos
+        foreach ($request->file('hosthomephotos') as $index => $photo) {
+            $filename = "photo_{$index}_" . time() . '.' . $photo->getClientOriginalExtension();
+            $relativePath = "uploads/hosthomes/{$uniqueDir}/{$filename}";
+            $fullPath = public_path($relativePath);
+            
+            // Move file to public directory
+            $photo->move(dirname($fullPath), $filename);
+            
+            $storedFiles['photos'][] = [
+                'path' => $relativePath,
+                'full_path' => $fullPath,
+                'original_name' => $photo->getClientOriginalName(),
+                'mime_type' => $photo->getMimeType(),
+            ];
+        }
+
+        // Store video
+        if ($request->hasFile('hosthomevideo')) {
+            $video = $request->file('hosthomevideo');
+            $filename = "video_" . time() . '.' . $video->getClientOriginalExtension();
+            $relativePath = "uploads/hosthomes/{$uniqueDir}/{$filename}";
+            $fullPath = public_path($relativePath);
+            
+            // Move file to public directory
+            $video->move(dirname($fullPath), $filename);
+            
+            $storedFiles['video'] = [
+                'path' => $relativePath,
+                'full_path' => $fullPath,
+                'original_name' => $video->getClientOriginalName(),
+                'mime_type' => $video->getMimeType(),
+            ];
+        }
+
+        return $storedFiles;
+    }
+
+    /**
+     * Clean up files from public directory
+     */
+    private function cleanupPublicFiles($storedFiles)
+    {
+        // Clean up photos
+        foreach ($storedFiles['photos'] as $photo) {
+            if (File::exists($photo['full_path'])) {
+                File::delete($photo['full_path']);
+            }
+        }
+        
+        // Clean up video
+        if ($storedFiles['video'] && File::exists($storedFiles['video']['full_path'])) {
+            File::delete($storedFiles['video']['full_path']);
+        }
+        
+        // Remove the temporary directory if it's empty
+        $dirPath = dirname($storedFiles['photos'][0]['full_path'] ?? $storedFiles['video']['full_path']);
+        if (File::isDirectory($dirPath) && count(File::files($dirPath)) === 0) {
+            File::deleteDirectory($dirPath);
+        }
+    }
+
 
     
     public function createImages($data)
@@ -1733,32 +1825,51 @@ class HostHomeController extends Controller
      */
     public function update(UpdateHostHomeRequest $request, $hostHomeId)
     {
-
         // Validate and get data
         $data = $request->validated();
 
         // Find user
         $user = User::findOrFail(auth()->id());
 
-        // Use a distributed lock instead of a simple cache
+        // Use a distributed lock for apartment updates
         $jobKey = "apartment_update_job_{$hostHomeId}";
         $lock = Cache::lock($jobKey, 15 * 60);
 
         if (!$lock->get()) {
-            return response([
-                "error" => "An apartment creation is already in progress for this user."
+            return response()->json([
+                "error" => "An apartment update is already in progress for this listing."
             ], 409);
         }
 
         try {
-            ProcessHostHomeUpdate::dispatch($data,$user, $hostHomeId, $lock);
+            // Store any uploaded files
+            $storedFiles = $this->storeFilesInPublic($request);
+            
+            // Include stored file paths in data
+            $data['hosthomephotos'] = $storedFiles['photos'] ?? [];
+            $data['hosthomevideo'] = $storedFiles['video'] ?? null;
 
-            return response([
-                "ok" => "Updated"
-            ]);
-        }catch (\Exception $e) {
+            // Dispatch the update job with user and stored file info
+            ProcessHostHomeUpdate::dispatch($data, $user, $hostHomeId, $lock);
+
+            return response()->json([
+                "ok" => "Update process started"
+            ], 202);
+            
+        } catch (\Exception $e) {
             $lock->release();
-            throw $e;
+            
+            // Clean up files if the dispatch fails
+            if (isset($storedFiles)) {
+                $this->cleanupPublicFiles($storedFiles);
+            }
+
+            return response()->json([
+                "error" => "An error occurred while processing your request."
+            ], 500);
+        } finally {
+            // Always release the lock in the end
+            $lock->release();
         }
     }
 

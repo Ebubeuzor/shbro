@@ -35,19 +35,20 @@ class ProcessHostHomeCreation implements ShouldQueue
 
     public $tries = 1;
     public $maxExceptions = 1;
-    public $timeout = 300;
+    public $timeout = 900;
     
     private $data;
     private $userId;
     private $jobKey;
     private $lock;
+    private $video;
+    private array $images;
 
-    public function __construct($data, $userId,$lock)
+    public function __construct(array $hostHomeData, $video = null, array $images = [])
     {
-        $this->data = $data;
-        $this->userId = $userId;
-        $this->jobKey = "apartment_creation_job_{$userId}";
-        $this->lock = $lock;
+        $this->data = $hostHomeData;
+        $this->video = $video;
+        $this->images = $images;
     }
 
     public function handle()
@@ -133,8 +134,8 @@ class ProcessHostHomeCreation implements ShouldQueue
     private function dispatchRelatedJobs($hostHome, $host, $user, $cohost)
     {
         // Create individual jobs
-        $videoJob = new ProcessHostHomeVideo($this->data['hosthomevideo'], $hostHome->id);
-        $imageJob = new ProcessHostHomeImages($this->data['hosthomephotos'], $hostHome->id);
+        $videoJob = new ProcessHostHomeVideo($this->video, $hostHome->id);
+        $imageJob = new ProcessHostHomeImages($this->images, $hostHome->id);
         $detailsJob = new ProcessHostHomeDetails($this->data, $hostHome->id);
         $notificationJob = new ProcessHostHomeNotifications($hostHome->id, $this->userId, [
             'is_cohost' => $user->co_host,

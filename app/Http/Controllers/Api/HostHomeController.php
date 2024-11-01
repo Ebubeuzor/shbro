@@ -454,49 +454,56 @@ class HostHomeController extends Controller
      */
     private function storeFilesInPublic($request)
     {
+        // Initialize the array to store paths for photos and video
         $storedFiles = [
             'photos' => [],
             'video' => null
         ];
 
-        // Create unique directory for this upload
-        $uniqueDir = 'temp_' . uniqid();
-        $basePath = public_path("uploads/hosthomes/{$uniqueDir}");
+        // Create a unique subdirectory within "public/uploads/hosthomes/"
+        $uniqueDir = 'hosthomes/' . 'temp_' . uniqid();
+        $basePath = public_path("uploads/{$uniqueDir}");
         
+        // Create directory if it doesn't exist
         if (!File::isDirectory($basePath)) {
             File::makeDirectory($basePath, 0755, true);
         }
 
-        // Store photos
-        foreach ($request->file('hosthomephotos') as $index => $photo) {
-            $filename = "photo_{$index}_" . time() . '.' . $photo->getClientOriginalExtension();
-            $relativePath = "uploads/hosthomes/{$uniqueDir}/{$filename}";
-            $fullPath = public_path($relativePath);
-            
-            // Move file to public directory
-            $photo->move(dirname($fullPath), $filename);
-            
-            $storedFiles['photos'][] = [
-                'path' => $relativePath,
-                'full_path' => $fullPath,
-                'original_name' => $photo->getClientOriginalName(),
-                'mime_type' => $photo->getMimeType(),
-            ];
+        // Process photos
+        if ($request->hasFile('hosthomephotos')) {
+            foreach ($request->file('hosthomephotos') as $index => $photo) {
+                // Ensure the file is valid
+                if ($photo->isValid()) {
+                    $filename = "photo_{$index}_" . time() . '.' . $photo->getClientOriginalExtension();
+                    $relativePath = "uploads/{$uniqueDir}/{$filename}";
+                    
+                    // Move the photo to the target directory
+                    $photo->move($basePath, $filename);
+                    
+                    // Store information about the photo
+                    $storedFiles['photos'][] = [
+                        'path' => $relativePath,
+                        'full_path' => public_path($relativePath),
+                        'original_name' => $photo->getClientOriginalName(),
+                        'mime_type' => $photo->getMimeType(),
+                    ];
+                }
+            }
         }
 
-        // Store video
-        if ($request->hasFile('hosthomevideo')) {
+        // Process video
+        if ($request->hasFile('hosthomevideo') && $request->file('hosthomevideo')->isValid()) {
             $video = $request->file('hosthomevideo');
             $filename = "video_" . time() . '.' . $video->getClientOriginalExtension();
-            $relativePath = "uploads/hosthomes/{$uniqueDir}/{$filename}";
-            $fullPath = public_path($relativePath);
+            $relativePath = "uploads/{$uniqueDir}/{$filename}";
+
+            // Move the video to the target directory
+            $video->move($basePath, $filename);
             
-            // Move file to public directory
-            $video->move(dirname($fullPath), $filename);
-            
+            // Store information about the video
             $storedFiles['video'] = [
                 'path' => $relativePath,
-                'full_path' => $fullPath,
+                'full_path' => public_path($relativePath),
                 'original_name' => $video->getClientOriginalName(),
                 'mime_type' => $video->getMimeType(),
             ];
@@ -504,6 +511,7 @@ class HostHomeController extends Controller
 
         return $storedFiles;
     }
+
 
     /**
      * Clean up files from public directory

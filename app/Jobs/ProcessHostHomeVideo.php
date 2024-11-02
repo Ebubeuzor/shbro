@@ -15,18 +15,26 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
-class ProcessHostHomeVideo implements ShouldQueue
+class ProcessHostHomeVideo implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
     public $timeout = 900; // 15 minutes
-    private $video;
+    private $videoPath;
     private $hostHomeId;
 
-    public function __construct($video, $hostHomeId)
+    /**
+     * The unique ID of the job.
+     */
+    public function uniqueId()
     {
-        $this->video = $video;
+        return $this->hostHomeId;
+    }
+
+    public function __construct($videoPath, $hostHomeId)
+    {
+        $this->videoPath = $videoPath;
         $this->hostHomeId = $hostHomeId;
     }
 
@@ -35,12 +43,27 @@ class ProcessHostHomeVideo implements ShouldQueue
         $hostHome = HostHome::findOrFail($this->hostHomeId);
         
         try {
-            $processedPath = $this->processVideo($this->video);
+            // Check if video is already processed
+            if ($hostHome->video && File::exists(public_path($hostHome->video))) {
+                Log::info("Video already processed, skipping", [
+                    'host_home_id' => $this->hostHomeId,
+                    'video_path' => $hostHome->video
+                ]);
+                return;
+            }
+
+            // Check if original video exists
+            if (!File::exists(public_path($this->videoPath))) {
+                throw new \RuntimeException("Original video file not found at: " . public_path($this->videoPath));
+            }
+
+            $processedPath = $this->processVideo($this->videoPath);
             
             $hostHome->update(['video' => $processedPath]);
             
             Log::info("Video processed successfully", [
-                'host_home_id' => $this->hostHomeId
+                'host_home_id' => $this->hostHomeId,
+                'processed_path' => $processedPath
             ]);
         } catch (Throwable $e) {
             Log::error("Video processing failed", [
@@ -51,23 +74,23 @@ class ProcessHostHomeVideo implements ShouldQueue
         }
     }
 
-    
-    private function processVideo($videoFile)
+    private function processVideo($videoPath)
     {
         try {
-            // Save the original video file
-            $originalPath = $this->saveVideo($videoFile);
+            // Get the full path of the original video
+            $originalFullPath = public_path($videoPath);
 
+            // Move the video to the permanent location
+            $permanentPath = $this->moveToFinalLocation($videoPath);
+            
             // Convert and compress the video
-            $processedPath = $this->convertAndCompressVideo($originalPath);
+            $processedPath = $this->convertAndCompressVideo($permanentPath);
 
             // Clean up the original file after successful processing
-            if ($originalPath !== $processedPath) {
-                if (File::exists(public_path($originalPath))) {
-                    Log::info("Deleting original video: " . public_path($originalPath));
-                    File::delete(public_path($originalPath));
-                } else {
-                    Log::warning("Original video not found for deletion: " . public_path($originalPath));
+            if ($permanentPath !== $processedPath) {
+                if (File::exists(public_path($permanentPath))) {
+                    Log::info("Deleting original video: " . public_path($permanentPath));
+                    File::delete(public_path($permanentPath));
                 }
             }
 
@@ -78,29 +101,46 @@ class ProcessHostHomeVideo implements ShouldQueue
         }
     }
 
-    private function saveVideo($videoFile)
+    private function moveToFinalLocation($tempPath)
     {
+        $extension = pathinfo($tempPath, PATHINFO_EXTENSION);
         $dir = 'videos/';
-        $fileName = Str::random() . '.' . $videoFile->getClientOriginalExtension();
+        $fileName = Str::random() . '.' . $extension;
         $relativePath = $dir . $fileName;
         $absolutePath = public_path($dir);
 
+        // Create videos directory if it doesn't exist
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        // Move uploaded file to the desired location
-        $videoFile->move($absolutePath, $fileName);
+        // Move the file from temp location to final location
+        $originalPath = public_path($tempPath);
+        $newPath = public_path($relativePath);
+        
+        if (!File::copy($originalPath, $newPath)) {
+            throw new \RuntimeException("Failed to copy video from {$originalPath} to {$newPath}");
+        }
+
+        // Delete the original temp file
+        File::delete($originalPath);
+        
+        // Delete the temp directory if it's empty
+        $tempDir = dirname($originalPath);
+        if (File::isDirectory($tempDir) && count(File::files($tempDir)) === 0) {
+            File::deleteDirectory($tempDir);
+        }
 
         return $relativePath;
     }
 
+    
     private function convertAndCompressVideo($relativePath)
     {
         $absolutePath = public_path($relativePath);
         $ffmpeg = FFMpeg::create([
-            'ffmpeg.binaries'  => '/usr/bin/ffmpeg',
-            'ffprobe.binaries' => '/usr/bin/ffprobe',
+            'ffmpeg.binaries'  => 'ffmpeg',
+            'ffprobe.binaries' => 'ffprobe',
             'timeout'          => 3600,
             'ffmpeg.threads'   => 12,
         ]);
@@ -146,25 +186,21 @@ class ProcessHostHomeVideo implements ShouldQueue
             $video->save($format, $newPath);
 
             $newFileSize = filesize($newPath) / (1024 * 1024); // in MB
-
-
             $newVideo = $ffmpeg->open($newPath);
             $newDuration = $newVideo->getFormat()->get('duration');
 
             if ($newFileSize > $originalFileSize || abs($newDuration - $originalDuration) > 1) {
-                unlink($newPath);
+                File::delete($newPath);
                 return $relativePath;
             }
 
             return $newRelativePath;
         } catch (\Exception $e) {
             Log::error('Video compression failed: ' . $e->getMessage());
-            if (file_exists($newPath)) {
-                unlink($newPath);
+            if (File::exists($newPath)) {
+                File::delete($newPath);
             }
             return $relativePath;
         }
     }
-    
 }
-

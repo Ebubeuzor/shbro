@@ -182,7 +182,7 @@ class ProcessHostHomeUpdate implements ShouldQueue
         $required = [
             'property_type', 'guest_choice', 'address', 'guest', 'bedrooms', 
             'beds', 'bathrooms', 'title', 'description', 'reservation', 
-            'price', 'check_out_time', 'host_type', 'checkin', 
+            'price', 'check_out_time', 'checkin', 
             'cancelPolicy', 'securityDeposit'
         ];
         

@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\File;
 
 class ProcessHostHomeImages implements ShouldQueue
 {
@@ -26,12 +27,27 @@ class ProcessHostHomeImages implements ShouldQueue
 
     public function handle()
     {
-        $batch = Bus::batch([]);
+        $imageChunks = array_chunk($this->images, 2); // Process 2 images at a time
         
-        foreach ($this->images as $image) {
-            $batch->add(new ProcessImage($image, $this->hostHomeId));
+        foreach ($imageChunks as $chunk) {
+            $batch = Bus::batch([]);
+            
+            foreach ($chunk as $imagePath) {
+                if ($this->isValidFile($imagePath)) {
+                    $batch->add(new ProcessImage($imagePath, $this->hostHomeId));
+                }
+            }
+            
+            if ($batch->jobs->isNotEmpty()) {
+                $batch->onQueue('single-image')->dispatch();
+            }
         }
-        
-        $batch->onQueue('single-image')->dispatch();
+    }
+
+    private function isValidFile($imagePath)
+    {
+        return $imagePath && 
+               File::exists(public_path($imagePath)) && 
+               File::isReadable(public_path($imagePath));
     }
 }

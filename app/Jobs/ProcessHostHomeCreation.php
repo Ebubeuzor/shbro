@@ -44,16 +44,24 @@ class ProcessHostHomeCreation implements ShouldQueue
     private $video;
     private array $images;
 
-    public function __construct(array $hostHomeData, $video = null, array $images = [])
+    public function __construct(array $hostHomeData,$userId, $video, array $images, $lock)
     {
         $this->data = $hostHomeData;
         $this->video = $video;
+        $this->userId = $userId;
         $this->images = $images;
+        $this->jobKey = "apartment_creation_job_{$userId}";
+        $this->lock = $lock;
     }
 
     public function handle()
     {
         Log::info("Starting apartment creation", ['user_id' => $this->userId]);
+
+        info([
+            "images" => $this->images,
+            "video" => $this->video
+        ]);
 
         try {
             $this->updateProgress('started', 0);
@@ -85,8 +93,9 @@ class ProcessHostHomeCreation implements ShouldQueue
                 return $hostHome;
             }, 1);
         } catch (Throwable $exception) {
-            $this->handleError($exception);
+            $this->failed($exception);
             throw $exception;
+            $this->lock->release();
         } finally {
             $this->lock->release();
         }
@@ -162,7 +171,7 @@ class ProcessHostHomeCreation implements ShouldQueue
         $required = [
             'property_type', 'guest_choice', 'address', 'guest', 'bedrooms', 
             'beds', 'bathrooms', 'title', 'description', 'reservation', 
-            'price', 'check_out_time', 'host_type', 'checkin', 
+            'price', 'check_out_time', 'checkin', 'longitude', 'latitude',
             'cancelPolicy', 'securityDeposit'
         ];
         
@@ -171,16 +180,6 @@ class ProcessHostHomeCreation implements ShouldQueue
                 throw new \InvalidArgumentException("Missing required field: {$field}");
             }
         }
-    }
-
-    private function handleError(Throwable $exception)
-    {
-        Log::error("Failed to create apartment", [
-            'user_id' => $this->userId,
-            'error' => $exception->getMessage(),
-        ]);
-        
-        $this->updateProgress('failed', 0);
     }
 
     public function failed(Throwable $exception)

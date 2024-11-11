@@ -688,6 +688,44 @@ class UserController extends Controller
     }
 
     /**
+     * Send OTP using Termii's messaging service
+     */
+    private function sendTermiiOtp($phoneNumber, $message)
+    {
+        return Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post('https://api.ng.termii.com/api/sms/otp/send', [
+            'api_key' => 'TLziDqseUsISyDIddwnEBfCMvKECTiyTAecNKfdjUDFYKrAwiHtBxOtcvvVXQI', // Replace with actual key securely
+            'message_type' => 'NUMERIC',      // Ensure this matches your intended OTP format
+            'to' => $phoneNumber,
+            'from' => 'EbubeInc',                // This must be an approved sender ID in Termii's system
+            'channel' => 'dnd',               // "dnd" is often preferred for SMS in Nigeria
+            'pin_attempts' => 3,
+            'pin_time_to_live' => 10,         // Time in minutes
+            'pin_length' => 6,
+            'pin_placeholder' => '<1234>',    // Placeholder for the OTP code
+            'message_text' => $message,       // The actual message content
+            'pin_type' => 'NUMERIC',          // Explicitly setting pin_type for numeric OTPs
+        ]);
+    }
+
+
+    /**
+     * Verify OTP using Termii's verification endpoint
+     */
+    private function verifyTermiiOtp($pinId, $pin)
+    {
+        return Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post('https://api.ng.termii.com/api/sms/otp/verify', [
+            'api_key' => 'TLziDqseUsISyDIddwnEBfCMvKECTiyTAecNKfdjUDFYKrAwiHtBxOtcvvVXQI',
+            'pin_id' => $pinId,
+            'pin' => $pin,
+            'secret_key' => 'tsk_Z4Itg04AqwAGe2BjHxjeIX4QNC',
+        ]);
+    }
+
+    /**
      * @lrd:start
      * Send OTP for changing the user's phone number.
      * This method is responsible for sending an OTP to the user's email for verifying a change in their phone number.
@@ -700,34 +738,27 @@ class UserController extends Controller
         $user = User::find($userid);
         
         try {
-            // Generate 6 digit OTP
-            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-            
             // Store the new phone number and expiration
             $user->update([
                 'otp_phone_number' => $data['new_number'],
                 'otp_expires_at' => now()->addMinutes(10)
             ]);
 
-            // Store OTP in cache
-            Cache::put('phone_change_otp_' . $userid, $otp, now()->addMinutes(10));
-
-            // Send OTP via Infobip
-            $response = Http::withHeaders([
-                'Authorization' => 'App 849fb0ee63c09690e2cea723d51e7ecb-72e0d63a-a591-4f16-9677-9881b192c98b',
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json'
-            ])->post('https://6kr2j.api.infobip.com/sms/2/text/advanced', [
-                'messages' => [[
-                    'destinations' => [
-                        ['to' => $data['new_number']]
-                    ],
-                    'from' => 'Shrbo',
-                    'text' => "Your Shrbo verification code is: $otp. Valid for 10 minutes."
-                ]]
-            ]);
+            // Send OTP via Termii
+            $response = $this->sendTermiiOtp(
+                $data['new_number'],
+                "Your Shrbo verification code is: < 1234 >. Valid for 10 minutes."
+            );
 
             if ($response->successful()) {
+                $responseData = $response->json();
+                info($responseData);
+                // Store the pin_id for verification
+                Cache::put(
+                    'phone_change_pinid_' . $userid, 
+                    now()->addMinutes(10)
+                );
+
                 return response("OTP sent", 200);
             }
 
@@ -737,8 +768,8 @@ class UserController extends Controller
             info($e->getMessage());
             return response("Failed to send OTP. Please try again later.", 500);
         }
-            
     }
+
 
     /**
      * @lrd:start
@@ -757,18 +788,26 @@ class UserController extends Controller
             return response("OTP has expired", 400);
         }
         
-        // Get OTP from cache
-        $stored_otp = Cache::get('phone_change_otp_' . $userid);
+        // Get pin_id from cache
+        $pinId = Cache::get('phone_change_pinid_' . $userid);
         
-        if ($stored_otp === $data['otp_code']) {
+        if (!$pinId) {
+            return response("OTP session expired", 400);
+        }
+
+        // Verify OTP with Termii
+        $response = $this->verifyTermiiOtp($pinId, $data['otp_code']);
+        
+        if ($response->successful() && $response->json()['verified']) {
             // Update the user's phone number
             $user->update([
                 'phone' => $user->otp_phone_number,
-                'otp_expires_at' => null
+                'otp_expires_at' => null,
+                'otp_phone_number' => null
             ]);
             
-            // Clear the cached OTP
-            Cache::flush();
+            // Clear the cached pin_id
+            Cache::forget('phone_change_pinid_' . $userid);
             
             return response("Phone number changed", 200);
         }
@@ -1002,8 +1041,8 @@ class UserController extends Controller
             return response("Please wait before requesting another OTP", 429);
         }
         
-        // Clear existing OTP
-        Cache::forget('phone_change_otp_' . $userid);
+        // Clear existing pin_id
+        Cache::forget('phone_change_pinid_' . $userid);
         
         return $this->sendOtpForPhoneNumberChange($request);
             

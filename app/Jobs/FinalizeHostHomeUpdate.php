@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 class FinalizeHostHomeUpdate implements ShouldQueue
@@ -44,6 +45,7 @@ class FinalizeHostHomeUpdate implements ShouldQueue
         if ($cohost) {
             $destination = "https://shortletbooking.com/EditHostHomes/{$this->hostHome->id}";
             Mail::to($this->host->email)->send(new CohostUpdateForHost($this->hostHome, $this->host, $this->user, $destination));
+            Cache::flush();
         }
 
         $message = "Your listing has been updated and is now awaiting admin approval";
@@ -62,5 +64,7 @@ class FinalizeHostHomeUpdate implements ShouldQueue
         $admins = User::whereNotNull('adminStatus')->get();
         $adminTitle = "Urgent: User Submitted Apartment Update Requires Admin Attention";
         NotifyAdmins::dispatch($admins, $this->hostHome, $this->host, $adminTitle)->onQueue('notifications');
+
+        Cache::flush();
     }
 }

@@ -1887,8 +1887,8 @@ class HostHomeController extends Controller
             $storedFiles = $this->storeFilesInPublic($request);
             
             // Include stored file paths in data
-            $data['hosthomephotos'] = $storedFiles['photos'] ?? [];
-            $data['hosthomevideo'] = $storedFiles['video'] ?? null;
+            $data['hosthomephotos'] = $storedFiles['photos'] ? array_column($storedFiles['photos'], 'path') : [];
+            $data['hosthomevideo'] = $storedFiles['video'] ? $storedFiles['video']['path'] : null;
 
             $lock->release();
 

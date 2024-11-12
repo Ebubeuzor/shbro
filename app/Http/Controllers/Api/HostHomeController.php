@@ -1675,6 +1675,8 @@ class HostHomeController extends Controller
             $user = User::findOrFail($userId);
 
             $user->forceDelete();
+
+            Cache::flush();
             
             // Return a success response
             return response("Cohost removed from all homes successfully", 200);

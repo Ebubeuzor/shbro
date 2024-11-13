@@ -797,6 +797,7 @@ class HostHomeController extends Controller
             // Delete the HostHomeDiscount record
             $discount->delete();
 
+            Cache::flush();
             return response(['message' => 'Discount deleted successfully']);
         } else {
             // Handle the case where the record is not found
@@ -821,6 +822,7 @@ class HostHomeController extends Controller
         if ($offer) {
             // Delete the record
             $offer->delete();
+            Cache::flush();
             return response(['message' => 'Offer deleted successfully']);
         } else {
             // Handle the case where the record is not found
@@ -845,6 +847,7 @@ class HostHomeController extends Controller
         if ($description) {
             // Delete the record
             $description->delete();
+            Cache::flush();
             return response(['message' => 'Description deleted successfully']);
         } else {
             // Handle the case where the record is not found
@@ -869,6 +872,7 @@ class HostHomeController extends Controller
         if ($reservation) {
             // Delete the record
             $reservation->delete();
+            Cache::flush();
             return response(['message' => 'Reservation deleted successfully']);
         } else {
             // Handle the case where the record is not found
@@ -893,6 +897,7 @@ class HostHomeController extends Controller
         if ($rule) {
             // Delete the record
             $rule->delete();
+            Cache::flush();
             return response(['message' => 'Rule deleted successfully']);
         } else {
             // Handle the case where the record is not found
@@ -917,6 +922,7 @@ class HostHomeController extends Controller
         if ($notice) {
             // Delete the record
             $notice->delete();
+            Cache::flush();
             return response(['message' => 'Notice deleted successfully']);
         } else {
             // Handle the case where the record is not found

@@ -75,6 +75,11 @@ class AuthController extends Controller
                 'remember_token' => $remember_token
             ]);
 
+            UserWallet::create([
+                'user_id' => $user->id,
+                'totalbalance' => 0,
+            ]);
+            
             Mail::to($user->email)->queue(
                 (new WelcomeMail($user))->onQueue('emails')
             );
@@ -152,6 +157,12 @@ class AuthController extends Controller
                     'remember_token' => $remember_token
                 ]);
 
+                    
+                UserWallet::create([
+                    'user_id' => $user->id,
+                    'totalbalance' => 0,
+                ]);
+                
                 Mail::to($user->email)->queue(
                     (new WelcomeMail($user))->onQueue('emails')
                 );

@@ -68,7 +68,6 @@
                                         <p>At Shrbo, we believe in making travel and stays comfortable, convenient, and memorable. Whether you’re looking for a cozy apartment in the city or a serene retreat in the countryside, we’ve got you covered.</p>
                                         <p><strong>What’s next?</strong></p>
                                         <ul>
-                                            <li>Browse through our diverse range of properties <a href="https://shortletbooking.com/properties" target="_blank">here</a>.</li>
                                             <li>Found the perfect place? Book it in just a few clicks.</li>
                                             <li>Sit back, relax, and enjoy your stay with Shrbo.</li>
                                         </ul>

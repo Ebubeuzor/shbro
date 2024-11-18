@@ -8,6 +8,7 @@ use App\Mail\FirstHomeWelcomeMessageMail;
 use App\Mail\NewApartmentpendingApproval;
 use App\Models\HostHome;
 use App\Models\Notification;
+use App\Models\Tip;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -49,6 +50,11 @@ class ProcessHostHomeNotifications implements ShouldQueue
         $this->notifyAdmins($hostHome, $host, $user);
         Cache::flush();
         
+        $tip = new Tip();
+        $tip->user_id = $user;
+        $tip->message = "Tip: Please upload your utility bill to verify your address for $hostHome->title and speed up the approval process.";
+        $tip->url = "listings";
+        $tip->save();
     }
 
     private function sendEmails($host, $user, $hostHome)
@@ -70,6 +76,7 @@ class ProcessHostHomeNotifications implements ShouldQueue
         foreach ($emailJobs as $job) {
             $this->sendEmail($job['email'], $job['mailable'], $job['context']);
         }
+
     }
 
     private function sendEmail($to, $mailable, $context)

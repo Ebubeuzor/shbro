@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string("property_type");
             $table->string("guest_choice");
             $table->string("address");
+            $table->string("utility_bill")->nullable();
             $table->integer("guests");
             $table->integer("bedroom");
             $table->integer("beds");

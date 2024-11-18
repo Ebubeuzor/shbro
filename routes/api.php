@@ -242,7 +242,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/createReviews', [ReviewController::class, 'createReviews']);
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
-    
+    Route::post('/host-homes/{id}/upload-utility-bill', [HostHomeController::class, 'uploadUtilityBill']);
 });
 
 

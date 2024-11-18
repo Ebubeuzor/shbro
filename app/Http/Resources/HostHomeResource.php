@@ -76,7 +76,6 @@ class HostHomeResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => new HostHomeHostInfoResource($this->user),
-            // 'cohosts' => $cohostResources->isNotEmpty() ? $cohostResources : null,
             'property_type' => $this->property_type,
             'guest_choice' => $this->guest_choice,
             'address' => $this->address,
@@ -126,6 +125,8 @@ class HostHomeResource extends JsonResource
             'bookedDates' => $bookingDates != null ? $formattedDates : [],
             'status' => $this->verified == 0 ? "Not published" : "Published",
             'created_on' => $this->created_at->format('Y-m-d'),
+            'utility_bill_status' => $this->utility_bill == null ? "Not Present" : "Present",
+            'utility_bill_url' => $this->utility_bill == null ? "Not Present" : url($this->utility_bill),
             'addedToWishlist' => $user ? $this->isAddedToWishlist($user->id, $this->id) : false,
         
         ];

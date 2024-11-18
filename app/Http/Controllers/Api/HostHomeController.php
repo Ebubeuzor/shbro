@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HostHome;
 use App\Http\Requests\StoreHostHomeRequest;
 use App\Http\Requests\UpdateHostHomeRequest;
+use App\Http\Requests\UtilityBillUploadRequest;
 use App\Http\Resources\GetHostHomeAndIdResource;
 use App\Http\Resources\HostHomeResource;
 use App\Jobs\ClearCache;
@@ -479,6 +480,54 @@ class HostHomeController extends Controller
                 "error" => "Failed to process apartment creation: " . $e->getMessage()
             ], 500);
         }
+    }
+
+
+    /**
+     * @lrd:start
+     * Handles the upload of a utility bill for a host home.
+     *
+     * This method performs the following steps:
+     * 1. Validates the incoming file to ensure it meets type and size requirements.
+     * 2. Stores the uploaded file securely in the `utility_bills` directory.
+     * 3. Updates the `host_homes` table with the stored file path.
+     * 4. Checks for an admin user with a specific role (`Property`) and sends an email notification if found.
+     *
+     * @param \Illuminate\Http\Request $request
+     *      The HTTP request object containing the uploaded file and other data.
+     * @param int $id
+     *      The ID of the host home for which the utility bill is being uploaded.
+     * @return \Illuminate\Http\JsonResponse
+     *      A JSON response indicating the success or failure of the operation, along with the file path.
+     * @lrd:end
+     */
+    public function uploadUtilityBill(UtilityBillUploadRequest $request, $id)
+    {
+        // Validate the request
+        $request->validated();
+        
+        // Find the host home
+        $hostHome = HostHome::findOrFail($id);
+
+        // Store the file
+        $filePath = $request->file('utility_bill')->move(public_path('utility_bills'), $request->file('utility_bill')->getClientOriginalName());
+
+        // Save the file path in the database
+        $hostHome->utility_bill = $filePath;
+        $hostHome->save();
+
+
+        Cache::flush();
+
+        $admins = User::whereNotNull('adminStatus')->get();
+
+        $host = User::find($hostHome->user_id);
+        NotifyAdmins::dispatch($admins, $hostHome, $host, "Utility Bill Submitted by User for Verification");
+
+        return response()->json([
+            'message' => 'Utility bill uploaded successfully.',
+            'utility_bill_path' => $filePath,
+        ]);
     }
 
     private function storeFilesInPublic($request)

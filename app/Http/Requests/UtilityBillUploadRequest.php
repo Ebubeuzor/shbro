@@ -24,7 +24,7 @@ class UtilityBillUploadRequest extends FormRequest
     public function rules()
     {
         return [
-            'utility_bill' => 'required|file'
+            'utility_bill' => 'required|file|image'
         ];
     }
 }

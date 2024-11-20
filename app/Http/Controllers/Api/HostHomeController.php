@@ -509,24 +509,41 @@ class HostHomeController extends Controller
         // Find the host home
         $hostHome = HostHome::findOrFail($id);
 
-        // Store the file
-        $filePath = $request->file('utility_bill')->move(public_path('utility_bills'), $request->file('utility_bill')->getClientOriginalName());
+        // Define the upload directory path
+        $uploadPath = 'utility_bills';
+        $fullPath = public_path($uploadPath);
 
-        // Save the file path in the database
-        $hostHome->utility_bill = $filePath;
+        // Create directory if it doesn't exist
+        if (!file_exists($fullPath)) {
+            mkdir($fullPath, 0777, true);
+        }
+
+        // Delete old file if exists
+        if ($hostHome->utility_bill && file_exists(public_path($hostHome->utility_bill))) {
+            unlink(public_path($hostHome->utility_bill));
+        }
+
+        // Generate unique filename with timestamp and extension
+        $extension = $request->file('utility_bill')->getClientOriginalExtension();
+        $filename = 'bill_' . uniqid() . '_' . time() . '.' . $extension;
+
+        // Move the file to public directory
+        $request->file('utility_bill')->move($fullPath, $filename);
+
+        // Save relative path in database
+        $relativePath = $uploadPath . '/' . $filename;
+        $hostHome->utility_bill = $relativePath;
         $hostHome->save();
-
 
         Cache::flush();
 
         $admins = User::whereNotNull('adminStatus')->get();
-
         $host = User::find($hostHome->user_id);
+        
         NotifyAdmins::dispatch($admins, $hostHome, $host, "Utility Bill Submitted by User for Verification");
 
         return response()->json([
             'message' => 'Utility bill uploaded successfully.',
-            'utility_bill_path' => $filePath,
         ]);
     }
 

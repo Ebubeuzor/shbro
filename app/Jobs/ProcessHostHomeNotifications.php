@@ -49,10 +49,16 @@ class ProcessHostHomeNotifications implements ShouldQueue
         $this->notifyCohosts($host, $hostHome);
         $this->notifyAdmins($hostHome, $host, $user);
         Cache::flush();
-        
+
+        $message = "Tip: Please upload your utility bill to verify your address for $hostHome->title and speed up the approval process.";
+        $notify = new Notification();
+        $notify->user_id = $user;
+        $notify->Message = $message;
+        $notify->save();
+
         $tip = new Tip();
-        $tip->user_id = $user;
-        $tip->message = "Tip: Please upload your utility bill to verify your address for $hostHome->title and speed up the approval process.";
+        $tip->user_id = $user->id;
+        $tip->message = $message;
         $tip->url = "listings";
         $tip->save();
     }

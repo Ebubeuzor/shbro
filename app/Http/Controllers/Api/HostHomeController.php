@@ -306,33 +306,37 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        // Get the current page from the request or default to 1
+        $currentPage = $request->input('page', 1);
+
         $user = $request->user();
 
+        // Identify the user for the cache key
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
-        
-        // Generate a cache key based on the request parameters
-        $cacheKey = 'unverifiedHomes_for_admin_' . $perPage . "_user_id_" . $userIdOrUniqueId;
 
-        
+        // Generate a cache key based on the request parameters, including the page
+        $cacheKey = "unverifiedHomes_for_admin_per_page_{$perPage}_page_{$currentPage}_user_id_{$userIdOrUniqueId}";
+
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
-            // Fetch the data with relationships
-
+            // Fetch the paginated data with relationships
             return HostHomeResource::collection(
-                HostHome::where(function($query) {
+                HostHome::where(function ($query) {
                     $query->where('approvedByHost', true)
                         ->where('needApproval', false);
                 })
-                ->orWhere(function($query) {
+                ->orWhere(function ($query) {
                     $query->whereNull('approvedByHost')
                         ->orWhereNull('needApproval');
                 })
-                ->where('verified',0)
-                ->where('disapproved',null)
+                ->where('verified', 0)
+                ->where('disapproved', null)
                 ->whereNull('banned')
-                ->whereNull('suspend')->paginate($perPage)
+                ->whereNull('suspend')
+                ->paginate($perPage)
             )->response()->getData(true);
         });
     }
+
 
     private function saveImage($image,$hosthomeid)
     {

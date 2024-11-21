@@ -28,7 +28,7 @@ class UpdateHostHomeRequest extends FormRequest
             'hosthomevideo' => "nullable | file",
             'title' => "required | max:255",
             'hosthomedescriptions' => "required | max:255 | array",
-            'description' => "required | max:255",
+            'description' => "required",
             'reservation' => "required | max:255",
             'reservations' => "array",
             'price' => "nullable |numeric",

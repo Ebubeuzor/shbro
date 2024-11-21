@@ -42,7 +42,7 @@ class StoreHostHomeRequest extends FormRequest
             'hosthomevideo' => ['required', 'file'],
             'title' => "required | max:255",
             'hosthomedescriptions' => "required|array| min:2",
-            'description' => "required  | max:255",
+            'description' => "required",
             'reservation' => "required  | max:255",
             'reservations' => "required | array",
             'price' => "required|numeric",

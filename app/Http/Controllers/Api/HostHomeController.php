@@ -271,12 +271,15 @@ class HostHomeController extends Controller
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        // Get the current page from the request or default to 1
+        $currentPage = $request->input('page', 1);
+
         $user = $request->user();
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
         // Generate a cache key based on the request parameters
-        $cacheKey = 'allHomes_for_admin_' . $perPage . "_user_id_" . $userIdOrUniqueId;
+        $cacheKey = 'allHomes_for_admin_' . $perPage .'_page_' . $currentPage . "_user_id_" . $userIdOrUniqueId;
 
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {

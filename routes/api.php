@@ -244,9 +244,9 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
     Route::post('/host-homes/{id}/upload-utility-bill', [HostHomeController::class, 'uploadUtilityBill']);
     Route::get('/hosthomes/authUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
-    Route::get('/hosthomes/nearby', [HostHomeController::class, 'getNearbyApartments']);
 });
 
+Route::get('/hosthomes/nearby', [HostHomeController::class, 'getNearbyApartments']);
 Route::get('/hosthomes/unAuthUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 
 

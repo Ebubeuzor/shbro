@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Stevebauman\Location\Facades\Location;
 
+Route::get('/hosthomes/nearbyApartments', [HostHomeController::class, 'getNearbyApartments']);
 Route::get('typing/{receiverId}/{senderid}', [ChatController::class, 'typing']);
 Route::get('admin-guest-chat/leaveChat/{adminId}/{guestid}/{status}', [AdminGuestChatController::class, 'leaveChat']);
 Route::get('showGuestHomeForUnAuthUser/{id}', [HostHomeController::class, 'showGuestHome']);
@@ -246,7 +247,6 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('/hosthomes/authUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 });
 
-Route::get('/hosthomes/nearbyApartments', [HostHomeController::class, 'getNearbyApartments']);
 Route::get('/hosthomes/unAuthUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 
 

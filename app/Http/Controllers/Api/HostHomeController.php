@@ -70,6 +70,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Stevebauman\Location\Facades\Location;
 
 class HostHomeController extends Controller
 {
@@ -81,18 +82,19 @@ class HostHomeController extends Controller
      * /api/hosthomesForAuthUser is for authenticated user
      * @lrd:end
      * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
      */
     public function index(Request $request)
     {
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
-
+        $currentPage = $request->input('page', 1);
         $user = $request->user();
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
         // Generate a cache key based on the request parameters
-        $cacheKey = 'host_homes_' . $perPage . "_user_id_" . $userIdOrUniqueId;
+        $cacheKey = 'host_homes_' . $perPage ."_page_{$currentPage}". "_user_id_" . $userIdOrUniqueId;
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
             // Fetch the data with relationships
@@ -109,6 +111,105 @@ class HostHomeController extends Controller
         });
     }
 
+    /**
+     * @lrd:start
+     * Fetch the highest-rated verified homes, available for both authenticated and unauthenticated users.
+     * /api/hosthomes?per_page=20&page=1
+     * @lrd:end
+     * @LRDparam per_page use|required|numeric Sets how many items you want to retrieve per page.
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
+     * 
+     * This endpoint works for:
+     * - **Authenticated users**: Data is cached based on the user's ID and page number.
+     * - **Unauthenticated users**: Data is cached based on the user's IP address and page number.
+     */
+    public function getHighestRatedHomes(Request $request)
+    {
+        // Set default values for items per page and page number
+        $perPage = $request->input('per_page', 10);
+        $currentPage = $request->input('page', 1);
+
+        // Determine user identifier (ID for authenticated users or IP for unauthenticated users)
+        $user = $request->user();
+        $userIdOrUniqueId = $user ? $user->id : $request->ip();
+
+        // Cache key includes per page, page number, and user identity
+        $cacheKey = "highest_rated_host_homes_{$perPage}_page_{$currentPage}_user_{$userIdOrUniqueId}";
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+            // Fetch highest-rated homes with relationships
+            $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
+                ->where('verified', 1)
+                ->whereNull('disapproved')
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->withAvg('hosthomereviews', 'ratings') // Calculate average ratings
+                ->orderByDesc('hosthomereviews_avg_ratings') // Sort by average ratings
+                ->paginate($perPage);
+
+            // Transform data and serialize it
+            return HostHomeResource::collection($hostHomes)->response()->getData(true);
+        });
+    }
+
+    /**
+     * @lrd:start
+     * Fetch nearby verified apartments based on the user's current location.
+     * /api/hosthomes/nearby?radius=10&per_page=10&page=1
+     * @lrd:end
+     * 
+     * @LRDparam radius use|optional|numeric The search radius in kilometers (default is 10 km).
+     * @LRDparam page use|optional|numeric The current page for paginated results.
+     * @LRDparam per_page use|required|numeric Sets how many items you want to retrieve per page.
+     * 
+     * This endpoint:
+     * - Uses the user's IP to determine location.
+     * - Retrieves verified and active apartments near the user's location.
+     * - Caches results to improve performance.
+    */
+    public function getNearbyApartments(Request $request)
+    {
+        // Get user's location using IP
+        $userLocation = Location::get($request->ip());
+
+        if (!$userLocation) {
+            return response()->json(['error' => 'Unable to determine your location.'], 400);
+        }
+
+        $latitude = $userLocation->latitude;
+        $longitude = $userLocation->longitude;
+
+        // Default radius (in kilometers) and pagination settings
+        $radius = $request->input('radius', 10);
+        $perPage = $request->input('per_page', 10);
+        $currentPage = $request->input('page', 1);
+
+        // Generate cache key
+        $cacheKey = "nearby_host_homes_{$perPage}_radius_{$radius}_page_{$currentPage}_lat_{$latitude}_lng_{$longitude}";
+
+        // Retrieve from cache or execute query
+        $result = Cache::remember($cacheKey, now()->addHour(), function () use ($latitude, $longitude, $radius, $perPage) {
+            return DB::table('host_homes')
+                ->select('*', DB::raw("
+                    (6371 * acos(
+                        cos(radians($latitude)) *
+                        cos(radians(latitude)) *
+                        cos(radians(longitude) - radians($longitude)) +
+                        sin(radians($latitude)) *
+                        sin(radians(latitude))
+                    )) AS distance
+                "))
+                ->where('verified', 1)
+                ->whereNull('disapproved')
+                ->whereNull('banned')
+                ->whereNull('suspend')
+                ->having('distance', '<=', $radius)
+                ->orderBy('distance', 'asc')
+                ->paginate($perPage);
+        });
+
+        return response()->json($result, 200);
+    }
 
     
     /**

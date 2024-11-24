@@ -243,45 +243,49 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::post('/createReviewsForguest', [ReviewController::class, 'createReviewsForguest']);
     Route::get('hosthomesForAuthUser', [HostHomeController::class, 'index']);
     Route::post('/host-homes/{id}/upload-utility-bill', [HostHomeController::class, 'uploadUtilityBill']);
+    Route::get('/hosthomes/authUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
+    Route::get('/hosthomes/nearby', [HostHomeController::class, 'getNearbyApartments']);
 });
 
+Route::get('/hosthomes/unAuthUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 
-    Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
 
-    Route::get('homepage', [HomepageController::class, 'index']);
+Route::get('/hostHomeView/{hosthomeid}/{hostid}', [UserController::class, 'hostHomeView']);
 
-    Route::post('signup', [AuthController::class, 'signup']);
-    Route::post('login', [AuthController::class, 'login']);
-    Route::get('auth', [AuthController::class, 'redirectToAuth']);
-    Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
-    Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail'])->middleware('throttle:3,60');
+Route::get('homepage', [HomepageController::class, 'index']);
 
-    Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
+Route::post('signup', [AuthController::class, 'signup']);
+Route::post('login', [AuthController::class, 'login']);
+Route::get('auth', [AuthController::class, 'redirectToAuth']);
+Route::get('auth/callback', [AuthController::class, 'handleAuthCallback']);
+Route::post('/password/reset', [ForgotPassword::class, 'sendPasswordResetEmail'])->middleware('throttle:3,60');
 
-    Route::get('/view-count', [AuthController::class, 'registerVisitor']);
+Route::get('/verify-tokens/{remToken}/{userToken}', [AuthController::class, 'authUserFromMain']);
 
-    Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
-    Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
-    Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
-    Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
-    Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
+Route::get('/view-count', [AuthController::class, 'registerVisitor']);
 
-    Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
+Route::get('/visitor', [AuthController::class, 'getVisitorInfo']);
+Route::put('/reactivateAccount', [UserController::class, 'reactivateAccount']);
+Route::post('/filterHomepageForUnAuthUser', [UserController::class, 'filterHomepage']);
+Route::post('/filterHostHomesDatesForUnAuthUser', [UserController::class, 'filterHostHomesDates']);
+Route::get('hosthomesForUnAuthUser', [HostHomeController::class, 'index']);
 
-    Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
+Route::get('/searchHomeByProperty_typeForUnAuthUser/{property_type}', [HostHomeController::class, 'searchHomeByProperty_type']);
 
-    Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
-    
-    Route::post('/mobile/sendOtpForReactivingAccountChange', [UserController::class, 'sendOtpForReactivingAccountChange']);
-    Route::post('/mobile/verifyOtpForReactivingAccount', [UserController::class, 'verifyOtpForReactivingAccount']);
-    Route::post('/mobile/resendOtpForReactivingAccount', [UserController::class, 'resendOtpForReactivingAccount']);
-    
-    Route::post('/mobile/sendOtpForChangeOfPassword', [ForgotPassword::class, 'sendOtpForPasswordReset']);
-    Route::post('/mobile/verifyOtpForChangeOfPassword', [ForgotPassword::class, 'verifyOtpForPasswordReset']);
-    Route::post('/mobile/resendOtpForChangeOfPassword', [ForgotPassword::class, 'resendOtpForPasswordReset']);
+Route::get('returnSocialMediaLink', [AdminController::class, 'returnSocialMediaLink']);
 
-    Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+Route::post('/upload-base64', [UserController::class, 'uploadBase64'])->name('video.upload.base64');
 
-    Route::get('/getLocation', function(Request $request){
-        return response()->json(['location' => Location::get($request->ip())]);
-    });
+Route::post('/mobile/sendOtpForReactivingAccountChange', [UserController::class, 'sendOtpForReactivingAccountChange']);
+Route::post('/mobile/verifyOtpForReactivingAccount', [UserController::class, 'verifyOtpForReactivingAccount']);
+Route::post('/mobile/resendOtpForReactivingAccount', [UserController::class, 'resendOtpForReactivingAccount']);
+
+Route::post('/mobile/sendOtpForChangeOfPassword', [ForgotPassword::class, 'sendOtpForPasswordReset']);
+Route::post('/mobile/verifyOtpForChangeOfPassword', [ForgotPassword::class, 'verifyOtpForPasswordReset']);
+Route::post('/mobile/resendOtpForChangeOfPassword', [ForgotPassword::class, 'resendOtpForPasswordReset']);
+
+Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+
+Route::get('/getLocation', function(Request $request){
+    return response()->json(['location' => Location::get($request->ip())]);
+});

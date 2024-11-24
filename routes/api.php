@@ -246,7 +246,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
     Route::get('/hosthomes/authUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 });
 
-Route::get('/hosthomes/nearby', [HostHomeController::class, 'getNearbyApartments']);
+Route::get('/hosthomes/nearbyApartments', [HostHomeController::class, 'getNearbyApartments']);
 Route::get('/hosthomes/unAuthUsers/highestRatedHosthomes', [HostHomeController::class, 'getHighestRatedHomes']);
 
 

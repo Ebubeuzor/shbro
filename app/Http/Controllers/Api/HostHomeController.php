@@ -171,13 +171,16 @@ class HostHomeController extends Controller
     {
         // Get user's location using IP
         $userLocation = Location::get($request->ip());
-
+ 
         if (!$userLocation) {
             return response()->json(['error' => 'Unable to determine your location.'], 400);
-        }
+        } 
 
         $latitude = $userLocation->latitude;
         $longitude = $userLocation->longitude;
+
+        info($latitude);
+        info($longitude);
 
         // Default radius (in kilometers) and pagination settings
         $radius = $request->input('radius', 10);

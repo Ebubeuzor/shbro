@@ -1298,6 +1298,8 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        info($request->all());
+        
         $user = $request->user();
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
@@ -1320,47 +1322,53 @@ class UserController extends Controller
         $per_page = $data['per_page'] ?? 10;
 
         $filteredHostHomes = HostHome::query();
+
         if (empty($startDate) || empty($endDate) || is_null($startDate) || is_null($endDate)) {
             $filteredHostHomes = $filteredHostHomes->where('verified', 1)
-            ->where('disapproved', null)
-            ->whereNull('banned')
-            ->whereNull('suspend');;
-        }else {
+                ->where('disapproved', null)
+                ->whereNull('banned')
+                ->whereNull('suspend');
+
+            // Include address filter if provided
+            if (!empty($address)) {
+                $filteredHostHomes->where('address', 'LIKE', "%{$address}%");
+            }
+        } else {
             $filteredHostHomes = HostHome::where('address', 'LIKE', "%{$address}%")
-            ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
-                $query->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('check_in', [$startDate, $endDate])
-                        ->orWhereBetween('check_out', [$startDate, $endDate])
-                        ->orWhere(function ($q) use ($startDate, $endDate) {
-                            $q->where('check_in', '<=', $startDate)
-                                ->where('check_out', '>=', $endDate);
+                ->whereDoesntHave('bookings', function ($query) use ($startDate, $endDate) {
+                    $query->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('check_in', [$startDate, $endDate])
+                            ->orWhereBetween('check_out', [$startDate, $endDate])
+                            ->orWhere(function ($q) use ($startDate, $endDate) {
+                                $q->where('check_in', '<=', $startDate)
+                                    ->where('check_out', '>=', $endDate);
                             });
-                        });
-                    })
-                    ->where('guests', '>=', $guests)
-                    ->where('verified', 1)
-                    ->where('disapproved', null)
-                    ->whereNull('banned')
-                    ->whereNull('suspend');
-                    
-                    if ($allowPets === 'allow_pets') {
-                        $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
-                            $query->where('rule', 'No pets');
-                        });
-                    }
-                    
-                    
+                    });
+                })
+                ->where('guests', '>=', $guests)
+                ->where('verified', 1)
+                ->where('disapproved', null)
+                ->whereNull('banned')
+                ->whereNull('suspend');
+
+            if ($allowPets === 'allow_pets') {
+                $filteredHostHomes->whereDoesntHave('hosthomerules', function ($query) {
+                    $query->where('rule', 'No pets');
+                });
+            }
         }
+
         $result = $filteredHostHomes->distinct()->paginate($per_page);
-        
+
         $resourceCollection = HostHomeResource::collection($result)->response()->getData(true);
-                    
+
         // Cache the result with the defined cache key for future use
         Cache::put($cacheKey, $resourceCollection, now()->addHours(1)); // Adjust cache expiry time as needed
 
         // Return the result
         return $resourceCollection;
     }
+
 
 
     

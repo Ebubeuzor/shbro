@@ -1297,8 +1297,6 @@ class UserController extends Controller
     public function filterHostHomesDates(FilterHostHomesDatesRequest $request)
     {
         $data = $request->validated();
-
-        info($request->all());
         
         $user = $request->user();
 

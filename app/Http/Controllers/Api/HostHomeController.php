@@ -161,6 +161,8 @@ class HostHomeController extends Controller
      * @LRDparam radius use|optional|numeric The search radius in kilometers (default is 10 km).
      * @LRDparam page use|optional|numeric The current page for paginated results.
      * @LRDparam per_page use|required|numeric Sets how many items you want to retrieve per page.
+     * @LRDparam latitude use|required|string Sets the latitude of a user.
+     * @LRDparam longitude use|required|string Sets the longitude of a user.
      * 
      * This endpoint:
      * - Uses the user's IP to determine location.
@@ -169,18 +171,9 @@ class HostHomeController extends Controller
     */
     public function getNearbyApartments(Request $request)
     {
-        // Get user's location using IP
-        $userLocation = Location::get($request->ip());
- 
-        if (!$userLocation) {
-            return response()->json(['error' => 'Unable to determine your location.'], 400);
-        } 
-
-        $latitude = $userLocation->latitude;
-        $longitude = $userLocation->longitude;
-
-        info($latitude);
-        info($longitude);
+        
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
 
         // Default radius (in kilometers) and pagination settings
         $radius = $request->input('radius', 10);

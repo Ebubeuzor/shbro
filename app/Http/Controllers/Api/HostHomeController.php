@@ -192,7 +192,8 @@ class HostHomeController extends Controller
 
         // Retrieve from cache or execute query
         $result = Cache::remember($cacheKey, now()->addHour(), function () use ($latitude, $longitude, $radius, $perPage) {
-            $queryResult = \App\Models\HostHome::select('*')
+            $queryResult = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
+                ->select('*')
                 ->selectRaw("
                     (6371 * acos(
                         cos(radians(?)) *

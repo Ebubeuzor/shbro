@@ -171,14 +171,18 @@ class HostHomeController extends Controller
     */
     public function getNearbyApartments(Request $request)
     {
-        
-        $latitude = $request->input('latitude');
-        $longitude = $request->input('longitude');
+        // Validate and sanitize inputs
+        $latitude = floatval($request->input('latitude'));
+        $longitude = floatval($request->input('longitude'));
+
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+            return response()->json(['error' => 'Invalid latitude or longitude'], 400);
+        }
 
         // Default radius (in kilometers) and pagination settings
-        $radius = $request->input('radius', 10);
-        $perPage = $request->input('per_page', 10);
-        $currentPage = $request->input('page', 1);
+        $radius = floatval($request->input('radius', 10));
+        $perPage = intval($request->input('per_page', 10));
+        $currentPage = intval($request->input('page', 1));
 
         // Generate cache key
         $cacheKey = "nearby_host_homes_{$perPage}_radius_{$radius}_page_{$currentPage}_lat_{$latitude}_lng_{$longitude}";
@@ -188,13 +192,14 @@ class HostHomeController extends Controller
             return DB::table('host_homes')
                 ->select('*', DB::raw("
                     (6371 * acos(
-                        cos(radians($latitude)) *
+                        cos(radians(?)) *
                         cos(radians(latitude)) *
-                        cos(radians(longitude) - radians($longitude)) +
-                        sin(radians($latitude)) *
+                        cos(radians(longitude) - radians(?)) +
+                        sin(radians(?)) *
                         sin(radians(latitude))
                     )) AS distance
                 "))
+                ->setBindings([$latitude, $longitude, $latitude])
                 ->where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
@@ -204,8 +209,11 @@ class HostHomeController extends Controller
                 ->paginate($perPage);
         });
 
-        return response()->json($result, 200);
+        // Use HostHomeResource to transform the data
+        return HostHomeResource::collection($result)->response();
     }
+
+
 
     
     /**

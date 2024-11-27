@@ -184,13 +184,16 @@ class HostHomeController extends Controller
         $perPage = intval($request->input('per_page', 10));
         $currentPage = intval($request->input('page', 1));
 
+        // Authenticated user's ID
+        $userId = auth()->id() ?? 'guest';
+
         // Generate cache key
-        $cacheKey = "nearby_host_homes_{$perPage}_radius_{$radius}_page_{$currentPage}_lat_{$latitude}_lng_{$longitude}";
+        $cacheKey = "user_{$userId}_nearby_host_homes_{$perPage}_radius_{$radius}_page_{$currentPage}_lat_{$latitude}_lng_{$longitude}";
 
         // Retrieve from cache or execute query
         $result = Cache::remember($cacheKey, now()->addHour(), function () use ($latitude, $longitude, $radius, $perPage) {
-            return DB::table('host_homes')
-                ->select('*', DB::raw("
+            $queryResult = \App\Models\HostHome::select('*')
+                ->selectRaw("
                     (6371 * acos(
                         cos(radians(?)) *
                         cos(radians(latitude)) *
@@ -198,8 +201,7 @@ class HostHomeController extends Controller
                         sin(radians(?)) *
                         sin(radians(latitude))
                     )) AS distance
-                "))
-                ->setBindings([$latitude, $longitude, $latitude])
+                ", [$latitude, $longitude, $latitude])
                 ->where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
@@ -207,11 +209,15 @@ class HostHomeController extends Controller
                 ->having('distance', '<=', $radius)
                 ->orderBy('distance', 'asc')
                 ->paginate($perPage);
+
+            // Transform and cache the resource response
+            return HostHomeResource::collection($queryResult)->response()->getData();
         });
 
-        // Use HostHomeResource to transform the data
-        return HostHomeResource::collection($result)->response();
+        // Return the cached or freshly computed response
+        return response()->json($result, 200);
     }
+
 
 
 

@@ -2103,93 +2103,119 @@ class UserController extends Controller
      * and if consumed will will return a 200 status code
      * @lrd:end
      */
-
-     public function filterHomepage(FilterHomepageRequest $request)
+    public function filterHomepage(FilterHomepageRequest $request)
     {
         try {
             $data = $request->validated();
-                
+    
             $user = $request->user();
-
             $userIdOrUniqueId = $user ? $user->id : $request->ip();
-
-            // Define a unique cache key based on the request data
-            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;;
-
-            // Check if the data is already cached
+    
+            // Define a unique cache key
+            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;
+    
+            // Check cache
             if (Cache::has($cacheKey)) {
-                // If cached data exists, return it
                 return Cache::get($cacheKey);
             }
-
-            $propertyType = $data['property_type'];
-            $minBedrooms = $data['bedrooms'];
-            $minBeds = $data['beds'];
-            $minBathrooms = $data['bathrooms'];
-            $minPrice = $data['min_price'];
-            $maxPrice = $data['max_price'];
-            $amenities = $data['amenities'];
-            $per_page = $data['per_page'] != "" ? $data['per_page'] : 10;
     
-            // Start with a base query for filtering host homes
+            // Extract filters
+            $address = $data['address'] ?? null;
+            $startDate = $data['start_date'] ?? null;
+            $endDate = $data['end_date'] ?? null;
+            $guests = $data['guests'] ?? null;
+            $allowPets = $data['allow_pets'] ?? null;
+            $minPrice = $data['min_price'] ?? null;
+            $maxPrice = $data['max_price'] ?? null;
+            $minBedrooms = $data['bedrooms'] ?? null;
+            $minBeds = $data['beds'] ?? null;
+            $minBathrooms = $data['bathrooms'] ?? null;
+            $propertyType = $data['property_type'] ?? null;
+            $amenities = $data['amenities'] ?? null;
+            $perPage = $data['per_page'] ?? 10;
+    
+            // Base query
             $query = HostHome::where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend');
     
-            // Additional filtering based on parameters
+            // Address filter
+            if (!empty($address)) {
+                $query->where('address', 'LIKE', "%{$address}%");
+            }
     
+            // Date availability filter
+            if (!empty($startDate) && !empty($endDate)) {
+                $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
+                    $q->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('check_in', [$startDate, $endDate])
+                            ->orWhereBetween('check_out', [$startDate, $endDate])
+                            ->orWhere(function ($q) use ($startDate, $endDate) {
+                                $q->where('check_in', '<=', $startDate)
+                                    ->where('check_out', '>=', $endDate);
+                            });
+                    });
+                });
+            }
+    
+            // Guests filter
+            if (!empty($guests)) {
+                $query->where('guests', '>=', $guests);
+            }
+    
+            // Pets filter
+            if ($allowPets === 'allow_pets') {
+                $query->whereDoesntHave('hosthomerules', function ($q) {
+                    $q->where('rule', 'No pets');
+                });
+            }
+    
+            // Property type filter
             if (!empty($propertyType) && is_array($propertyType)) {
                 $query->whereIn('property_type', $propertyType);
             }
     
-            // Check if "Any" is selected for Bedrooms and handle accordingly
-            if (!empty($minBedrooms) && is_numeric($minBedrooms)) {
+            // Bedrooms, beds, and bathrooms filters
+            if (!empty($minBedrooms)) {
                 $query->where('bedroom', '>=', $minBedrooms);
             }
-    
-            // Check if "Any" is selected for Beds and handle accordingly
-            if (!empty($minBeds) && strtolower($minBeds) !== 'any' && is_numeric($minBeds)) {
+            if (!empty($minBeds)) {
                 $query->where('beds', '>=', $minBeds);
             }
-    
-            // Check if "Any" is selected for Bathrooms and handle accordingly
-            if (!empty($minBathrooms) && strtolower($minBathrooms) !== 'any' && is_numeric($minBathrooms)) {
+            if (!empty($minBathrooms)) {
                 $query->where('bathrooms', '>=', $minBathrooms);
             }
     
-            if (!empty($minPrice) && is_numeric($minPrice)) {
+            // Price range filter
+            if (!empty($minPrice)) {
                 $query->where('actualPrice', '>=', $minPrice);
             }
-    
-            if (!empty($maxPrice) && is_numeric($maxPrice)) {
+            if (!empty($maxPrice)) {
                 $query->where('actualPrice', '<=', $maxPrice);
             }
     
+            // Amenities filter
             if (!empty($amenities) && is_array($amenities)) {
-                // Use whereHas to filter based on related offers
                 $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
                     $q->whereIn('offer', $amenities);
                 });
             }
     
-            
-            // Fetch the filtered results along with associated host home photos
-            $result = $query->with('hosthomephotos')->distinct()->paginate($per_page);
-            
+            // Fetch results
+            $result = $query->with('hosthomephotos')->distinct()->paginate($perPage);
+    
+            // Wrap response
             $wrappedData = HostHomeResource::collection($result)->response()->getData(true);
-
-            // Cache the result with the defined cache key for future use
+    
+            // Cache the result
             Cache::put($cacheKey, $wrappedData, now()->addHours(1));
-
-            // Return the filtered data as JSON response
+    
+            // Return response
             return response()->json(['data' => $wrappedData], 200);
-
         } catch (QueryException $e) {
-            // Log the exception or handle it as needed
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
         } catch (\Exception $e) {
-            // Log the exception or handle it as needed
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }

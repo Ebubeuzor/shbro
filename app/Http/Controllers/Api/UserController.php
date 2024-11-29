@@ -736,40 +736,17 @@ class UserController extends Controller
         $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
-        
-        try {
-            // Store the new phone number and expiration
-            $user->update([
-                'otp_phone_number' => $data['new_number'],
-                'otp_expires_at' => now()->addMinutes(10)
-            ]);
 
-            // Send OTP via Termii
-            $response = $this->sendTermiiOtp(
-                $data['new_number'],
-                "Your Shrbo verification code is: < 1234 >. Valid for 10 minutes."
-            );
-
-            if ($response->successful()) {
-                $responseData = $response->json();
-                info($responseData);
-                // Store the pin_id for verification
-                Cache::put(
-                    'phone_change_pinid_' . $userid, 
-                    now()->addMinutes(10)
-                );
-
-                return response("OTP sent", 200);
-            }
-
-            throw new \Exception('Failed to send SMS: ' . $response->body());
-
-        } catch (\Exception $e) {
-            info($e->getMessage());
-            return response("Failed to send OTP. Please try again later.", 500);
-        }
+        $otp = Otp::identifier($user->email)->send(
+            new UserUpdateNumberOtp(
+                id: $userid,
+                phone_number: $data['new_number']
+            ),
+            UserNotification::route('mail', $user->email)
+        );
+    
+        return __($otp['status']);
     }
-
 
     /**
      * @lrd:start
@@ -777,42 +754,20 @@ class UserController extends Controller
      * This method verifies the OTP provided by the user for changing their phone number.
      * @lrd:end
      */
-    public function verifyOtp(VerifyOtpRequest $request)
-    {
+    public function verifyOtp(VerifyOtpRequest $request) {
+
         $data = $request->validated();
         $userid = auth()->id();
         $user = User::find($userid);
-        
-        // Check if OTP has expired
-        if ($user->otp_expires_at < now()) {
-            return response("OTP has expired", 400);
+    
+        $otp = Otp::identifier($user->email)->attempt($data['otp_code']);
+    
+        if($otp['status'] != Otp::OTP_PROCESSED)
+        {
+            abort(403, __($otp['status']));
         }
-        
-        // Get pin_id from cache
-        $pinId = Cache::get('phone_change_pinid_' . $userid);
-        
-        if (!$pinId) {
-            return response("OTP session expired", 400);
-        }
-
-        // Verify OTP with Termii
-        $response = $this->verifyTermiiOtp($pinId, $data['otp_code']);
-        
-        if ($response->successful() && $response->json()['verified']) {
-            // Update the user's phone number
-            $user->update([
-                'phone' => $user->otp_phone_number,
-                'otp_expires_at' => null,
-                'otp_phone_number' => null
-            ]);
-            
-            // Clear the cached pin_id
-            Cache::forget('phone_change_pinid_' . $userid);
-            
-            return response("Phone number changed", 200);
-        }
-        
-        return response("Invalid OTP code", 400);
+    
+        return response("Phone number sucessfully Changed");
     }
 
     /**
@@ -1027,27 +982,21 @@ class UserController extends Controller
      * @lrd:start
      * Resend the OTP for changing the user's phone number.
      * This method resends the OTP for changing the user's phone number.
-     * new_number you must include it in the request body when making the request
-     * If you need to wait for another otp to be sent and you made a rewuest you will get 429 error
      * @lrd:end
      */
-    public function resendOtp(UpdateUserNumberRequest $request)
-    {
+    public function resendOtp() {
+
         $userid = auth()->id();
         $user = User::find($userid);
         
-        // Check if we need to wait before resending
-        if ($user->otp_expires_at && $user->otp_expires_at > now()->subMinutes(9)) {
-            return response("Please wait before requesting another OTP", 429);
+        $otp = Otp::identifier($user->email)->update();
+    
+        if($otp['status'] != Otp::OTP_SENT)
+        {
+            abort(403, __($otp['status']));
         }
-        
-        // Clear existing pin_id
-        Cache::forget('phone_change_pinid_' . $userid);
-        
-        return $this->sendOtpForPhoneNumberChange($request);
-            
+        return __($otp['status']);
     }
-
 
     /**
      * @lrd:start
@@ -2107,19 +2056,17 @@ class UserController extends Controller
     {
         try {
             $data = $request->validated();
-    
             $user = $request->user();
             $userIdOrUniqueId = $user ? $user->id : $request->ip();
-    
+
             // Define a unique cache key
             $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;
-    
+
             // Check cache
             if (Cache::has($cacheKey)) {
                 return Cache::get($cacheKey);
             }
-    
-            // Extract filters
+
             $address = $data['address'] ?? null;
             $startDate = $data['start_date'] ?? null;
             $endDate = $data['end_date'] ?? null;
@@ -2133,84 +2080,78 @@ class UserController extends Controller
             $propertyType = $data['property_type'] ?? null;
             $amenities = $data['amenities'] ?? null;
             $perPage = $data['per_page'] ?? 10;
-    
+
             // Base query
             $query = HostHome::where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend');
-    
-            // Address filter
+
+            // Prioritize address filter
             if (!empty($address)) {
                 $query->where('address', 'LIKE', "%{$address}%");
-            }
-    
-            // Date availability filter
-            if (!empty($startDate) && !empty($endDate)) {
-                $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
-                    $q->where(function ($q) use ($startDate, $endDate) {
-                        $q->whereBetween('check_in', [$startDate, $endDate])
-                            ->orWhereBetween('check_out', [$startDate, $endDate])
-                            ->orWhere(function ($q) use ($startDate, $endDate) {
-                                $q->where('check_in', '<=', $startDate)
-                                    ->where('check_out', '>=', $endDate);
-                            });
+            } else {
+                // Other filters if address is not provided
+                if (!empty($startDate) && !empty($endDate)) {
+                    $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
+                        $q->where(function ($q) use ($startDate, $endDate) {
+                            $q->whereBetween('check_in', [$startDate, $endDate])
+                                ->orWhereBetween('check_out', [$startDate, $endDate])
+                                ->orWhere(function ($q) use ($startDate, $endDate) {
+                                    $q->where('check_in', '<=', $startDate)
+                                        ->where('check_out', '>=', $endDate);
+                                });
+                        });
                     });
-                });
+                }
+
+                if (!empty($guests)) {
+                    $query->where('guests', '>=', $guests);
+                }
+
+                if ($allowPets === 'allow_pets') {
+                    $query->whereDoesntHave('hosthomerules', function ($q) {
+                        $q->where('rule', 'No pets');
+                    });
+                }
+
+                if (!empty($propertyType) && is_array($propertyType)) {
+                    $query->whereIn('property_type', $propertyType);
+                }
+
+                if (!empty($minBedrooms)) {
+                    $query->where('bedroom', '>=', $minBedrooms);
+                }
+                if (!empty($minBeds)) {
+                    $query->where('beds', '>=', $minBeds);
+                }
+                if (!empty($minBathrooms)) {
+                    $query->where('bathrooms', '>=', $minBathrooms);
+                }
+
+                if (!empty($minPrice)) {
+                    $query->where('actualPrice', '>=', $minPrice);
+                }
+                if (!empty($maxPrice)) {
+                    $query->where('actualPrice', '<=', $maxPrice);
+                }
+
+                if (!empty($amenities) && is_array($amenities)) {
+                    $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                        $q->whereIn('offer', $amenities);
+                    });
+                }
             }
-    
-            // Guests filter
-            if (!empty($guests)) {
-                $query->where('guests', '>=', $guests);
-            }
-    
-            // Pets filter
-            if ($allowPets === 'allow_pets') {
-                $query->whereDoesntHave('hosthomerules', function ($q) {
-                    $q->where('rule', 'No pets');
-                });
-            }
-    
-            // Property type filter
-            if (!empty($propertyType) && is_array($propertyType)) {
-                $query->whereIn('property_type', $propertyType);
-            }
-    
-            // Bedrooms, beds, and bathrooms filters
-            if (!empty($minBedrooms)) {
-                $query->where('bedroom', '>=', $minBedrooms);
-            }
-            if (!empty($minBeds)) {
-                $query->where('beds', '>=', $minBeds);
-            }
-            if (!empty($minBathrooms)) {
-                $query->where('bathrooms', '>=', $minBathrooms);
-            }
-    
-            // Price range filter
-            if (!empty($minPrice)) {
-                $query->where('actualPrice', '>=', $minPrice);
-            }
-            if (!empty($maxPrice)) {
-                $query->where('actualPrice', '<=', $maxPrice);
-            }
-    
-            // Amenities filter
-            if (!empty($amenities) && is_array($amenities)) {
-                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
-                    $q->whereIn('offer', $amenities);
-                });
-            }
-    
+
             // Fetch results
             $result = $query->with('hosthomephotos')->distinct()->paginate($perPage);
-    
+
             // Wrap response
             $wrappedData = HostHomeResource::collection($result)->response()->getData(true);
-    
+
             // Cache the result
             Cache::put($cacheKey, $wrappedData, now()->addHours(1));
-    
+
             // Return response
             return response()->json(['data' => $wrappedData], 200);
         } catch (QueryException $e) {
@@ -2219,6 +2160,7 @@ class UserController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
+
      
     
     public function filterHomepageLocation(FilterHomepageLocationRequest $request)

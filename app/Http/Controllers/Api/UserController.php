@@ -2087,60 +2087,60 @@ class UserController extends Controller
                 ->whereNull('banned')
                 ->whereNull('suspend');
 
-            // Prioritize address filter
+            // Apply address filter first
             if (!empty($address)) {
                 $query->where('address', 'LIKE', "%{$address}%");
-            } else {
-                // Other filters if address is not provided
-                if (!empty($startDate) && !empty($endDate)) {
-                    $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
-                        $q->where(function ($q) use ($startDate, $endDate) {
-                            $q->whereBetween('check_in', [$startDate, $endDate])
-                                ->orWhereBetween('check_out', [$startDate, $endDate])
-                                ->orWhere(function ($q) use ($startDate, $endDate) {
-                                    $q->where('check_in', '<=', $startDate)
-                                        ->where('check_out', '>=', $endDate);
-                                });
-                        });
+            }
+
+            // Apply other filters only after the address
+            if (!empty($startDate) && !empty($endDate)) {
+                $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
+                    $q->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('check_in', [$startDate, $endDate])
+                            ->orWhereBetween('check_out', [$startDate, $endDate])
+                            ->orWhere(function ($q) use ($startDate, $endDate) {
+                                $q->where('check_in', '<=', $startDate)
+                                    ->where('check_out', '>=', $endDate);
+                            });
                     });
-                }
+                });
+            }
 
-                if (!empty($guests)) {
-                    $query->where('guests', '>=', $guests);
-                }
+            if (!empty($guests)) {
+                $query->where('guests', '>=', $guests);
+            }
 
-                if ($allowPets === 'allow_pets') {
-                    $query->whereDoesntHave('hosthomerules', function ($q) {
-                        $q->where('rule', 'No pets');
-                    });
-                }
+            if ($allowPets === 'allow_pets') {
+                $query->whereDoesntHave('hosthomerules', function ($q) {
+                    $q->where('rule', 'No pets');
+                });
+            }
 
-                if (!empty($propertyType) && is_array($propertyType)) {
-                    $query->whereIn('property_type', $propertyType);
-                }
+            if (!empty($propertyType) && is_array($propertyType)) {
+                $query->whereIn('property_type', $propertyType);
+            }
 
-                if (!empty($minBedrooms)) {
-                    $query->where('bedroom', '>=', $minBedrooms);
-                }
-                if (!empty($minBeds)) {
-                    $query->where('beds', '>=', $minBeds);
-                }
-                if (!empty($minBathrooms)) {
-                    $query->where('bathrooms', '>=', $minBathrooms);
-                }
+            if (!empty($minBedrooms)) {
+                $query->where('bedroom', '>=', $minBedrooms);
+            }
+            if (!empty($minBeds)) {
+                $query->where('beds', '>=', $minBeds);
+            }
+            if (!empty($minBathrooms)) {
+                $query->where('bathrooms', '>=', $minBathrooms);
+            }
 
-                if (!empty($minPrice)) {
-                    $query->where('actualPrice', '>=', $minPrice);
-                }
-                if (!empty($maxPrice)) {
-                    $query->where('actualPrice', '<=', $maxPrice);
-                }
+            if (!empty($minPrice)) {
+                $query->where('actualPrice', '>=', $minPrice);
+            }
+            if (!empty($maxPrice)) {
+                $query->where('actualPrice', '<=', $maxPrice);
+            }
 
-                if (!empty($amenities) && is_array($amenities)) {
-                    $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
-                        $q->whereIn('offer', $amenities);
-                    });
-                }
+            if (!empty($amenities) && is_array($amenities)) {
+                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                    $q->whereIn('offer', $amenities);
+                });
             }
 
             // Fetch results
@@ -2160,6 +2160,7 @@ class UserController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
+
 
      
     

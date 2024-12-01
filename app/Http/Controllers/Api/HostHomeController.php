@@ -86,27 +86,25 @@ class HostHomeController extends Controller
      */
     public function index(Request $request)
     {
-        // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
         $currentPage = $request->input('page', 1);
         $user = $request->user();
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
-        // Generate a cache key based on the request parameters
-        $cacheKey = 'host_homes_' . $perPage ."_page_{$currentPage}". "_user_id_" . $userIdOrUniqueId;
+        // Create a more unique cache key
+        $cacheKey = 'host_homes_' . md5($perPage . $currentPage . $userIdOrUniqueId);
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
-            // Fetch the data with relationships
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage, $currentPage) {
+            // Use a seeded random order to maintain consistency
             $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
                 ->where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend')
-                ->inRandomOrder()
+                ->orderByRaw('RAND(' . $currentPage . ')')
                 ->paginate($perPage);
 
-            // Transform the data using the resource and serialize it
             return HostHomeResource::collection($hostHomes)->response()->getData(true);
         });
     }

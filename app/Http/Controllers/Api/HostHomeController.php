@@ -92,22 +92,24 @@ class HostHomeController extends Controller
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
-        // Create a more unique cache key
-        $cacheKey = 'host_homes_' . md5($perPage . $currentPage . $userIdOrUniqueId);
+        // Generate a cache key based on request parameters and seed
+        $seed = crc32($userIdOrUniqueId);
+        $cacheKey = 'hosthomes' . $perPage . "page{$currentPage}" . "_userid" . $userIdOrUniqueId;
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage, $currentPage) {
-            // Use a seeded random order to maintain consistency
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage, $seed) {
+            // Apply the seed for consistent random order
             $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
                 ->where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend')
-                ->orderByRaw('RAND(' . $currentPage . ')')
+                ->orderByRaw('RAND(?)', [$seed]) // MySQL-specific; use alternative for other databases
                 ->paginate($perPage);
 
             return HostHomeResource::collection($hostHomes)->response()->getData(true);
         });
     }
+
 
     /**
      * @lrd:start

@@ -2067,6 +2067,8 @@ class UserController extends Controller
             $user = $request->user();
             $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
+            $seed = crc32($userIdOrUniqueId);
+
             // Include page and per_page in the cache key
             $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId . "_page_" . $page;
 
@@ -2086,6 +2088,7 @@ class UserController extends Controller
             // Paginate with per_page and page from query params
             $result = $query->with('hosthomephotos')
                 ->distinct()
+                ->orderByRaw('RAND(?)', [$seed])
                 ->paginate($perPage, ['*'], 'page', $page);
 
             // Wrap and cache response

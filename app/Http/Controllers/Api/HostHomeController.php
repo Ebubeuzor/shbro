@@ -219,9 +219,6 @@ class HostHomeController extends Controller
         return response()->json($result, 200);
     }
 
-
-
-
     
     /**
      * @lrd:start
@@ -241,8 +238,9 @@ class HostHomeController extends Controller
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
+        $seed = crc32($userIdOrUniqueId);
         $cacheKey = "view_home_by" . $property_type . "page{$currentPage}" . "_per_page_" . $perPage . "user_id_" . $userIdOrUniqueId;;
-        return Cache::remember($cacheKey,60, function() use($property_type, $perPage){
+        return Cache::remember($cacheKey,60, function() use($property_type, $seed ,$perPage){
             // Fetch the data with relationships
             $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])
             ->where('verified', 1)
@@ -250,7 +248,7 @@ class HostHomeController extends Controller
             ->whereNull('banned')
             ->whereNull('suspend')
             ->where('property_type',$property_type)
-            ->inRandomOrder()
+            ->orderByRaw('RAND(?)', [$seed]) 
             ->paginate($perPage);
 
             // Transform the data using the resource and serialize it

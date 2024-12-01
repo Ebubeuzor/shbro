@@ -2060,7 +2060,7 @@ class UserController extends Controller
             $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
             // Define a unique cache key
-            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId;
+            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId . "_page_" . ($data['page'] ?? 1);
 
             // Check cache
             if (Cache::has($cacheKey)) {

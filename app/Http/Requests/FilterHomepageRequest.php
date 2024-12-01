@@ -39,6 +39,7 @@ class FilterHomepageRequest extends FormRequest
             'amenities' => 'nullable|array',
             'amenities.*' => 'string', // Ensure each amenity is a string
             'per_page' => 'nullable|integer|min:1',
+            'page' => 'nullable|integer|min:1',
         ];
     }
 }

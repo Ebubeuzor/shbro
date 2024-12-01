@@ -229,17 +229,19 @@ class HostHomeController extends Controller
      * /api/hosthomes/{property_type}?per_page=20
      * @lrd:end
      * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
      */
     public function searchHomeByProperty_type(Request $request,$property_type)
     {
         $perPage = $request->input('per_page', 10);
         
+        $currentPage = $request->input('page', 1);
         
         $user = $request->user();
 
         $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
-        $cacheKey = "view_home_by" . $property_type . "_per_page_" . $perPage . "user_id_" . $userIdOrUniqueId;;
+        $cacheKey = "view_home_by" . $property_type . "page{$currentPage}" . "_per_page_" . $perPage . "user_id_" . $userIdOrUniqueId;;
         return Cache::remember($cacheKey,60, function() use($property_type, $perPage){
             // Fetch the data with relationships
             $hostHomes = HostHome::with(['hosthomereviews', 'hosthomephotos', 'hosthomedescriptions'])

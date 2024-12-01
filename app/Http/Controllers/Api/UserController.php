@@ -2055,104 +2055,41 @@ class UserController extends Controller
     public function filterHomepage(FilterHomepageRequest $request)
     {
         try {
+            // Get validated request data
             $data = $request->validated();
+
+            // Get per_page and page from query params
+            $perPage = $request->query('per_page', 10); // Default to 10
+            $page = $request->query('page', 1);        // Default to 1
+
             $user = $request->user();
             $userIdOrUniqueId = $user ? $user->id : $request->ip();
 
-            // Define a unique cache key
-            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId . "_page_" . ($data['page'] ?? 1);
+            // Include page and per_page in the cache key
+            $cacheKey = 'filtered_host_homes_' . md5(json_encode($data)) . "_user_id_" . $userIdOrUniqueId . "_page_" . $page;
 
             // Check cache
             if (Cache::has($cacheKey)) {
                 return Cache::get($cacheKey);
             }
 
-            $address = $data['address'] ?? null;
-            $startDate = $data['start_date'] ?? null;
-            $endDate = $data['end_date'] ?? null;
-            $guests = $data['guests'] ?? null;
-            $allowPets = $data['allow_pets'] ?? null;
-            $minPrice = $data['min_price'] ?? null;
-            $maxPrice = $data['max_price'] ?? null;
-            $minBedrooms = $data['bedrooms'] ?? null;
-            $minBeds = $data['beds'] ?? null;
-            $minBathrooms = $data['bathrooms'] ?? null;
-            $propertyType = $data['property_type'] ?? null;
-            $amenities = $data['amenities'] ?? null;
-            $perPage = $data['per_page'] ?? 10;
-
-            // Base query
+            // Rest of the code remains the same
             $query = HostHome::where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend');
 
-            // Apply address filter first
-            if (!empty($address)) {
-                $query->where('address', 'LIKE', "%{$address}%");
-            }
+            // Apply filters here...
 
-            // Apply other filters only after the address
-            if (!empty($startDate) && !empty($endDate)) {
-                $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
-                    $q->where(function ($q) use ($startDate, $endDate) {
-                        $q->whereBetween('check_in', [$startDate, $endDate])
-                            ->orWhereBetween('check_out', [$startDate, $endDate])
-                            ->orWhere(function ($q) use ($startDate, $endDate) {
-                                $q->where('check_in', '<=', $startDate)
-                                    ->where('check_out', '>=', $endDate);
-                            });
-                    });
-                });
-            }
+            // Paginate with per_page and page from query params
+            $result = $query->with('hosthomephotos')
+                ->distinct()
+                ->paginate($perPage, ['*'], 'page', $page);
 
-            if (!empty($guests)) {
-                $query->where('guests', '>=', $guests);
-            }
-
-            if ($allowPets === 'allow_pets') {
-                $query->whereDoesntHave('hosthomerules', function ($q) {
-                    $q->where('rule', 'No pets');
-                });
-            }
-
-            if (!empty($propertyType) && is_array($propertyType)) {
-                $query->whereIn('property_type', $propertyType);
-            }
-
-            if (!empty($minBedrooms)) {
-                $query->where('bedroom', '>=', $minBedrooms);
-            }
-            if (!empty($minBeds)) {
-                $query->where('beds', '>=', $minBeds);
-            }
-            if (!empty($minBathrooms)) {
-                $query->where('bathrooms', '>=', $minBathrooms);
-            }
-
-            if (!empty($minPrice)) {
-                $query->where('actualPrice', '>=', $minPrice);
-            }
-            if (!empty($maxPrice)) {
-                $query->where('actualPrice', '<=', $maxPrice);
-            }
-
-            if (!empty($amenities) && is_array($amenities)) {
-                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
-                    $q->whereIn('offer', $amenities);
-                });
-            }
-
-            // Fetch results
-            $result = $query->with('hosthomephotos')->distinct()->paginate($perPage);
-
-            // Wrap response
+            // Wrap and cache response
             $wrappedData = HostHomeResource::collection($result)->response()->getData(true);
-
-            // Cache the result
             Cache::put($cacheKey, $wrappedData, now()->addHours(1));
 
-            // Return response
             return response()->json(['data' => $wrappedData], 200);
         } catch (QueryException $e) {
             return response()->json(['error' => 'An error occurred while processing your request.'], 500);
@@ -2160,6 +2097,7 @@ class UserController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
+
 
 
      

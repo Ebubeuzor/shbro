@@ -3,6 +3,7 @@
 namespace App\Otp;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use SadiqSalau\LaravelOtp\Contracts\OtpInterface as Otp;
 
 class UserUpdateNumberOtp implements Otp
@@ -33,6 +34,7 @@ class UserUpdateNumberOtp implements Otp
             'phone' => $this->phone_number
         ]);
 
+        Cache::flush();
         return response("OTP sent successfully");
     }
 }

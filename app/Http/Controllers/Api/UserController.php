@@ -2051,6 +2051,8 @@ class UserController extends Controller
      * JSON response containing filtered host home data.
      * and if consumed will will return a 200 status code
      * @lrd:end
+     * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
      */
     public function filterHomepage(FilterHomepageRequest $request)
     {

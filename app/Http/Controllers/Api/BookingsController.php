@@ -370,25 +370,32 @@ class BookingsController extends Controller
 
     private function applyStandardDiscounts($price, $discounts, $bookingCount, $durationOfStay)
     {
+        $appliedDiscounts = [];
+
         foreach ($discounts as $discount) {
             switch ($discount->discount) {
                 case '20% New listing promotion':
-                    if ($bookingCount < 3) {
+                    if ($bookingCount < 3 && !in_array('20% New listing promotion', $appliedDiscounts)) {
                         $price *= 0.8;
+                        $appliedDiscounts[] = '20% New listing promotion';
                     }
                     break;
                 case '5% Weekly discount':
-                    if ($durationOfStay >= 7 && ($discounts->contains('discount', '10% Monthly discount') && $durationOfStay < 28)) {
+                    if ($durationOfStay >= 7 && $durationOfStay < 28 && !in_array('5% Weekly discount', $appliedDiscounts)) {
                         $price *= 0.95;
+                        $appliedDiscounts[] = '5% Weekly discount';
                     }
                     break;
                 case '10% Monthly discount':
-                    if ($durationOfStay >= 28) {
+                    if ($durationOfStay >= 28 && !in_array('10% Monthly discount', $appliedDiscounts)) {
                         $price *= 0.9;
+                        $appliedDiscounts[] = '10% Monthly discount';
                     }
                     break;
             }
         }
+
+        // If no discounts were applied and array is empty, return original price
         return $price;
     }
     

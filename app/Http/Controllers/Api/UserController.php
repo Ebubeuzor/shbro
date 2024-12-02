@@ -2077,13 +2077,82 @@ class UserController extends Controller
                 return Cache::get($cacheKey);
             }
 
+            $address = $data['address'] ?? null;
+            $startDate = $data['start_date'] ?? null;
+            $endDate = $data['end_date'] ?? null;
+            $guests = $data['guests'] ?? null;
+            $allowPets = $data['allow_pets'] ?? null;
+            $minPrice = $data['min_price'] ?? null;
+            $maxPrice = $data['max_price'] ?? null;
+            $minBedrooms = $data['bedrooms'] ?? null;
+            $minBeds = $data['beds'] ?? null;
+            $minBathrooms = $data['bathrooms'] ?? null;
+            $propertyType = $data['property_type'] ?? null;
+            $amenities = $data['amenities'] ?? null;
+            $perPage = $data['per_page'] ?? 10;
+
             // Rest of the code remains the same
             $query = HostHome::where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend');
 
-            // Apply filters here...
+            // Apply address filter first
+            if (!empty($address)) {
+                $query->where('address', 'LIKE', "%{$address}%");
+            }
+
+            // Apply other filters only after the address
+            if (!empty($startDate) && !empty($endDate)) {
+                $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
+                    $q->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('check_in', [$startDate, $endDate])
+                            ->orWhereBetween('check_out', [$startDate, $endDate])
+                            ->orWhere(function ($q) use ($startDate, $endDate) {
+                                $q->where('check_in', '<=', $startDate)
+                                    ->where('check_out', '>=', $endDate);
+                            });
+                    });
+                });
+            }
+
+            if (!empty($guests)) {
+                $query->where('guests', '>=', $guests);
+            }
+
+            if ($allowPets === 'allow_pets') {
+                $query->whereDoesntHave('hosthomerules', function ($q) {
+                    $q->where('rule', 'No pets');
+                });
+            }
+
+            if (!empty($propertyType) && is_array($propertyType)) {
+                $query->whereIn('property_type', $propertyType);
+            }
+
+            if (!empty($minBedrooms)) {
+                $query->where('bedroom', '>=', $minBedrooms);
+            }
+            if (!empty($minBeds)) {
+                $query->where('beds', '>=', $minBeds);
+            }
+            if (!empty($minBathrooms)) {
+                $query->where('bathrooms', '>=', $minBathrooms);
+            }
+
+            if (!empty($minPrice)) {
+                $query->where('actualPrice', '>=', $minPrice);
+            }
+            if (!empty($maxPrice)) {
+                $query->where('actualPrice', '<=', $maxPrice);
+            }
+
+            if (!empty($amenities) && is_array($amenities)) {
+                $query->whereHas('hosthomeoffers', function ($q) use ($amenities) {
+                    $q->whereIn('offer', $amenities);
+                });
+            }
+            
 
             // Paginate with per_page and page from query params
             $result = $query->with('hosthomephotos')

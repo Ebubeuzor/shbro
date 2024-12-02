@@ -58,6 +58,7 @@ class ProcessHostHomeNotifications implements ShouldQueue
 
         $tip = new Tip();
         $tip->user_id = $user->id;
+        $tip->host_home_id = $this->hostHomeId;
         $tip->message = $message;
         $tip->url = "listings";
         $tip->save();

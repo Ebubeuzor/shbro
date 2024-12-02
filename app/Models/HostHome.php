@@ -49,6 +49,10 @@ class HostHome extends Model
         return $this->hasMany(Hosthomenotice::class);
     }
 
+    public function hosthometip(){
+        return $this->hasMany(Tip::class);
+    }
+
     
     public function cohosthomes(){
         return $this->hasMany(Hosthomecohost::class);

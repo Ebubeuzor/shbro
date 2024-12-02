@@ -654,6 +654,9 @@ class HostHomeController extends Controller
         $hostHome->utility_bill = $relativePath;
         $hostHome->save();
 
+        // Delete associated tips for this host home
+        $hostHome->hosthometip()->delete();
+
         Cache::flush();
 
         $admins = User::whereNotNull('adminStatus')->get();
@@ -2028,6 +2031,7 @@ class HostHomeController extends Controller
 
         $tip = new Tip();
         $tip->user_id = $user;
+        $tip->host_home_id = $hosthomeid;
         $tip->message = $fullMessage;
         $tip->url = "listings";
         $tip->save();

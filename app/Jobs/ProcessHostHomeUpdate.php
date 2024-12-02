@@ -70,9 +70,8 @@ class ProcessHostHomeUpdate implements ShouldQueue
                 
                 $this->updateProgress('completed', 100);
 
-                Log::info("Apartment update completed, related jobs dispatched", [
-                    'host_home_id' => $this->hostHomeId,
-                ]);
+                // Delete associated tips for this host home
+                $hostHome->hosthometip()->delete();
                 
                 return $hostHome;
             }, 1);

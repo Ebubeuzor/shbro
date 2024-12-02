@@ -653,11 +653,11 @@ class UserController extends Controller
                 Mail::to($user->email)->queue((new VerifyUser($user,$data['status'],'emails.VerifyUser',"Government ID Verification Complete"))->onQueue('emails'));
                 Cache::flush();
             }else {
-                $tip = new Tip();
-                $tip->user_id = $user;
-                $tip->message = "You Government id is " . $data['status'];
-                $tip->url = "AddGovernmentId";
-                $tip->save();
+                // $tip = new Tip();
+                // $tip->user_id = $user;
+                // $tip->message = "You Government id is " . $data['status'];
+                // $tip->url = "AddGovernmentId";
+                // $tip->save();
                 Mail::to($user->email)->queue((new VerifyUser($user,$data['status'],'emails.governementIDUnverified',"Government ID Verification Incomplete"))->onQueue('emails'));
                 
             }

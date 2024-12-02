@@ -2019,16 +2019,22 @@ class HostHomeController extends Controller
 
         $title = "Your home $hostHome->title was not approved";
 
+        $fullMessage = "$title. Reason: {$data['message']}. **Action Required:** Please resubmit a valid utility bill immediately to complete the approval process.";
+        
         $notify = new Notification();
         $notify->user_id = $user;
-        $notify->Message = $data['message'];
+        $notify->Message = $fullMessage;
         $notify->save();
 
         $tip = new Tip();
         $tip->user_id = $user;
-        $tip->message = $data['message'];
+        $tip->message = $fullMessage;
         $tip->url = "listings";
         $tip->save();
+
+        $hostHome->update([
+            'utility_bill' => null
+        ]);
 
         $user = User::find($user);
 
@@ -2036,13 +2042,7 @@ class HostHomeController extends Controller
             'disapproved' => 'disapproved'
         ]);
 
-        
-        $notification = new Notification();
-        $notification->user_id = $user->id;  // Assuming you want to save the user ID
-        $notification->Message = $data['message'];
-        $notification->save();
-        // Broadcast the NewNotificationEvent to notify the WebSocket clients
-        event(new NewNotificationEvent($notification, $notification->id, $user->id));
+        event(new NewNotificationEvent($notify, $notify->id, $user->id));
 
         Mail::to($user->email)->queue(
             (new DisapproveHostHome($user,$data['message'],$hostHome,$title))->onQueue('emails')

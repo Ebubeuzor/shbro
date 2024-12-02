@@ -265,7 +265,7 @@ class UserController extends Controller
     public function userTips()
     {
         $user = Auth::user();
-        $tips = $user->tips;
+        $tips = $user->tips->latest();
         return response($tips);
     }
 

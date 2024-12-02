@@ -652,6 +652,7 @@ class HostHomeController extends Controller
         // Save relative path in database
         $relativePath = $uploadPath . '/' . $filename;
         $hostHome->utility_bill = $relativePath;
+        $hostHome->disapproved = null;
         $hostHome->save();
 
         // Delete associated tips for this host home

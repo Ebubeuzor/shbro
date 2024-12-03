@@ -1113,13 +1113,7 @@ class UserController extends Controller
             // Remove the specific wishlist item associated with this HostHome
             $wishlistItem->delete();
             
-            $cacheKey = "user_wishlist".auth()->id();
-            $cacheKey2 = "userWishlistContainersAndItems{$userId}";
-            $cacheKey3 = "userWishlistContainerItems{$userId}ContainerId{$wishlistItem->wishlistcontainer_id}";
-
-            Cache::forget($cacheKey);
-            Cache::forget($cacheKey2);
-            Cache::forget($cacheKey3);
+            Cache::flush();
             return response("HostHome removed from the wishlist", 200);
 
         } else {

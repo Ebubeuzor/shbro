@@ -1031,12 +1031,8 @@ class UserController extends Controller
                 $wishlistContainerItem->host_home_id = $hosthome->id;
                 $wishlistContainerItem->save();
 
-                $cacheKey = "userWishlistContainersAndItems{$user->id}";
-                $cacheKey2 = "user_wishlist" . auth()->id();
-                $cacheKey3 = "userWishlistContainerItems{$user->id}ContainerId{$wishlistContainer->id}";
-                Cache::forget($cacheKey);
-                Cache::forget($cacheKey2);
-                Cache::forget($cacheKey3);
+                
+                Cache::flush();
                 return response("Ok", 201);
 
             } else {
@@ -1052,11 +1048,8 @@ class UserController extends Controller
                 $wishlistContainerItem->wishlistcontainer_id = $wishlistcontainer->id;
                 $wishlistContainerItem->host_home_id = $hosthome->id;
                 $wishlistContainerItem->save();
-
-                $cacheKey = "userWishlistContainersAndItems{$user->id}";
-                $cacheKey2 = "userWishlistContainerItems{$user->id}ContainerId{$data['wishcontainerid']}";
-                Cache::forget($cacheKey);
-                Cache::forget($cacheKey2);
+                
+                Cache::flush();
                 return response("Ok", 201);
 
             } else {

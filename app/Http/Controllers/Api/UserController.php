@@ -3251,7 +3251,7 @@ class UserController extends Controller
             $userId = auth()->id();
 
             // Retrieve payment records for the user
-            $paymentRecords = UserRequestPay::where('user_id', $userId)->get();
+            $paymentRecords = UserRequestPay::where('user_id', $userId)->latest()->get();
 
             return response()->json(['payment_records' => $paymentRecords]);
         } catch (\Exception $e) {

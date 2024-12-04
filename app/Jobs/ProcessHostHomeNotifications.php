@@ -52,7 +52,7 @@ class ProcessHostHomeNotifications implements ShouldQueue
 
         $message = "Tip: Please upload your utility bill to verify your address for $hostHome->title and speed up the approval process.";
         $notify = new Notification();
-        $notify->user_id = $user;
+        $notify->user_id =  $user->id;
         $notify->Message = $message;
         $notify->save();
 

@@ -2086,8 +2086,13 @@ class UserController extends Controller
 
             // Apply address filter first
             if (!empty($address)) {
-                $query->whereRaw("MATCH(address) AGAINST (? IN NATURAL LANGUAGE MODE)", [$address]);
-            }            
+                $addressKeywords = explode(',', $address); // Split by comma
+                $query->where(function ($q) use ($addressKeywords) {
+                    foreach ($addressKeywords as $keyword) {
+                        $q->orWhere('address', 'LIKE', '%' . trim($keyword) . '%');
+                    }
+                });
+            }           
 
             // Apply other filters only after the address
             if (!empty($startDate) && !empty($endDate)) {

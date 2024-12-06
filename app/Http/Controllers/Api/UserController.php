@@ -2153,9 +2153,9 @@ class UserController extends Controller
 
             return response()->json(['data' => $wrappedData], 200);
         } catch (QueryException $e) {
-            return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+            return response()->json(['error' => 'An error occurred while processing your request.' . $e->getMessage()], 500);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'An unexpected error occurred.'], 500);
+            return response()->json(['error' => 'An unexpected error occurred.' . $e->getMessage()], 500);
         }
     }
 

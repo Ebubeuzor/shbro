@@ -25,6 +25,8 @@ class FilterHomepageRequest extends FormRequest
     {
         return [
             'address' => 'nullable|string',
+            'latitude' => 'nullable',
+            'longitude' => 'nullable',
             'start_date' => 'nullable|date_format:Y-m-d',
             'end_date' => 'nullable|date_format:Y-m-d',
             'guests' => 'nullable|integer|min:0',

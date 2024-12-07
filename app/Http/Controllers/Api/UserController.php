@@ -2077,6 +2077,9 @@ class UserController extends Controller
             $propertyType = $data['property_type'] ?? null;
             $amenities = $data['amenities'] ?? null;
             $perPage = $data['per_page'] ?? 10;
+            $latitude = $data['latitude'] ?? null;
+            $longitude = $data['longitude'] ?? null;
+            $radius = 10;
 
             // Rest of the code remains the same
             $query = HostHome::where('verified', 1)
@@ -2086,14 +2089,21 @@ class UserController extends Controller
 
             // Apply address filter first
             if (!empty($address)) {
-                $addressKeywords = explode(',', $address); // Split by comma
-                $query->where(function ($q) use ($addressKeywords) {
-                    foreach ($addressKeywords as $keyword) {
-                        $q->orWhere('address', 'LIKE', '%' . trim($keyword) . '%');
-                    }
-                });
-            }           
+                $query->where('address', 'LIKE', "%{$address}%");
+            }
 
+
+            // Apply geographical filter
+            if (!empty($latitude) && !empty($longitude)) {
+                $query->whereRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ?
+                ", [$latitude, $longitude, $latitude, $radius]);
+            }
+            
             // Apply other filters only after the address
             if (!empty($startDate) && !empty($endDate)) {
                 $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {

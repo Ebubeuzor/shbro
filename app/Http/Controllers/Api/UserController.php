@@ -2081,19 +2081,12 @@ class UserController extends Controller
             $longitude = $data['longitude'] ?? null;
             $radius = 10;
 
-            // Rest of the code remains the same
             $query = HostHome::where('verified', 1)
                 ->whereNull('disapproved')
                 ->whereNull('banned')
                 ->whereNull('suspend');
 
-            // Apply address filter first
-            if (!empty($address)) {
-                $query->where('address', 'LIKE', "%{$address}%");
-            }
-
-
-            // Apply geographical filter
+            // Prioritize longitude and latitude over address
             if (!empty($latitude) && !empty($longitude)) {
                 $query->whereRaw("
                     (6371 * acos(
@@ -2102,9 +2095,13 @@ class UserController extends Controller
                         sin(radians(?)) * sin(radians(latitude))
                     )) <= ?
                 ", [$latitude, $longitude, $latitude, $radius]);
+            } 
+            // Only use address if no longitude and latitude are provided
+            elseif (!empty($address)) {
+                $query->where('address', 'LIKE', "%{$address}%");
             }
             
-            // Apply other filters only after the address
+            // Rest of the filtering logic remains the same
             if (!empty($startDate) && !empty($endDate)) {
                 $query->whereDoesntHave('bookings', function ($q) use ($startDate, $endDate) {
                     $q->where(function ($q) use ($startDate, $endDate) {
@@ -2155,7 +2152,6 @@ class UserController extends Controller
                 });
             }
             
-
             // Paginate with per_page and page from query params
             $result = $query->with('hosthomephotos')
                 ->distinct()

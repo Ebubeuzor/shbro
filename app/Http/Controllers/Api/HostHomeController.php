@@ -2252,15 +2252,8 @@ class HostHomeController extends Controller
 
         // Prevent deletion if there's an active booking
         if ($activeBooking) {
-        return response()->json([
-            'message' => 'The host home cannot be deleted because there is an ongoing stay. Please wait until the current booking is completed.'
-        ], 403);
-        }
-
-        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
-        if ($isHosting || $isStaying) {
             return response()->json([
-                'message' => 'The host home cannot be deleted because there is an ongoing stay or hosting activity. Please wait until the current booking is completed.'
+                'message' => 'The host home cannot be deleted because there is an ongoing stay. Please wait until the current booking is completed.'
             ], 403);
         }
 

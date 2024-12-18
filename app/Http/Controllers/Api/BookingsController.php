@@ -516,7 +516,7 @@ class BookingsController extends Controller
         if ($lastRequest) {
             return response()->json(['error' => 'You have already made a request today'], 400);
         }
-        $messageToHost = $user->name . " has requested to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay please approve or decline";
+        $messageToHost = $user->name . " has requested to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay please go to your mail inbox to approve or decline";
         $chat = new ChatRepository();
         $message = $chat->sendMessages([
             'message' => $messageToHost,

@@ -211,16 +211,13 @@ class UserController extends Controller
         $data = $request->validated();
 
         // Retrieve the user's about user record, or create a new one if it doesn't exist
-        $aboutUser = $user->aboutUser->first();
-        
-        if (!$aboutUser) {
-            $aboutUser = new AboutUser();
-            $user->aboutUser()->save($aboutUser);
-        }
-
+        $aboutUser = $user->aboutUser()->firstOrNew();
         
         // Fill the about user record with the validated data
         $aboutUser->fill($data);
+
+        // Associate the user if it's a new record
+        $aboutUser->user_id = $user->id;
 
         // Save the about user record to the database
         $aboutUser->save();

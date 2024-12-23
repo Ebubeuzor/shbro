@@ -1768,31 +1768,43 @@ class UserController extends Controller
         $user = Auth::user();
 
         if ($user) {
-            
             // Get the current date and time
             $currentDateTime = Carbon::now();
             
-            // Check if the user is currently hosting and has a non-null checkOutNotification
+            // Check if the user is currently hosting
             $isHosting = Booking::where('hostId', $user->id)
-            ->where('paymentStatus', 'success')
-            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-            ->whereNotNull('checkOutNotification')
-            ->exists();
+                ->where('paymentStatus', 'success')
+                ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                ->exists();
 
-            // Check if the user is currently staying and has a non-null checkOutNotification
+            // Check if the user is currently staying
             $isStaying = Booking::where('user_id', $user->id)
-                    ->where('paymentStatus', 'success')
-                    ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                    ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                    ->whereNotNull('checkOutNotification')
-                    ->exists();
+                ->where('paymentStatus', 'success')
+                ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                ->exists();
 
-            // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
+            // Prevent deactivation if there are active bookings
             if ($isHosting || $isStaying) {
-            return response()->json([
-            'message' => 'This account cannot be delected while the user is hosting or staying in an apartment'
-            ], 403);
+                return response()->json([
+                    'message' => 'Your account cannot be deactivated while you have active bookings (either as a host or guest). Please wait until all current stays are completed.'
+                ], 403);
+            }
+
+            // Also check for any upcoming bookings
+            $upcomingBookings = Booking::where(function($query) use ($user, $currentDateTime) {
+                $query->where('hostId', $user->id)
+                    ->orWhere('user_id', $user->id);
+            })
+                ->where('paymentStatus', 'success')
+                ->where('check_in', '>', $currentDateTime->format('Y-m-d'))
+                ->exists();
+
+            if ($upcomingBookings) {
+                return response()->json([
+                    'message' => 'Your account cannot be deactivated while you have upcoming bookings. Please cancel all future bookings first.'
+                ], 403);
             }
 
             /** @var User $user  */

@@ -900,29 +900,35 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
 
-        // Get the current date and time
         $currentDateTime = Carbon::now();
-
-        // Check if the user is currently hosting and has a non-null checkOutNotification
+    
+        // Check if the user is currently hosting
         $isHosting = Booking::where('hostId', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // Check if the user is currently staying and has a non-null checkOutNotification
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+            
+        // Check if the user is currently staying
         $isStaying = Booking::where('user_id', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
-        if ($isHosting || $isStaying) {
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        // Check for any upcoming bookings
+        $upcomingBookings = Booking::where(function($query) use ($user, $currentDateTime) {
+            $query->where('hostId', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '>', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        if ($isHosting || $isStaying || $upcomingBookings) {
             return response()->json([
-                'message' => 'The user cannot be banned while they are hosting, staying in an apartment'
+                'message' => 'This user cannot be banned because they have active or upcoming bookings. Please wait until all bookings are completed.'
             ], 403);
         }
 
@@ -1063,29 +1069,34 @@ class AdminController extends Controller
 
         $user = User::where('id', $id)->first();
 
-        // Get the current date and time
         $currentDateTime = Carbon::now();
-
-        // Check if the user is currently hosting and has a non-null checkOutNotification
+    
+        // Check if the user is currently hosting
         $isHosting = Booking::where('hostId', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // Check if the user is currently staying and has a non-null checkOutNotification
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        // Check if the user is currently staying
         $isStaying = Booking::where('user_id', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
-        if ($isHosting || $isStaying) {
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        // Check for any upcoming bookings
+        $upcomingBookings = Booking::where(function($query) use ($user, $currentDateTime) {
+            $query->where('hostId', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '>', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        if ($isHosting || $isStaying || $upcomingBookings) {
             return response()->json([
-                'message' => 'The user cannot be suspended while they are hosting, staying in an apartment'
+                'message' => 'This user cannot be suspended because they have active or upcoming bookings. Please wait until all bookings are completed.'
             ], 403);
         }
 
@@ -1297,7 +1308,7 @@ class AdminController extends Controller
         
         return response("Ok", 200); 
     }
-    
+
     /**
      * @lrd:start
      * this is used to Send an email to guest and host and all

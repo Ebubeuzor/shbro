@@ -1221,50 +1221,81 @@ class AdminController extends Controller
      * @LRDparam message use|required
      */
     public function deleteGuest(Request $request, $id) {
-
         $data = $request->validate([
             "message" => "required"
         ]);
-
+    
         $user = User::where('id', $id)->first();
-
-        
-        // Get the current date and time
-        $currentDateTime = Carbon::now();
-
-        // Check if the user is currently hosting and has a non-null checkOutNotification
-        $isHosting = Booking::where('hostId', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // Check if the user is currently staying and has a non-null checkOutNotification
-        $isStaying = Booking::where('user_id', $user->id)
-                            ->where('paymentStatus', 'success')
-                            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
-                            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
-                            ->whereNotNull('checkOutNotification')
-                            ->exists();
-
-        // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
-        if ($isHosting || $isStaying) {
+    
+        if (!$user) {
             return response()->json([
-                'message' => 'The user cannot be delected while they are hosting or staying in an apartment'
+                'message' => 'User not found'
+            ], 404);
+        }
+        
+        $currentDateTime = Carbon::now();
+    
+        // Check if the user is currently hosting
+        $isHosting = Booking::where('hostId', $user->id)
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        // Check if the user is currently staying
+        $isStaying = Booking::where('user_id', $user->id)
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        // Check for any upcoming bookings
+        $upcomingBookings = Booking::where(function($query) use ($user, $currentDateTime) {
+            $query->where('hostId', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '>', $currentDateTime->format('Y-m-d'))
+            ->exists();
+    
+        if ($isHosting || $isStaying || $upcomingBookings) {
+            return response()->json([
+                'message' => 'This user cannot be deleted because they have active or upcoming bookings. Please wait until all bookings are completed.'
             ], 403);
         }
-
+    
+        // Check for any unresolved financial transactions
+        $pendingBookings = Booking::where(function($query) use ($user) {
+            $query->where('hostId', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
+            ->where('paymentStatus', 'success')
+            ->where(function ($query) {
+                $query->whereNull('addedToHostWallet')
+                      ->orWhereNull('addedToGuestWallet')
+                      ->orWhereNotNull('pauseSecurityDepositToGuest');
+            })
+            ->exists();
+    
+        if ($pendingBookings) {
+            return response()->json([
+                'message' => 'This user cannot be deleted because they have pending financial transactions. Please resolve all payments first.'
+            ], 403);
+        }
+    
         $title = "Your account has been terminated";
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountDeletion';
+        
         Mail::to($user->email)->queue(
-            (new AccountNotice($user,$data['message'], $title,$formatedDate,$viewToUse))->onQueue('emails')
+            (new AccountNotice($user, $data['message'], $title, $formatedDate, $viewToUse))->onQueue('emails')
         );
-        $user->forceDelete();
+    
         $user->hosthomes()->forceDelete();
+        $user->forceDelete();
         Cache::flush();
-        return response("Ok",200); 
+        
+        return response("Ok", 200); 
     }
     
     /**

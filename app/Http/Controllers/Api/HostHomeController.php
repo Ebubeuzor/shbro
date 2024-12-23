@@ -2258,7 +2258,7 @@ class HostHomeController extends Controller
         }
 
         // Efficiently check for conditions on active bookings
-        $activeBooking = Booking::where('host_home_id', $id)
+        $activeFunding = Booking::where('host_home_id', $id)
         ->where('paymentStatus', 'success')
         ->where(function ($query) {
             $query->whereNull('addedToHostWallet')
@@ -2273,7 +2273,7 @@ class HostHomeController extends Controller
         ->first();
 
         // If an active booking violates any condition, return an appropriate error message
-        if ($activeBooking) {
+        if ($activeFunding) {
             if ($activeBooking->addedToHostWallet === null) {
                 return response()->json([
                     'message' => 'The host home cannot be deleted because the booking funds have not yet been added to the host\'s wallet.'

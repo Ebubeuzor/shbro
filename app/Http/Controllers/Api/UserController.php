@@ -1768,6 +1768,33 @@ class UserController extends Controller
         $user = Auth::user();
 
         if ($user) {
+            
+            // Get the current date and time
+            $currentDateTime = Carbon::now();
+            
+            // Check if the user is currently hosting and has a non-null checkOutNotification
+            $isHosting = Booking::where('hostId', $user->id)
+            ->where('paymentStatus', 'success')
+            ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+            ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+            ->whereNotNull('checkOutNotification')
+            ->exists();
+
+            // Check if the user is currently staying and has a non-null checkOutNotification
+            $isStaying = Booking::where('user_id', $user->id)
+                    ->where('paymentStatus', 'success')
+                    ->where('check_in', '<=', $currentDateTime->format('Y-m-d'))
+                    ->where('check_out', '>=', $currentDateTime->format('Y-m-d'))
+                    ->whereNotNull('checkOutNotification')
+                    ->exists();
+
+            // If the user is either hosting or staying, and checkOutNotification is set, prevent the ban
+            if ($isHosting || $isStaying) {
+            return response()->json([
+            'message' => 'This account cannot be delected while the user is hosting or staying in an apartment'
+            ], 403);
+            }
+
             /** @var User $user  */
             $currentAccessToken = $user->currentAccessToken();
             

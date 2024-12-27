@@ -2166,13 +2166,13 @@ class UserController extends Controller
             }
 
             if (!empty($minBedrooms)) {
-                $query->where('bedroom', '>=', $minBedrooms);
+                $query->where('bedroom', $minBedrooms);
             }
             if (!empty($minBeds)) {
-                $query->where('beds', '>=', $minBeds);
+                $query->where('beds', $minBeds);
             }
             if (!empty($minBathrooms)) {
-                $query->where('bathrooms', '>=', $minBathrooms);
+                $query->where('bathrooms', $minBathrooms);
             }
 
             if (!empty($minPrice)) {

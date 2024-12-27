@@ -165,9 +165,9 @@ class BookingsController extends Controller
         $checkOut = \DateTime::createFromFormat('d/m/Y', $checkOutString);
 
         $currentDate = new \DateTime();
-        if ($checkIn < $currentDate || $checkOut < $currentDate) {
-            abort(400, "Invalid date. Dates must be present or future dates.");
-        }
+        if ($checkIn <= $currentDate || $checkOut <= $currentDate) {
+            abort(400, "Invalid booking dates. Check-in and check-out dates must be in the future. Please select dates beyond today.");
+        }               
 
         if ($checkOut <= $checkIn) {
             abort(400, "Invalid date range. Check-out must be after check-in.");

@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173','http://localhost:5173','https://shbro.onrender.com','http://127.0.0.1:5500'],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 

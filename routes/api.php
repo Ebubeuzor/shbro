@@ -179,7 +179,7 @@ Route::middleware(['auth:sanctum', 'checkUserConditions'])->group(function(){
         Route::put('unsuspendGuest/{id}', [AdminController::class, 'unsuspendGuest']);
         Route::put('suspendGuest/{id}', [AdminController::class, 'suspendGuest']);
         Route::delete('deleteGuest/{id}', [AdminController::class, 'deleteGuest']);
-        
+        Route::post('/register-token', [UserController::class, 'saveDeviceToken']);
         Route::get('/reporthosthome', [ReportController::class, 'index']);
         Route::get('/getReportDamagesForAdmin', [ReportController::class, 'getReportDamagesForAdmin']);
         Route::get('/assignSecurityDepositToGuest/{bookingNumber}/{id}', [ReportController::class, 'assignSecurityDepositToGuest']);

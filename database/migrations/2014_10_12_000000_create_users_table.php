@@ -25,6 +25,7 @@ return new class extends Migration
                 $table->timestamp('otp_expires_at')->nullable();
                 $table->string('verification_type')->nullable();
                 $table->string('government_id')->nullable();
+                $table->string('device_token')->nullable();
                 $table->string('live_photo')->nullable();
                 $table->string('profilePicture')->nullable();
                 $table->string('country')->nullable();

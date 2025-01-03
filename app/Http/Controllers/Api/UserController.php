@@ -1851,6 +1851,33 @@ class UserController extends Controller
 
     /**
      * @lrd:start
+     * Save device token for the authenticated user.
+     * @lrd:end
+     * @LRDparam token use|required
+     */
+    public function saveDeviceToken(Request $request)
+    {
+        $request->validate([
+            'device_token' => 'required|string'
+        ]);
+    
+        $user = Auth::user();
+        
+        // Update the user's device token
+        $user->device_token = $request->device_token;
+        $user->save();
+    
+        // Log the token registration
+        Log::info('Device token registered for user: ' . $user->id . ' Token: ' . $request->device_token);
+    
+        return response()->json([
+            'message' => 'Device token registered successfully',
+            'token' => $request->device_token
+        ]);
+    }
+
+    /**
+     * @lrd:start
      * Send OTP for reactivating the user's account.
      *
      * This method is responsible for sending a One-Time Password (OTP) to the user's email.

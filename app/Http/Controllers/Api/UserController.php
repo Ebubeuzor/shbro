@@ -1863,10 +1863,13 @@ class UserController extends Controller
     
         $user = Auth::user();
         
-        // Update the user's device token
-        $user->device_token = $request->device_token;
-        $user->save();
-    
+        if($user->device_token != null && $user->device_token != $request->device_token){
+            
+            $user->device_token = $request->device_token;
+            $user->save();
+        
+        }
+        
         // Log the token registration
         Log::info('Device token registered for user: ' . $user->id . ' Token: ' . $request->device_token);
     

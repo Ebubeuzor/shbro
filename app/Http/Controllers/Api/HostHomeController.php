@@ -21,6 +21,7 @@ use App\Jobs\ProcessNotice;
 use App\Jobs\ProcessOffer;
 use App\Jobs\ProcessReservation;
 use App\Jobs\ProcessRule;
+use App\Jobs\PushNotification;
 use App\Jobs\UpdateDescription;
 use App\Jobs\UpdateDiscount;
 use App\Jobs\UpdateImage;
@@ -1999,6 +2000,13 @@ class HostHomeController extends Controller
             (new ListingApproved($user, $hostHome, $title))->onQueue('emails')
         );
     
+        $deviceToken = $user->device_token;
+                
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$message,$deviceToken);
+
+        }
         Cache::flush();
         return response()->json(['message'=>'approved'],200);
     }
@@ -2053,6 +2061,13 @@ class HostHomeController extends Controller
             (new DisapproveHostHome($user,$data['message'],$hostHome,$title))->onQueue('emails')
         );
         
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$fullMessage,$deviceToken);
+
+        }
         Cache::flush();
         return response()->json(['message'=>'disapproved'],200);
     }

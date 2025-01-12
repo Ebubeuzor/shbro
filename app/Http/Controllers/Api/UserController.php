@@ -32,6 +32,7 @@ use App\Http\Resources\UserTransactionResource;
 use App\Http\Resources\UserTripResource;
 use App\Http\Resources\WishlistContainerItemResource;
 use App\Jobs\NotifyAdminsAboutGovernmentId;
+use App\Jobs\PushNotification;
 use App\Jobs\RequestPay;
 use App\Mail\ActivateAccount;
 use App\Mail\NotificationMail;
@@ -641,6 +642,7 @@ class UserController extends Controller
             $user->update([
                 'verified' => $data['status'] == "Verified" ? "Verified" : "Not Verified"
             ]);
+            $fullMessage =  "You Government id is " . $data['status'];
             $notify = new Notification();
             $notify->user_id = $user->id;
             $notify->Message = "You Government id is " . $data['status'];
@@ -659,6 +661,13 @@ class UserController extends Controller
                 
             }
             
+            $deviceToken = $user->device_token;
+
+            if ($deviceToken) {
+
+                PushNotification::dispatch("Shrbo",$fullMessage,$deviceToken);
+
+            }
 
         }
         elseif(isset($data['government_id']) && isset($data['live_photo']) && isset($data['verification_type'])){

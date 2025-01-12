@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\MessageSent;
 use App\Events\Typing;
 use App\Http\Controllers\Controller;
+use App\Jobs\PushNotification;
 use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\NewMessageMail;
 use App\Mail\NotificationMail;
@@ -146,6 +147,15 @@ class ChatController extends Controller
 
                 // Send notification email to the receiver
                 $receiver = User::find($receiverId);
+
+                
+                $deviceToken = $receiver->device_token;
+
+                if ($deviceToken) {
+
+                    PushNotification::dispatch("Shrbo", $request->message,$deviceToken);
+
+                }
                 Mail::to($receiver->email)->queue(
                     (new NewMessageMail($receiver, 'You have a new message'))->onQueue('emails')
                 );

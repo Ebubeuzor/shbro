@@ -11,6 +11,7 @@ use App\Http\Resources\AllBookingsResource;
 use App\Http\Resources\AllReviewssResource;
 use App\Http\Resources\CancelTripsResource;
 use App\Http\Resources\GuestsResource;
+use App\Jobs\PushNotification;
 use App\Mail\AccountNotice;
 use App\Mail\AdminToUsers;
 use App\Mail\NotificationMail;
@@ -102,6 +103,15 @@ class AdminController extends Controller
             event(new NewNotificationEvent($notification, $notification->id, $user->id));
             
             $formatedDate = $userWallet->updated_at->format('M j, Y h:ia');
+            
+            $deviceToken = $user->device_token;
+
+            if ($deviceToken) {
+
+                PushNotification::dispatch("Shrbo",$title,$deviceToken);
+
+            }
+
             Mail::to($user->email)->queue(
                 (new PaymentRequestApproved($user,$deductedAmount,$title,$formatedDate))->onQueue('emails')
             );
@@ -935,6 +945,16 @@ class AdminController extends Controller
         $title = "Your account has been banned from shrbo";
         $viewToUse = 'emails.accountBanned';
         $formatedDate = now()->format('M j, Y h:ia');
+
+        
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$data['message'],$deviceToken);
+
+        }
+
         Mail::to($user->email)->queue(
             (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
         );
@@ -1009,6 +1029,17 @@ class AdminController extends Controller
         User::chunk(100, function ($users) use ($request, $formatedDate) {
             foreach ($users as $user) {
                 $title = "A message for everyone";
+                
+                $fullMessage = "Hello " . $user->name . "! Our service charges have been updated to: Guest Services: " . 
+                $request->guest_services_charge . "%, Host Services: " . $request->host_services_charge . 
+                "%, Tax: " . $request->tax . "%. Effective " . $formatedDate;
+                $deviceToken = $user->device_token;
+
+                if ($deviceToken) {
+
+                    PushNotification::dispatch($title,$fullMessage,$deviceToken);
+
+                }
                 Mail::to($user->email)->queue(
                     (new RevisedServiceCharges(
                         $user, 
@@ -1104,6 +1135,14 @@ class AdminController extends Controller
         
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountSuspension';
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$data['message'],$deviceToken);
+
+        }
+        
         Mail::to($user->email)->queue(
             (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
         );
@@ -1155,6 +1194,14 @@ class AdminController extends Controller
         
         $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$data['message'],$deviceToken);
+
+        }
+
         Mail::to($user->email)->queue(
             (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
         );
@@ -1207,6 +1254,14 @@ class AdminController extends Controller
         
         $viewToUse = 'emails.accountUnbanned';
         $formatedDate = now()->format('M j, Y h:ia');
+
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$data['message'],$deviceToken);
+
+        }
         Mail::to($user->email)->queue(
             (new AccountNotice($user,$data['message'], $title, $formatedDate,$viewToUse))->onQueue('emails')
         );
@@ -1297,6 +1352,14 @@ class AdminController extends Controller
         $title = "Your account has been terminated";
         $formatedDate = now()->format('M j, Y h:ia');
         $viewToUse = 'emails.accountDeletion';
+        
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch($title,$data['message'],$deviceToken);
+
+        }
         
         Mail::to($user->email)->queue(
             (new AccountNotice($user, $data['message'], $title, $formatedDate, $viewToUse))->onQueue('emails')

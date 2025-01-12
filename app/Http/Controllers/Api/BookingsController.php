@@ -9,6 +9,7 @@ use App\Http\Requests\BookingApartmentRequest;
 use App\Http\Requests\CancelTripRequest;
 use App\Http\Resources\BookedResource;
 use App\Jobs\CancelUnbookedRequest;
+use App\Jobs\PushNotification;
 use App\Jobs\SendMailForChatToCohosts;
 use App\Mail\AcceptOrDeclineGuestMail;
 use App\Mail\BookingCancellation;
@@ -551,12 +552,23 @@ class BookingsController extends Controller
 
         $this->sendMessagesToCohosts($messageToHost, $user->id, $receiverId, $hostHomeId);
         $userToReceive = User::whereId($receiverId)->first();
+        
         Mail::to($user->email)->queue(
             (new BookingRequestConfirmationEmail($user, $hosthome, "Request to book apartment has Been Successfully Made"))->onQueue('emails')
         );
+
         Mail::to($userToReceive->email)->queue(
             (new NewBookingRequest($userToReceive,$hosthome, "A Guest has made a request to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay"))->onQueue('emails')
         );
+
+        $deviceToken = $userToReceive->device_token;
+            
+        if ($deviceToken) {
+
+            PushNotification::dispatch("Shrbo","A Guest has made a request to book your apartment from $checkInDateForDisplay to $checkOutDateForDisplay",$deviceToken);
+
+        }
+
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId, $hostHomeId)
@@ -569,6 +581,14 @@ class BookingsController extends Controller
 
             foreach ($cohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false, true, $hostHomeId);
+            }
+                
+            $deviceToken = $receiver->device_token;
+                
+            if ($deviceToken) {
+
+                PushNotification::dispatch("Shrbo","A Guest has made a request to book your apartment",$deviceToken);
+
             }
         }elseif ($sender->hostcohosts()->exists()) {
             $cohosts = $sender->hostcohosts()->with('user')->get();

@@ -62,6 +62,15 @@ class ProcessHostHomeNotifications implements ShouldQueue
         $tip->message = $message;
         $tip->url = "listings";
         $tip->save();
+
+        
+        $deviceToken = $user->device_token;
+
+        if ($deviceToken) {
+
+            PushNotification::dispatch("Shrbo",$message,$deviceToken);
+
+        }
     }
 
     private function sendEmails($host, $user, $hostHome)

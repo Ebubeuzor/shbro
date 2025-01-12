@@ -110,6 +110,14 @@ class SendMailForChatToCohosts implements ShouldQueue
             event(new NewNotificationEvent($notification, $notification->id, $receiverId));
 
             $hosthome = HostHome::find($this->hostHomeId);
+            
+            $deviceToken = $receiver->device_token;
+
+            if ($deviceToken) {
+
+                PushNotification::dispatch("Shrbo",$message,$deviceToken);
+
+            }
             Mail::to($receiver->email)->queue(new NewBookingRequest($receiver,$hosthome, "A Guest made a request"));
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());

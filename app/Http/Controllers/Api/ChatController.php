@@ -153,7 +153,7 @@ class ChatController extends Controller
 
                 if ($deviceToken) {
 
-                    PushNotification::dispatch("Shrbo", $request->message,$deviceToken);
+                    PushNotification::dispatch("Shrbo", 'You have a new message' ,$deviceToken);
 
                 }
                 Mail::to($receiver->email)->queue(

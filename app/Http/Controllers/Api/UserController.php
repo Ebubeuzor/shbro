@@ -423,14 +423,16 @@ class UserController extends Controller
             throw new \Exception('Failed to save image to temp file');
         }
 
-        // Optimize the image
-        try {
-            ImageOptimizer::optimize($tempFile);
-        } catch (\Exception $e) {
-            Log::error('Image optimization failed: ' . $e->getMessage());
+        // Skip optimization for SVG
+        if ($imageType !== 'svg') {
+            try {
+                ImageOptimizer::optimize($tempFile);
+            } catch (\Exception $e) {
+                Log::error('Image optimization failed: ' . $e->getMessage());
+            }
         }
 
-        // Move the optimized image to the public directory
+        // Move the file to the public directory
         $dir = 'images/';
         $fileName = Str::random() . '.' . $imageType;
         $absolutePath = public_path($dir);
@@ -442,7 +444,7 @@ class UserController extends Controller
         }
 
         if (!rename($tempFile, $filePath)) {
-            throw new \Exception('Failed to move optimized image to public directory');
+            throw new \Exception('Failed to move image to public directory');
         }
 
         return $relativePath;

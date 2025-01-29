@@ -398,55 +398,51 @@ class UserController extends Controller
         return $dir . $fileName;
     }
 
-    private function saveImage($image)
+    private function saveImage($image) 
     {
-        // Check if image is base64 string
-        if (preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
-            $imageData = substr($image, strpos($image, ',') + 1);
-            $imageType = strtolower($matches[1]);
-
-            // Decode base64 image data
-            $decodedImage = base64_decode($imageData);
-
-            if ($decodedImage === false) {
-                throw new \Exception('Failed to decode image');
-            }
-        } else {
+        if (!preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
             throw new \Exception('Invalid image format');
         }
-
-        $tempDir = sys_get_temp_dir();
-        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
-
-        // Save the decoded image to the temp file
-        if (!file_put_contents($tempFile, $decodedImage)) {
-            throw new \Exception('Failed to save image to temp file');
+    
+        $imageData = substr($image, strpos($image, ',') + 1);
+        $imageType = strtolower($matches[1]);
+        $decodedImage = base64_decode($imageData);
+    
+        if ($decodedImage === false) {
+            throw new \Exception('Failed to decode image');
         }
-
-        // Skip optimization for SVG
-        if ($imageType !== 'svg') {
-            try {
-                ImageOptimizer::optimize($tempFile);
-            } catch (\Exception $e) {
-                Log::error('Image optimization failed: ' . $e->getMessage());
-            }
-        }
-
-        // Move the file to the public directory
+    
+        // Set file extension and handle SVG case
+        $extension = ($imageType === 'svg+xml') ? 'svg' : $imageType;
+        
         $dir = 'images/';
-        $fileName = Str::random() . '.' . $imageType;
+        $fileName = Str::random(32) . '.' . $extension;
         $absolutePath = public_path($dir);
         $relativePath = $dir . $fileName;
         $filePath = $absolutePath . '/' . $fileName;
-
+    
+        // Create directory if it doesn't exist
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
-
-        if (!rename($tempFile, $filePath)) {
-            throw new \Exception('Failed to move image to public directory');
+    
+        // For non-SVG images, use temporary file and optimize
+        if ($extension !== 'svg') {
+            $tempFile = tempnam(sys_get_temp_dir(), 'img_');
+            file_put_contents($tempFile, $decodedImage);
+            
+            try {
+                ImageOptimizer::optimize($tempFile);
+                rename($tempFile, $filePath);
+            } catch (\Exception $e) {
+                unlink($tempFile);
+                throw $e;
+            }
+        } else {
+            // Direct save for SVG files
+            file_put_contents($filePath, $decodedImage);
         }
-
+    
         return $relativePath;
     }
 

@@ -400,7 +400,7 @@ class UserController extends Controller
 
     private function saveImage($image) 
     {
-        if (!preg_match('/^data:image\/(\w+);base64,/', $image, $matches)) {
+        if (!preg_match('/^data:image\/([\w\+]+);base64,/', $image, $matches)) {
             throw new \Exception('Invalid image format');
         }
     
@@ -412,8 +412,17 @@ class UserController extends Controller
             throw new \Exception('Failed to decode image');
         }
     
-        // Set file extension and handle SVG case
-        $extension = ($imageType === 'svg+xml') ? 'svg' : $imageType;
+        // Better extension handling
+        switch ($imageType) {
+            case 'svg+xml':
+                $extension = 'svg';
+                break;
+            case 'jpeg':
+                $extension = 'jpg';
+                break;
+            default:
+                $extension = $imageType;
+        }
         
         $dir = 'images/';
         $fileName = Str::random(32) . '.' . $extension;
@@ -421,12 +430,10 @@ class UserController extends Controller
         $relativePath = $dir . $fileName;
         $filePath = $absolutePath . '/' . $fileName;
     
-        // Create directory if it doesn't exist
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
     
-        // For non-SVG images, use temporary file and optimize
         if ($extension !== 'svg') {
             $tempFile = tempnam(sys_get_temp_dir(), 'img_');
             file_put_contents($tempFile, $decodedImage);
@@ -439,7 +446,6 @@ class UserController extends Controller
                 throw $e;
             }
         } else {
-            // Direct save for SVG files
             file_put_contents($filePath, $decodedImage);
         }
     

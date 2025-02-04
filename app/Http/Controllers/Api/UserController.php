@@ -403,15 +403,15 @@ class UserController extends Controller
         if (!preg_match('/^data:image\/([\w\+]+);base64,/', $image, $matches)) {
             throw new \Exception('Invalid image format');
         }
-    
+
         $imageData = substr($image, strpos($image, ',') + 1);
         $imageType = strtolower($matches[1]);
         $decodedImage = base64_decode($imageData);
-    
+
         if ($decodedImage === false) {
             throw new \Exception('Failed to decode image');
         }
-    
+
         // Better extension handling
         switch ($imageType) {
             case 'svg+xml':
@@ -429,11 +429,11 @@ class UserController extends Controller
         $absolutePath = public_path($dir);
         $relativePath = $dir . $fileName;
         $filePath = $absolutePath . '/' . $fileName;
-    
+
         if (!File::exists($absolutePath)) {
             File::makeDirectory($absolutePath, 0755, true);
         }
-    
+
         if ($extension !== 'svg') {
             $tempFile = tempnam(sys_get_temp_dir(), 'img_');
             file_put_contents($tempFile, $decodedImage);
@@ -442,16 +442,21 @@ class UserController extends Controller
                 ImageOptimizer::optimize($tempFile);
                 rename($tempFile, $filePath);
             } catch (\Exception $e) {
-                unlink($tempFile);
-                throw $e;
+                                
+                // Clean up temp file if it exists
+                if (file_exists($tempFile)) {
+                    unlink($tempFile);
+                }
+                
+                // Save the original unoptimized image
+                file_put_contents($filePath, $decodedImage);
             }
         } else {
             file_put_contents($filePath, $decodedImage);
         }
-    
+
         return $relativePath;
     }
-
 
     /**
      * @lrd:start

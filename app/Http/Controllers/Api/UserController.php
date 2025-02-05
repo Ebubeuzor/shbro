@@ -400,32 +400,39 @@ class UserController extends Controller
 
     private function saveImage($image) 
     {
-        if (!preg_match('/^data:image\/([\w\+]+);base64,/', $image, $matches)) {
-            throw new \Exception('Invalid image format');
-        }
-
+        // Check if image is base64 string
+        if (preg_match('/^data:image\/([\w\+]+);base64,/', $image, $matches)) {
         $imageData = substr($image, strpos($image, ',') + 1);
         $imageType = strtolower($matches[1]);
+
+            // Decode base64 image data
         $decodedImage = base64_decode($imageData);
 
         if ($decodedImage === false) {
             throw new \Exception('Failed to decode image');
         }
-
-        // Better extension handling
-        switch ($imageType) {
-            case 'svg+xml':
-                $extension = 'svg';
-                break;
-            case 'jpeg':
-                $extension = 'jpg';
-                break;
-            default:
-                $extension = $imageType;
+        } else {
+            throw new \Exception('Invalid image format');
         }
-        
+
+        $tempDir = sys_get_temp_dir();
+        $tempFile = tempnam($tempDir, 'image_') . '.' . $imageType;
+
+        // Save the decoded image to the temp file
+        if (!file_put_contents($tempFile, $decodedImage)) {
+            throw new \Exception('Failed to save image to temp file');
+        }
+
+        // Optimize the image
+        try {
+            ImageOptimizer::optimize($tempFile);
+        } catch (\Exception $e) {
+            Log::error('Image optimization failed: ' . $e->getMessage());
+        }
+
+        // Move the optimized image to the public directory
         $dir = 'images/';
-        $fileName = Str::random(32) . '.' . $extension;
+        $fileName = Str::random() . '.' . $imageType;
         $absolutePath = public_path($dir);
         $relativePath = $dir . $fileName;
         $filePath = $absolutePath . '/' . $fileName;
@@ -434,29 +441,13 @@ class UserController extends Controller
             File::makeDirectory($absolutePath, 0755, true);
         }
 
-        if ($extension !== 'svg') {
-            $tempFile = tempnam(sys_get_temp_dir(), 'img_');
-            file_put_contents($tempFile, $decodedImage);
-            
-            try {
-                ImageOptimizer::optimize($tempFile);
-                rename($tempFile, $filePath);
-            } catch (\Exception $e) {
-                                
-                // Clean up temp file if it exists
-                if (file_exists($tempFile)) {
-                    unlink($tempFile);
-                }
-                
-                // Save the original unoptimized image
-                file_put_contents($filePath, $decodedImage);
-            }
-        } else {
-            file_put_contents($filePath, $decodedImage);
+        if (!rename($tempFile, $filePath)) {
+            throw new \Exception('Failed to move optimized image to public directory');
         }
 
         return $relativePath;
     }
+
 
     /**
      * @lrd:start

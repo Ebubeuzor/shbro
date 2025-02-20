@@ -66,7 +66,7 @@
                                         <p>Hello {{$user->name}},</p>
                                         <p>Welcome to Shrbo! You're just one step away from unlocking all the exciting features of your new account. To ensure your email security and begin your journey with Shrbo, please verify your email address.</p>
                                         <p>Simply click the link below to confirm your email address and activate your account:</p>
-                                        <p><a href="{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token]) }}" class="button" style="background-color: orangered; color: white; text-decoration: none; display: inline-block; font-size: 16px; padding: 15px 32px; margin: 10px 0; cursor: pointer;">Verify Email</a></p>
+                                        <p><a href="{{ route('verifyEmailOrActivateAccount', ['token' => $user->remember_token, 'mobileRequest'=> $mobileRequest]) }}" class="button" style="background-color: orangered; color: white; text-decoration: none; display: inline-block; font-size: 16px; padding: 15px 32px; margin: 10px 0; cursor: pointer;">Verify Email</a></p>
                                         <p><strong>Why Verify?</strong></p>
                                         <ul>
                                             <li>Verifying your email helps us ensure that we can communicate important information to you about your account.</li>

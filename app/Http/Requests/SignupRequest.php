@@ -46,6 +46,7 @@ class SignupRequest extends FormRequest
             'hostremtoken' => 'nullable',
             'hostid' => 'nullable',
             'encrptedCoHostemail' => 'nullable',
+            'mobileRequest' => 'nullable|boolean',
         ];
     }
 }

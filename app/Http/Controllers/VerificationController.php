@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 
 class VerificationController extends Controller
 {
-    public function verifyEmail($token)
+    public function verifyEmail($token,$mobileRequest = null)
     {
         $user = User::where('remember_token',$token)->first();
         if (!empty($user) || $user->is_active == false) {
@@ -36,8 +36,8 @@ class VerificationController extends Controller
                         $hostHome->restore();
                     }
                 }
-                
-                return redirect()->away('https://shortletbooking.com/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken);
+                $mobileRequest = $mobileRequest != null ? true : false;
+                return redirect()->away('https://shortletbooking.com/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken . "&mobileRequest=" . $mobileRequest);
 
             }    
             else{

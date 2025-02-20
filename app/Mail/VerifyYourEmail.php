@@ -19,10 +19,12 @@ class VerifyYourEmail extends Mailable
      * @return void
      */
     protected $user;
+    protected $mobileRequest;
 
-    public function __construct($user)
+    public function __construct($user, $mobileRequest)
     {
         $this->user = $user;
+        $this->mobileRequest = $mobileRequest;
     }
 
     public function build()
@@ -30,7 +32,8 @@ class VerifyYourEmail extends Mailable
         return $this->subject('Activate your account by verifying your email address.')
         ->view('emails.verify-email')
         ->with([
-            'user' => $this->user
+            'user' => $this->user,
+            'mobileRequest' => $this->mobileRequest
         ])
         ;    
     }

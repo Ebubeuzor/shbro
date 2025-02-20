@@ -207,6 +207,7 @@ class AuthController extends Controller
      * - `hostremtoken`: A token used for host or co-host authorization (string).
      * - `hostid`: The ID of the user who invited you to be a co-host (integer).
      * - `encrptedCoHostemail`: The encrpted email of the cohost.
+     * - `mobileRequest`: A flag indicating if the request is from a mobile device (boolean, default: false).
      *
      * **Behavior:**
      * - Validates required data (`name`, `email`, `password`) using the `SignupRequest` class.
@@ -226,6 +227,10 @@ class AuthController extends Controller
      * - Returns a 500 with an appropriate error message if:
      *    - A user tries to manipulate the encrptrd data 
      * 
+     * **Mobile Request Handling:**
+     * - If `mobileRequest` is provided and set to `true`, the user will be redirected with `&mobileRequest=true` in the URL.
+     * - When redirected after email verification, if `mobileRequest` is `true`, the frontend should hide the "Go Back" button.
+     *
      * @lrd:end
     */
     public function signup(SignupRequest $request) {
@@ -306,11 +311,14 @@ class AuthController extends Controller
             ]);
         }
 
+        $mobileRequest = empty($data['mobileRequest']) ? false : true;
+
         Mail::to($user->email)->queue(
             (new WelcomeMail($user))->onQueue('emails')
         );
+
         Mail::to($user->email)->queue(
-            (new VerifyYourEmail($user))->onQueue('emails')
+            (new VerifyYourEmail($user,$mobileRequest))->onQueue('emails')
         );
     
         Cache::flush();

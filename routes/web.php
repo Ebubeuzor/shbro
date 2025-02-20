@@ -44,7 +44,7 @@ Route::get('/guest', function () {
 
 Route::get('/payment/callback', [BookingsController::class, 'callback'])->name('callback');
 
-Route::get('/verify/{token}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
+Route::get('/verify/{token}/{mobileRequest?}', [VerificationController::class, 'verifyEmail'])->name('verifyEmailOrActivateAccount');
 
 Route::get('/becomeACoHost/{userId}/{hostid}', [HostHomeController::class, 'becomeACoHost'])->name('becomeACoHost');
 Route::get('/approveHomeForHost/{hostid}/{hosthomeid}', [HostHomeController::class, 'approveHomeForHost'])->name('approveHomeForHost');

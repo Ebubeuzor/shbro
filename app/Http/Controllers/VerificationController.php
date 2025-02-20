@@ -37,7 +37,7 @@ class VerificationController extends Controller
                     }
                 }
                 
-                $mobileRequest = $mobileRequest != "true" ? "true" : "false";
+                $mobileRequest = $mobileRequest != "false" ? "true" : "false";
                 return redirect()->away('https://shortletbooking.com/?verified=true&remtoken=' . $token . "&ustoken=".$recentToken . "&mobileRequest=" . $mobileRequest);
 
             }    

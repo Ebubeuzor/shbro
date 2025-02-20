@@ -311,8 +311,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Fix 1: Convert to boolean and cast to string for URL compatibility
-        $mobileRequest = (!empty($data['mobileRequest'])) ? 'true' : 'false';
+        $mobileRequest = isset($data['mobileRequest']) && $data['mobileRequest'] === true;
 
         info("mobileRequest1=".$mobileRequest);
         Mail::to($user->email)->queue(

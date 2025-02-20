@@ -311,7 +311,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $mobileRequest = isset($data['mobileRequest']) && $data['mobileRequest'] === true;
+        $mobileRequest = isset($data['mobileRequest']) && $data['mobileRequest'] === true ? "true" : "false";
 
         info("mobileRequest1=".$mobileRequest);
         Mail::to($user->email)->queue(

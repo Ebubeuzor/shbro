@@ -313,6 +313,7 @@ class AuthController extends Controller
 
         $mobileRequest = empty($data['mobileRequest']) ? false : true;
 
+        info("mobileRequest1=".$mobileRequest);
         Mail::to($user->email)->queue(
             (new WelcomeMail($user))->onQueue('emails')
         );

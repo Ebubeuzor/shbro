@@ -135,14 +135,17 @@ class AdminController extends Controller
      * @lrd:end
      * 
      * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
      */
     public function guests(Request $request)
     {
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        $currentPage = $request->input('page', 1);
+
         // Generate a cache key based on the request parameters
-        $cacheKey = 'guests_for_admin_' . $perPage;
+        $cacheKey = 'guests_for_admin_' . $perPage. "page{$currentPage}";
 
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
@@ -572,15 +575,17 @@ class AdminController extends Controller
      * @lrd:end
      * 
      * @LRDparam per_page use|required |numeric to set how many items you want to get per page.
-     * 
+     * @LRDparam page use|optional|numeric Specifies the current page for pagination.
      */
     public function hosts(Request $request)
     {
         // Set a default value for the number of items per page
         $perPage = $request->input('per_page', 10);
 
+        $currentPage = $request->input('page', 1);
+
         // Generate a cache key based on the request parameters
-        $cacheKey = 'hosts_for_admin_' . $perPage;
+        $cacheKey = 'hosts_for_admin_' . $perPage. "page{$currentPage}";
 
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {

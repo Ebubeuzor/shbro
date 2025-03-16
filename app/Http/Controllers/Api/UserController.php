@@ -499,7 +499,7 @@ class UserController extends Controller
     
             // If email was updated, send a verification email
             if ($emailUpdated) {
-                Mail::to($user->email)->queue((new VerifyYourEmail($user))->onQueue('emails'));
+                Mail::to($user->email)->queue((new VerifyYourEmail($user,"true"))->onQueue('emails'));
                 $user->update([
                     'email_verified_at' => null
                 ]);

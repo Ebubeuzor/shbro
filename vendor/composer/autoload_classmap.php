@@ -159,6 +159,7 @@ return array(
     'App\\Jobs\\ProcessReservation' => $baseDir . '/app/Jobs/ProcessReservation.php',
     'App\\Jobs\\ProcessRule' => $baseDir . '/app/Jobs/ProcessRule.php',
     'App\\Jobs\\ProcessSecurityDeposit' => $baseDir . '/app/Jobs/ProcessSecurityDeposit.php',
+    'App\\Jobs\\PushNotification' => $baseDir . '/app/Jobs/PushNotification.php',
     'App\\Jobs\\RequestPay' => $baseDir . '/app/Jobs/RequestPay.php',
     'App\\Jobs\\SaveReportDamages' => $baseDir . '/app/Jobs/SaveReportDamages.php',
     'App\\Jobs\\SendEmailToUnverifiedUser' => $baseDir . '/app/Jobs/SendEmailToUnverifiedUser.php',

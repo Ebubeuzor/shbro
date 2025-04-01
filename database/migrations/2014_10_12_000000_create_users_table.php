@@ -43,6 +43,7 @@ return new class extends Migration
                 $table->boolean('co_host')->nullable();
                 $table->boolean('is_guest')->nullable();
                 $table->string('emergency_no')->nullable();
+                $table->string('apple_id')->nullable();
                 $table->string('google_id')->nullable();
                 $table->rememberToken();
                 $table->timestamps();

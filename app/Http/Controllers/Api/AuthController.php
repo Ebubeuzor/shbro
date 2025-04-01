@@ -18,6 +18,8 @@ use App\Models\UserWallet;
 use App\Models\Visitor;
 use App\Rules\PasswordRequirements;
 use Carbon\Carbon;
+use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -193,6 +195,125 @@ class AuthController extends Controller
         }
     }
 
+
+    /**
+     * 
+     * @lrd:start
+     * Verify Apple Token and Authenticate User
+     * 
+     * This endpoint verifies the provided Apple ID token and authenticates the user.
+     * @title Verify Apple Token
+     * @description Verifies the Apple ID token sent from the Flutter app and logs in or registers the user.
+     * @auth false
+     * @bodyParam token string required The Apple ID token received after successful sign-in in the Flutter app. Example: "eyJraW..."
+     * @bodyParam name string The user's name provided by Apple (only sent during first login). Example: "David Ajanaku"
+     * @response 200 {
+     *   "user": {
+     *     "id": 1,
+     *     "name": "Ajanaku David",
+     *     "email": "private@privaterelay.appleid.com",
+     *     "apple_id": "001631.a603db9d5f9c41e5a9cd88ce87f9f86e...",
+     *     "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+     *   }
+     * }
+     * @response 400 {
+     *   "error": "Invalid or expired token"
+     * }
+     * @lrd:end
+     * @LRDparam token use|required
+     * @LRDparam name use
+     */
+    public function verifyAppleToken(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'name' => 'nullable|string',
+        ]);
+
+        try {
+            // Get Apple's public keys
+            $appleKeys = Http::get('https://appleid.apple.com/auth/keys')->json();
+            
+            // Decode the JWT header to determine which key to use
+            $tokenParts = explode('.', $data['token']);
+            $header = json_decode(base64_decode($tokenParts[0]), true);
+            
+            // Find the matching key
+            $publicKey = null;
+            foreach ($appleKeys['keys'] as $key) {
+                if ($key['kid'] === $header['kid']) {
+                    $publicKey = JWK::parseKey($key);
+                    break;
+                }
+            }
+            
+            if (!$publicKey) {
+                return response()->json([
+                    'error' => 'Invalid token: Unable to find matching key',
+                ], 400);
+            }
+            
+            // Verify the token
+            $tokenVerifier = new JWT();
+            $payload = $tokenVerifier->decode($data['token'], $publicKey);
+            
+            // Validate the token audience and issuer
+            if ($payload->aud !== config('services.apple.client_id') || $payload->iss !== 'https://appleid.apple.com') {
+                return response()->json([
+                    'error' => 'Invalid token: Audience or issuer mismatch',
+                ], 400);
+            }
+            
+            // Find or create user
+            $user = User::where('apple_id', $payload->sub)->orWhere('email', $payload->email)->first();
+            
+            if (!$user) {
+                do {
+                    $remember_token = Str::random(40);
+                } while (User::where('remember_token', $remember_token)->exists());
+                
+                // Use name if provided or a placeholder
+                $name = $data['name'] ?? 'Apple User';
+                
+                $user = User::create([
+                    'name' => $name,
+                    'email' => $payload->email,
+                    'apple_id' => $payload->sub,
+                    'remember_token' => $remember_token
+                ]);
+                
+                UserWallet::create([
+                    'user_id' => $user->id,
+                    'totalbalance' => 0,
+                ]);
+                
+                Mail::to($user->email)->queue(
+                    (new WelcomeMail($user))->onQueue('emails')
+                );
+            } elseif (!$user->is_active) {
+                return response("Your account has been deactivated", 422);
+            } elseif ($user->suspend != null) {
+                return response("Your account has been suspended", 422);
+            } elseif ($user->banned != null) {
+                return response("Your account has been banned", 422);
+            }
+            
+            return response()->json([
+                'user' => $user,
+                'token' => $user->createToken('main')->plainTextToken,
+            ], 201);
+            
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            info('Apple Token Verification Failed', [
+                'message' => $e->getMessage(),
+            ]);
+            
+            return response()->json([
+                'error' => 'An error occurred during token verification: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 
     /**
      * @lrd:start

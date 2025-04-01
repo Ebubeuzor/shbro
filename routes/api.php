@@ -285,6 +285,7 @@ Route::post('/mobile/verifyOtpForChangeOfPassword', [ForgotPassword::class, 'ver
 Route::post('/mobile/resendOtpForChangeOfPassword', [ForgotPassword::class, 'resendOtpForPasswordReset']);
 
 Route::post('/mobile/google/verify-token', [AuthController::class, 'verifyGoogleToken']);
+Route::post('/mobile/apple/verify-token', [AuthController::class, 'verifyAppleToken']);
 
 Route::get('/getLocation', function(Request $request){
     return response()->json(['location' => Location::get($request->ip())]);

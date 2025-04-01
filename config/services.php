@@ -45,5 +45,9 @@ return [
 
     'firebase' => [
         'FIREBASE_SERVER_KEY' => env('FIREBASE_SERVER_KEY')
+    ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID')
     ]
 ];

@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2.8",
         "cyberwizard/dbsafeguard": "dev-main",
+        "firebase/php-jwt": "^6.11",
         "guzzlehttp/guzzle": "^7.2",
         "jlorente/laravel-credit-cards": "^1.0",
         "kreait/laravel-firebase": "5.10",

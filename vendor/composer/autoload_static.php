@@ -1024,6 +1024,7 @@ class ComposerStaticInitebb21f07cdcee7324426e0d85abbb839
         'App\\Jobs\\ProcessReservation' => __DIR__ . '/../..' . '/app/Jobs/ProcessReservation.php',
         'App\\Jobs\\ProcessRule' => __DIR__ . '/../..' . '/app/Jobs/ProcessRule.php',
         'App\\Jobs\\ProcessSecurityDeposit' => __DIR__ . '/../..' . '/app/Jobs/ProcessSecurityDeposit.php',
+        'App\\Jobs\\PushNotification' => __DIR__ . '/../..' . '/app/Jobs/PushNotification.php',
         'App\\Jobs\\RequestPay' => __DIR__ . '/../..' . '/app/Jobs/RequestPay.php',
         'App\\Jobs\\SaveReportDamages' => __DIR__ . '/../..' . '/app/Jobs/SaveReportDamages.php',
         'App\\Jobs\\SendEmailToUnverifiedUser' => __DIR__ . '/../..' . '/app/Jobs/SendEmailToUnverifiedUser.php',

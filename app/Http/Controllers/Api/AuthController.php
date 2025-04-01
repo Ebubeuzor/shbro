@@ -257,7 +257,7 @@ class AuthController extends Controller
             $tokenVerifier = new JWT();
             $payload = $tokenVerifier->decode($data['token'], $publicKey);
             
-            info($payload);
+            info(["payload" => $payload]);
             // Validate the token audience and issuer
             if ($payload->aud !== config('services.apple.client_id') || $payload->iss !== 'https://appleid.apple.com') {
                 return response()->json([

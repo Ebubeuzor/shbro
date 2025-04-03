@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MessageSent;
+use App\Events\NewNotificationEvent;
 use App\Events\Typing;
 use App\Http\Controllers\Controller;
 use App\Jobs\PushNotification;
@@ -11,6 +12,7 @@ use App\Mail\NewMessageMail;
 use App\Mail\NotificationMail;
 use App\Models\Cohost;
 use App\Models\Message;
+use App\Models\Notification;
 use App\Models\User;
 use App\Repository\ChatRepository;
 use Illuminate\Http\Request;
@@ -176,6 +178,14 @@ class ChatController extends Controller
             'sender_id' => $senderId,
             'receiver_id' => $receiverId,
         ]);
+
+        
+        $notification = Notification::create([
+            'user_id' => $receiverId,
+            'message' => 'You have a new message',
+        ]);
+
+        event(new NewNotificationEvent($notification, $notification->id, $receiverId));
     }
 
     private function sendMessagesToCohosts($message, $senderId, $receiverId)
@@ -190,6 +200,14 @@ class ChatController extends Controller
             // Queue messages to cohosts in batch for efficiency
             foreach ($uniqueCohosts as $cohost) {
                 SendMailForChatToCohosts::dispatch($message, $senderId, $cohost->user_id, false);
+                
+                $notification = Notification::create([
+                    'user_id' => $cohost->user_id,
+                    'message' => 'You have a new message',
+                ]);
+
+                event(new NewNotificationEvent($notification, $notification->id, $cohost->user_id));
+
             }
         }
         if ($sender->cohosts()->exists()) {

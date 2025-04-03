@@ -663,6 +663,14 @@ class BookingsController extends Controller
         $subject = ($action == 'accept') ? 'Booking Request Accepted' : 'Booking Request Declined';
         $statusMessage = ($action == 'accept') ? 'Your booking request has been accepted.' : 'Your booking request has been declined.';
         $this->sendNotification($user, $statusMessage, $subject, $action, $host_home_id);
+        
+        $notification = Notification::create([
+            'user_id' => $guest_id,
+            'message' => $statusMessage,
+        ]);
+
+        event(new NewNotificationEvent($notification, $notification->id, $guest_id));
+        
         Cache::flush();
         return response()->json(['message'=> "The request has been successfully {$action}d."]);
     }
